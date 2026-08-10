@@ -14,7 +14,7 @@ import CoreData
 struct ResetView: View {
 	// MARK: Body
     var body: some View {
-		NBList( ("Reset")) {
+		NBList( ("重置")) {
 			_cache()
 			_coredata()
 			_all()
@@ -35,7 +35,7 @@ struct ResetView: View {
 		action: @escaping () -> Void
 	) {
 		let action = UIAlertAction(
-			title:  ("Proceed"),
+			title:  ("继续"),
 			style: .destructive
 		) { _ in
 			action()
@@ -48,7 +48,7 @@ struct ResetView: View {
 		
 		var msg = ""
 		if !message.isEmpty { msg = message + "\n" }
-		msg.append( ("This action cannot be undone. Would you like to proceed?"))
+		msg.append( ("此操作不可撤销，是否继续？"))
 	
 		UIAlertController.showAlertWithCancel(
 			title: title,
@@ -64,15 +64,15 @@ extension ResetView {
 	@ViewBuilder
 	private func _cache() -> some View {
 		Section {
-			Button("Reset Work Cache", systemImage: "xmark.rectangle.portrait") {
-				Self.resetAlert(title: "Reset Work Cache") {
+			Button("重置工作缓存", systemImage: "xmark.rectangle.portrait") {
+				Self.resetAlert(title: "重置工作缓存") {
 					Self.clearWorkCache()
 				}
 			}
 			
-			Button("Reset Network Cache", systemImage: "xmark.rectangle.portrait") {
+			Button("重置网络缓存", systemImage: "xmark.rectangle.portrait") {
 				Self.resetAlert(
-					title: "Reset Network Cache",
+					title: "重置网络缓存",
 					message: _cacheSize()
 				) {
 					Self.clearNetworkCache()
@@ -84,36 +84,36 @@ extension ResetView {
 	@ViewBuilder
 	private func _coredata() -> some View {
 		Section {
-			Button("Reset Sources", systemImage: "xmark.circle") {
+			Button("重置源", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "Reset Signed Apps",
+					title: "重置已签名的应用",
 					message: Storage.shared.countContent(for: AltSource.self)
 				) {
 					Self.resetSources()
 				}
 			}
 			
-			Button("Reset Signed Apps", systemImage: "xmark.circle") {
+			Button("重置已签名的应用", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "Reset Signed Apps",
+					title: "重置已签名的应用",
 					message: Storage.shared.countContent(for: Signed.self)
 				) {
 					Self.deleteSignedApps()
 				}
 			}
 			
-			Button("Reset Imported Apps", systemImage: "xmark.circle") {
+			Button("重置已导入的应用", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "Reset Imported Apps",
+					title: "重置已导入的应用",
 					message: Storage.shared.countContent(for: Imported.self)
 				) {
 					Self.deleteImportedApps()
 				}
 			}
 			
-			Button("Reset Certificates", systemImage: "xmark.circle") {
+			Button("重置证书", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "Reset Certificates",
+					title: "重置证书",
 					message: Storage.shared.countContent(for: CertificatePair.self)
 				) {
 					Self.resetCertificates()
@@ -125,14 +125,14 @@ extension ResetView {
 	@ViewBuilder
 	private func _all() -> some View {
 		Section {
-			Button("Reset Settings", systemImage: "xmark.octagon") {
-				Self.resetAlert(title: "Reset Settings") {
+			Button("重置设置", systemImage: "xmark.octagon") {
+				Self.resetAlert(title: "重置设置") {
 					Self.resetUserDefaults()
 				}
 			}
 			
-			Button("Reset All", systemImage: "xmark.octagon") {
-				Self.resetAlert(title: "Reset All") {
+			Button("重置全部", systemImage: "xmark.octagon") {
+				Self.resetAlert(title: "重置全部") {
 					Self.resetAll()
 				}
 			}

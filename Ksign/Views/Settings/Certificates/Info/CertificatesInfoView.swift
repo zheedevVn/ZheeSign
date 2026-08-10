@@ -47,20 +47,20 @@ struct CertificatesInfoView: View {
 extension CertificatesInfoView {
 	@ViewBuilder
 	private func _infoSection(data: Certificate) -> some View {
-		NBSection(.localized("Info")) {
-			_info(.localized("Name"), description: data.Name)
-			_info(.localized("AppID Name"), description: data.AppIDName)
-			_info(.localized("Team Name"), description: data.TeamName)
+		NBSection(.localized("信息")) {
+			_info(.localized("名称"), description: data.Name)
+			_info(.localized("AppID 名称"), description: data.AppIDName)
+			_info(.localized("团队名称"), description: data.TeamName)
 		}
 		
 		Section {
-			_info(.localized("Expires"), description: data.ExpirationDate.expirationInfo().formatted)
+			_info(.localized("过期时间"), description: data.ExpirationDate.expirationInfo().formatted)
 				.foregroundStyle(data.ExpirationDate.expirationInfo().color)
             
-            _info(.localized("Revoked"), description: cert.revoked ? "Yes" : "No")
+            _info(.localized("已吊销"), description: cert.revoked ? "Yes" : "No")
             
 			if let ppq = data.PPQCheck {
-				_info("PPQCheck", description: ppq ? "Yes" : "No")
+				_info("PPQ 检查", description: ppq ? "是" : "否")
 			}
 		}
 	}
@@ -69,7 +69,7 @@ extension CertificatesInfoView {
 	private func _entitlementsSection(data: Certificate) -> some View {
 		if let entitlements = data.Entitlements {
 			Section {
-				NavigationLink(.localized("View Entitlements")) {
+				NavigationLink(.localized("查看权限")) {
 					CertificatesInfoEntitlementView(entitlements: entitlements)
 				}
 			}
@@ -78,21 +78,21 @@ extension CertificatesInfoView {
 	
 	@ViewBuilder
 	private func _miscSection(data: Certificate) -> some View {
-		NBSection(.localized("Misc")) {
-			_disclosure(.localized("Platform"), keys: data.Platform)
+		NBSection(.localized("其他")) {
+			_disclosure(.localized("平台"), keys: data.Platform)
 			
 			if let all = data.ProvisionsAllDevices {
-				_info(.localized("Provision All Devices"), description: all.description)
+				_info(.localized("描述所有设备"), description: all.description)
 			}
 			
 			if let devices = data.ProvisionedDevices {
-				_disclosure(.localized("Provisioned Devices"), keys: devices)
+				_disclosure(.localized("已描述的设备"), keys: devices)
 			}
 			
-			_disclosure(.localized("Team Identifiers"), keys: data.TeamIdentifier)
+			_disclosure(.localized("团队标识符"), keys: data.TeamIdentifier)
 			
 			if let prefix = data.ApplicationIdentifierPrefix{
-				_disclosure(.localized("Identifier Prefix"), keys: prefix)
+				_disclosure(.localized("标识符前缀"), keys: prefix)
 			}
 		}
 	}

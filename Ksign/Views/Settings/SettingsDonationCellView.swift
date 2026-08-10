@@ -18,15 +18,15 @@ struct SettingsDonationCellView: View {
 				_title()
 				
 				_benefit(
-					.localized("Show Your Support"),
-					.localized("Show your support by donating! If you're unable to donate, spreading the word works too!"),
+					.localized("支持我们"),
+					.localized("通过赞助来支持我们！如果暂时无法赞助，帮忙宣传也是一种支持～"),
 					systemName: "heart.fill"
 				)
 				
 				Button() {
 					UIApplication.open(site)
 				} label: {
-					_sheetButton(.localized("Donate"))
+					_sheetButton(.localized("赞助"))
 				}
 				.frame(height: 45)
 			}
@@ -40,7 +40,7 @@ struct SettingsDonationCellView: View {
 		VStack(alignment: .center, spacing: 12) {
             Image(uiImage: (UIImage(named: "Kana_love"))!).resizable().frame(width: 60, height: 60)
 			
-			Text(.localized("Donations"))
+			Text(.localized("赞助"))
 				.font(.title)
 				.bold()
 		}

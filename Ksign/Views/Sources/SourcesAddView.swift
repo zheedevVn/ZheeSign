@@ -23,17 +23,17 @@ struct SourcesAddView: View {
 	
 	// MARK: Body
 	var body: some View {
-		NBNavigationView(.localized("Add Source"), displayMode: .inline) {
+		NBNavigationView(.localized("添加源"), displayMode: .inline) {
 			Form {
 				Section {
-					TextField(.localized("Source Repo URL"), text: $_sourceURL)
+					TextField(.localized("源仓库链接"), text: $_sourceURL)
 						.keyboardType(.URL)
 				} footer: {
-					Text(.localized("Enter a URL to start validation."))
+					Text(.localized("输入链接以开始验证。"))
 				}
 				
 				Section {
-					Button(.localized("Import"), systemImage: "square.and.arrow.down") {
+					Button(.localized("导入"), systemImage: "square.and.arrow.down") {
 						_isImporting = true
 						_addCode(UIPasteboard.general.string) {
 							UINotificationFeedbackGenerator().notificationOccurred(.success)
@@ -42,15 +42,15 @@ struct SourcesAddView: View {
 						
 					}
 					
-					Button(.localized("Export"), systemImage: "doc.on.clipboard") {
+					Button(.localized("导出"), systemImage: "doc.on.clipboard") {
 						UIPasteboard.general.string = Storage.shared.getSources().map {
 							$0.sourceURL!.absoluteString
 						}.joined(separator: "\n")
 						UINotificationFeedbackGenerator().notificationOccurred(.success)
-						UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized("All sources copied to clipboard."))
+						UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized("已复制全部源到剪贴板。"))
 					}
 				} footer: {
-					Text(.localized("Supports importing from KravaSign/MapleSign and ESign"))
+					Text(.localized("支持从 KravaSign/MapleSign 和 ESign 导入"))
 				}
 			}
 			.toolbar {
@@ -58,7 +58,7 @@ struct SourcesAddView: View {
 				
 				if !_isImporting {
 					NBToolbarButton(
-						.localized("Save"),
+						.localized("保存"),
 						style: .text,
 						placement: .confirmationAction,
 						isDisabled: _sourceURL.isEmpty

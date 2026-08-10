@@ -39,9 +39,9 @@ struct WebViewContainer: UIViewRepresentable {
             DispatchQueue.main.async {
                 switch result {
                 case .success:
-                    UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized("The IPA file is being downloaded!\nYou can close this window or download more!"))
+                    UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized("IPA 文件正在下载！\n你可以关闭此窗口，或继续下载其他文件。"))
                 case .failure(let error):
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: error.localizedDescription)
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: error.localizedDescription)
                 }
             }
         }
@@ -51,9 +51,9 @@ struct WebViewContainer: UIViewRepresentable {
         downloadManager.checkFileTypeAndDownload(url: url) { result in
             switch result {
             case .success:
-                UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized("The IPA file is being downloaded!\nYou can close this window or download more!"))
+                UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized("IPA 文件正在下载！\n你可以关闭此窗口，或继续下载其他文件。"))
             case .failure(let error):
-                UIAlertController.showAlertWithOk(title: .localized("Error"), message: error.localizedDescription)
+                UIAlertController.showAlertWithOk(title: .localized("错误"), message: error.localizedDescription)
             }
         }
     }

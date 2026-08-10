@@ -33,17 +33,17 @@ struct SigningPropertiesView: View {
                     Button {
                         text = certAppId ?? ""
                     } label: {
-                        Text(.localized("Matching Certificate's App ID"))
+                        Text(.localized("匹配证书的 App ID"))
                     }
                     .disabled(certAppId == nil)
                 } footer: {
-                    Text(.localized("Use certiticate's app ID, this will help the app have access to features that uses certificate's entitlements."))
+                    Text(.localized("使用证书的 App ID，让应用能使用证书权限对应的功能。"))
                 }
             }
         }
 		.toolbar {
 			NBToolbarButton(
-				.localized("Save"),
+				.localized("保存"),
 				style: .text,
 				placement: .topBarTrailing,
 				isDisabled: saveButtonDisabled

@@ -44,7 +44,7 @@ struct ExpandableText: View {
 						expanded.toggle()
 					}
 				}) {
-					Text(expanded ? .localized("Less") : .localized("More"))
+					Text(expanded ? .localized("收起") : .localized("更多"))
 						.font(.caption)
 						.foregroundColor(.accentColor)
 				}

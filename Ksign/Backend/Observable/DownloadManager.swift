@@ -274,7 +274,7 @@ extension DownloadManager: URLSessionDownloadDelegate {
     private func _notifyDownloadCompleted(fileName: String) {
         guard OptionsManager.shared.options.notifications else { return }
         let content = UNMutableNotificationContent()
-        content.title = String.localized("Download Completed")
+        content.title = String.localized("下载完成")
         content.body = fileName
         content.sound = .default
         

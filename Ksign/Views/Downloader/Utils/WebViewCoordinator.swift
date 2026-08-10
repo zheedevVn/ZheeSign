@@ -72,6 +72,6 @@ class WebViewCoordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
             return
         }
         
-        UIAlertController.showAlertWithOk(title: .localized("Error"), message: error.localizedDescription)
+        UIAlertController.showAlertWithOk(title: .localized("错误"), message: error.localizedDescription)
     }
 }

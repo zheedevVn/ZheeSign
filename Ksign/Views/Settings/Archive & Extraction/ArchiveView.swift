@@ -16,9 +16,9 @@ struct ArchiveView: View {
 	@AppStorage("Feather.extractionLibrary") private var _extractionLibrary: String = "Zip"
     
     var body: some View {
-		NBList(.localized("Archive & Extraction")) {
+		NBList(.localized("压缩与解压")) {
 			Section {
-				Picker(.localized("Compression Level"), systemImage: "archivebox", selection: $_compressionLevel) {
+				Picker(.localized("压缩级别"), systemImage: "archivebox", selection: $_compressionLevel) {
 					ForEach(ZipCompression.allCases, id: \.rawValue) { level in
 						Text(level.label).tag(level)
 					}
@@ -26,25 +26,25 @@ struct ArchiveView: View {
 			}
 			
 			Section {
-				Toggle(.localized("Show Sheet when Exporting"), systemImage: "square.and.arrow.up", isOn: $_useShareSheet)
+				Toggle(.localized("导出时显示分享面板"), systemImage: "square.and.arrow.up", isOn: $_useShareSheet)
 			} footer: {
-				Text(.localized("Toggling show sheet will present a share sheet after exporting to your files."))
+				Text(.localized("开启后，导出到文件时会弹出分享面板。"))
 			}
             
             Section {
-                Toggle(.localized("Use last copied location"), systemImage: "clock.arrow.circlepath", isOn: $_useLastExportLocation)
+                Toggle(.localized("使用上次复制的位置"), systemImage: "clock.arrow.circlepath", isOn: $_useLastExportLocation)
             } footer: {
-                Text(.localized("Whether to remember the last location where a file was copied/moved to or use Ksign's documents folder as default."))
+                Text(.localized("是否记住上次复制/移动文件的目标位置，否则默认使用 Ksign 的 Documents 文件夹。"))
             }
 
             Section {
-                Picker(.localized("Extraction Library"), systemImage: "archivebox.circle.fill", selection: $_extractionLibrary) {
+                Picker(.localized("解压库"), systemImage: "archivebox.circle.fill", selection: $_extractionLibrary) {
                     ForEach(Options.extractionLibraryValues, id: \.self) { value in
                         Text(value).tag(value)
                     }
                 }
             } footer: {
-                Text(.localized("Choose which library to use for extracting archives. ZIPFoundation is recommended for large files or when Zip is not working."))
+                Text(.localized("选择用于解压压缩包的库。文件较大或默认 Zip 失效时，推荐使用 ZIPFoundation。"))
             }
 		}
     }

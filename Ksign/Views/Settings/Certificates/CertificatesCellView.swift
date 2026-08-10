@@ -19,8 +19,8 @@ struct CertificatesCellView: View {
 		VStack(spacing: 6) {
 			
 			NBTitleWithSubtitleView(
-				title: cert.nickname ?? data?.Name ?? .localized("Unknown"),
-				subtitle: data?.AppIDName ?? .localized("Unknown")
+				title: cert.nickname ?? data?.Name ?? .localized("未知"),
+				subtitle: data?.AppIDName ?? .localized("未知")
 			)
 			
 			_certInfoPill(data: cert)
@@ -60,14 +60,14 @@ extension CertificatesCellView {
 		var pills: [NBPillItem] = []
 		
 		if cert.ppQCheck == true {
-			pills.append(NBPillItem(title: "PPQCheck", icon: "checkmark.shield", color: .red))
+			pills.append(NBPillItem(title: "PPQ 检查", icon: "checkmark.shield", color: .red))
 		}
         
         if cert.revoked {
-            pills.append(NBPillItem(title: "Revoked", icon: "xmark.octagon", color: .red))
+            pills.append(NBPillItem(title: "已吊销", icon: "xmark.octagon", color: .red))
         }
         else {
-            pills.append(NBPillItem(title: "Valid", icon: "checkmark.circle", color: .green))
+            pills.append(NBPillItem(title: "有效", icon: "checkmark.circle", color: .green))
         }
 		
 		if let info = cert.expiration?.expirationInfo() {

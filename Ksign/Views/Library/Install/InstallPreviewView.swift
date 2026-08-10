@@ -101,8 +101,8 @@ struct InstallPreviewView: View {
 	private func _install() {
         guard isSharing || app.identifier != Bundle.main.bundleIdentifier! || _installationMethod == 1 else {
             UIAlertController.showAlertWithOk(
-                title: .localized("Install"),
-                message: .localized("You cannot update ‘%@‘ with itself, please use an alternative tool to update it.", arguments: Bundle.main.name)
+                title: .localized("安装"),
+                message: .localized("无法用 ‘%@‘ 自身进行更新，请使用其他工具来更新它。", arguments: Bundle.main.name)
             )
             return
         }
@@ -156,7 +156,7 @@ struct InstallPreviewView: View {
                 await progressTask?.cancel()
 				await MainActor.run {
 					UIAlertController.showAlertWithOk(
-						title: .localized("Install"),
+						title: .localized("安装"),
 						message: error.localizedDescription,
 						action: {
 							HeartbeatManager.shared.start(true)

@@ -22,10 +22,10 @@ struct TextEditorView: View {
                 .navigationTitle(fileURL.lastPathComponent).navigationBarTitleDisplayMode(.inline)
                 .toolbar { 
                     ToolbarItem(placement: .cancellationAction) {
-                        Button(String(localized: "Cancel")) { dismiss() }
+                        Button(String(localized: "取消")) { dismiss() }
                     }
                     ToolbarItem(placement: .confirmationAction) {
-                        Button(String(localized: "Save")) { _saveFile() }
+                        Button(String(localized: "保存")) { _saveFile() }
                             .disabled(!_isChanged)
                     }
                 }

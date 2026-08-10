@@ -24,16 +24,16 @@ struct ConfigurationDictAddView: View {
 	
 	// MARK: Body
     var body: some View {
-		NBList(.localized("New")) {
+		NBList(.localized("新建")) {
 			Section {
-				TextField(.localized("Identifier"), text: $_newKey)
-				TextField(.localized("Replacement"), text: $_newValue)
+				TextField(.localized("标识符"), text: $_newKey)
+				TextField(.localized("替换"), text: $_newValue)
 			}
 			.autocapitalization(.none)
 		}
 		.toolbar {
 			NBToolbarButton(
-				"Save",
+				"保存",
 				style: .text,
 				placement: .confirmationAction,
 				isDisabled: saveButtonDisabled

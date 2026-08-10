@@ -56,7 +56,7 @@ struct SourceAppsCellView: View {
     static func appDescription(app: ASRepository.App) -> String {
         let optionalComponents: [String?] = [
             app.currentVersion,
-            app.currentDescription ?? .localized("An awesome application")
+            app.currentDescription ?? .localized("一个超棒的应用")
         ]
         
         let components: [String] = optionalComponents.compactMap { value in

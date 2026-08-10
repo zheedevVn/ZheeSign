@@ -20,7 +20,7 @@ struct DylibsView: View {
     @State private var hiddenDylibCount: Int = 0
     @State private var searchText: String = ""
     var body: some View {
-        NBNavigationView(app.name ?? .localized("Frameworks & Dylibs"), displayMode: .inline) {
+        NBNavigationView(app.name ?? .localized("框架与动态库"), displayMode: .inline) {
             VStack {
                 List(dylibFiles.filter { searchText.isEmpty ? true : $0.lastPathComponent.localizedCaseInsensitiveContains(searchText) }, id: \.absoluteString) { fileURL in
                     DylibRowView(
@@ -33,7 +33,7 @@ struct DylibsView: View {
                 }
                 .listStyle(.plain)
                 if hiddenDylibCount > 0 {
-                    Text(verbatim: .localized("%lld required system dylibs not shown", arguments: hiddenDylibCount))
+                    Text(verbatim: .localized("另有 %lld 个系统必需的动态库未显示", arguments: hiddenDylibCount))
                         .font(.footnote)
                         .foregroundColor(.disabled())
                 }
@@ -42,9 +42,9 @@ struct DylibsView: View {
                 if dylibFiles.isEmpty {
                     if #available(iOS 17.0, *) {
                         ContentUnavailableView(
-                            .localized("No Frameworks"),
+                            .localized("暂无框架"),
                             systemImage: "doc.text.magnifyingglass",
-                            description: Text(.localized("No frameworks or dylibs found in this app"))
+                            description: Text(.localized("未在此应用中找到框架或动态库"))
                         )
                     } else {
                         VStack(spacing: 15) {
@@ -52,10 +52,10 @@ struct DylibsView: View {
                                 .font(.largeTitle)
                                 .foregroundColor(.secondary)
                             
-                            Text(.localized("No Frameworks"))
+                            Text(.localized("暂无框架"))
                                 .font(.headline)
                             
-                            Text(.localized("No frameworks or dylibs found in this app"))
+                            Text(.localized("未在此应用中找到框架或动态库"))
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                                 .multilineTextAlignment(.center)
@@ -67,19 +67,19 @@ struct DylibsView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button(.localized("Cancel")) {
+                    Button(.localized("取消")) {
                         dismiss()
                     }
                 }
                 ToolbarItem(placement: .principal) {
                     HStack(spacing: 8) {
                         FRAppIconView(app: app, size: 28)
-                        Text(app.name ?? .localized("Frameworks & Dylibs"))
+                        Text(app.name ?? .localized("框架与动态库"))
                             .font(.headline)
                     }
                 }
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(.localized("Copy")) {
+                    Button(.localized("复制")) {
                         showDirectoryPicker = true
                     }
                     .disabled(selectedDylibs.isEmpty)

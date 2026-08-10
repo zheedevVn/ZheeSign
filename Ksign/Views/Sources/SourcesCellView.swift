@@ -16,7 +16,7 @@ struct SourcesCellView: View {
 	// MARK: Body
 	var body: some View {
 		FRIconCellView(
-			title: source.name ?? .localized("Unknown"),
+			title: source.name ?? .localized("未知"),
 			subtitle: source.sourceURL?.absoluteString ?? "",
 			iconUrl: source.iconURL
 		)
@@ -36,14 +36,14 @@ struct SourcesCellView: View {
 extension SourcesCellView {
 	@ViewBuilder
 	private func _actions(for source: AltSource) -> some View {
-		Button(.localized("Delete"), systemImage: "trash", role: .destructive) {
+		Button(.localized("删除"), systemImage: "trash", role: .destructive) {
 			Storage.shared.deleteSource(for: source)
 		}
 	}
 	
 	@ViewBuilder
 	private func _contextActions(for source: AltSource) -> some View {
-		Button(.localized("Copy"), systemImage: "doc.on.clipboard") {
+		Button(.localized("复制"), systemImage: "doc.on.clipboard") {
 			UIPasteboard.general.string = source.sourceURL?.absoluteString
 		}
 	}

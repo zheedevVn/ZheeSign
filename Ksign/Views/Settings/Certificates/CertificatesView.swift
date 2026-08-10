@@ -40,20 +40,20 @@ struct CertificatesView: View {
 				_cellButton(for: cert, at: index)
 			}
 		}
-		.navigationTitle(.localized("Certificates"))
+		.navigationTitle(.localized("证书"))
 		.navigationBarTitleDisplayMode(.inline)
         .overlay {
             if certificates.isEmpty {
                 if #available(iOS 17, *) {
                     ContentUnavailableView {
-                        Label(.localized("No Certificates"), systemImage: "questionmark.folder.fill")
+                        Label(.localized("暂无证书"), systemImage: "questionmark.folder.fill")
                     } description: {
-                        Text(.localized("Get started signing by importing your first certificate."))
+                        Text(.localized("先导入你的第一个证书，即可开始签名。"))
                     } actions: {
                         Button {
                             _isAddingPresenting = true
                         } label: {
-							Text("Import").bg()
+							Text("导入").bg()
                         }
                     }
                 }
@@ -135,15 +135,15 @@ extension CertificatesView {
 		Button(role: .destructive) {
 			if certificates.count == 1 {
                 UIAlertController.showAlertWithOk(
-                    title: .localized("You don't want to do this!"),
-                    message: .localized("You don't want to delete your only certificate, right >.<?"),
+                    title: .localized("此操作不可撤销！"),
+                    message: .localized("你不会想把唯一的证书删掉吧 >.<?"),
                     isCancel: true
                 )
             } else {
                 Storage.shared.deleteCertificate(for: cert)
             }
 		} label: {
-			Label(.localized("Delete"), systemImage: "trash")
+			Label(.localized("删除"), systemImage: "trash")
 		}
 	}
 	
@@ -152,7 +152,7 @@ extension CertificatesView {
 		Button {
 			_isSelectedInfoPresenting = cert
 		} label: {
-			Label(.localized("Get Info"), systemImage: "info.circle")
+			Label(.localized("查看信息"), systemImage: "info.circle")
 		}
 	}
 	

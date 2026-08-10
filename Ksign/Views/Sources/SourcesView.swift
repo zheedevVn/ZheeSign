@@ -29,7 +29,7 @@ struct SourcesView: View {
 	
 	// MARK: Body
 	var body: some View {
-		NBNavigationView(.localized("Sources")) {
+		NBNavigationView(.localized("源")) {
 			NBListAdaptable {
 				Section {
 					NavigationLink {
@@ -38,8 +38,8 @@ struct SourcesView: View {
 						HStack(spacing: 9) {
 							Image("Repositories").appIconStyle()
 							NBTitleWithSubtitleView(
-								title: .localized("All Repositories"),
-								subtitle: .localized("See all apps from your sources")
+								title: .localized("全部仓库"),
+								subtitle: .localized("查看你所有源里的应用")
 							)
 						}
 					}
@@ -47,7 +47,7 @@ struct SourcesView: View {
 				}
 				
 				NBSection(
-					.localized("Repositories"),
+					.localized("仓库"),
 					secondary: _filteredSources.count.description
 				) {
 					ForEach(_filteredSources) { source in
@@ -65,14 +65,14 @@ struct SourcesView: View {
                 if _filteredSources.isEmpty {
                     if #available(iOS 17, *) {
                         ContentUnavailableView {
-                            Label(.localized("No Repositories"), systemImage: "globe.desk.fill")
+                            Label(.localized("暂无仓库"), systemImage: "globe.desk.fill")
                         } description: {
-                            Text(.localized("Get started by adding your first repository."))
+                            Text(.localized("先添加你的第一个仓库吧。"))
                         } actions: {
                             Button {
                                 _isAddingPresenting = true
                             } label: {
-                                Text("Add Source").bg()
+                                Text("添加源").bg()
                             }
                         }
                     }

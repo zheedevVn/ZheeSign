@@ -51,7 +51,7 @@ struct BulkSigningView: View {
 	}
 
 	var body: some View {
-		NBNavigationView(.localized("Bulk Signing"), displayMode: .inline) {
+		NBNavigationView(.localized("批量签名"), displayMode: .inline) {
 			Form {
                 _cert()
 				
@@ -66,14 +66,14 @@ struct BulkSigningView: View {
 				Button {
 					_start()
 				} label: {
-					NBSheetButton(title: .localized("Start Signing"))
+					NBSheetButton(title: .localized("开始签名"))
 				}
 			}
 			.toolbar {
 				NBToolbarButton(role: .dismiss)
 				
 				NBToolbarButton(
-					.localized("Reset"),
+					.localized("重置"),
 					style: .text,
 					placement: .topBarTrailing
 				) {
@@ -127,15 +127,15 @@ extension BulkSigningView {
 	@ViewBuilder
 	private func _customizationOptions(for config: Binding<AppSignConfig>) -> some View {
 			Menu {
-				Button(.localized("Select Alternative Icon")) {
+				Button(.localized("选择备用图标")) {
 					_editingConfigId = config.wrappedValue.id
 					_isAltPickerPresenting = true 
 				}
-				Button(.localized("Choose from Files")) {
+				Button(.localized("从“文件”选取")) {
 					_editingConfigId = config.wrappedValue.id
 					_isFilePickerPresenting = true 
 				}
-				Button(.localized("Choose from Photos")) {
+				Button(.localized("从相册选取")) {
 					_editingConfigId = config.wrappedValue.id
 					_isImagePickerPresenting = true 
 				}
@@ -149,23 +149,23 @@ extension BulkSigningView {
 					FRAppIconView(app: config.app.wrappedValue, size: 55)
 				}
 			}
-			_infoCell(.localized("Name"), desc: config.options.appName.wrappedValue ?? config.app.wrappedValue.name) {
+			_infoCell(.localized("名称"), desc: config.options.appName.wrappedValue ?? config.app.wrappedValue.name) {
 				SigningPropertiesView(
-					title: .localized("Name"),
+					title: .localized("名称"),
 					initialValue: config.options.appName.wrappedValue ?? (config.app.wrappedValue.name ?? ""),
 					bindingValue: config.options.appName
 				)
 			}
-			_infoCell(.localized("Identifier"), desc: config.options.appIdentifier.wrappedValue ?? config.app.wrappedValue.identifier) {
+			_infoCell(.localized("标识符"), desc: config.options.appIdentifier.wrappedValue ?? config.app.wrappedValue.identifier) {
 				SigningPropertiesView(
-					title: .localized("Identifier"),
+					title: .localized("标识符"),
 					initialValue: config.options.appIdentifier.wrappedValue ?? (config.app.wrappedValue.identifier ?? ""),
 					bindingValue: config.options.appIdentifier
 				)
 			}
-			_infoCell(.localized("Version"), desc: config.options.appVersion.wrappedValue ?? config.app.wrappedValue.version) {
+			_infoCell(.localized("版本"), desc: config.options.appVersion.wrappedValue ?? config.app.wrappedValue.version) {
 				SigningPropertiesView(
-					title: .localized("Version"),
+					title: .localized("版本"),
 					initialValue: config.options.appVersion.wrappedValue ?? (config.app.wrappedValue.version ?? ""),
 					bindingValue: config.options.appVersion
 				)
@@ -175,7 +175,7 @@ extension BulkSigningView {
 
 	@ViewBuilder
 	private func _cert() -> some View {
-		NBSection(.localized("Signing")) {
+		NBSection(.localized("签名")) {
 			if let cert = _selectedCert() {
 				NavigationLink {
 					CertificatesView(selectedCert: $_temporaryCertificate)
@@ -190,40 +190,40 @@ extension BulkSigningView {
 	
 	@ViewBuilder
 	private func _customizationProperties(for config: Binding<AppSignConfig>) -> some View {
-			DisclosureGroup(.localized("Modify")) {
-				NavigationLink(.localized("Existing Dylibs")) {
+			DisclosureGroup(.localized("修改")) {
+				NavigationLink(.localized("已有动态库")) {
 					SigningDylibView(
 						app: config.app.wrappedValue,
 						options: config.options.optional()
 					)
 				}
 				
-				NavigationLink(String.localized("Frameworks & PlugIns")) {
+				NavigationLink(String.localized("框架与插件")) {
 					SigningFrameworksView(
 						app: config.app.wrappedValue,
 						options: config.options.optional()
 					)
 				}
 				#if NIGHTLY || DEBUG
-				NavigationLink(String.localized("Entitlements")) {
+				NavigationLink(String.localized("权限")) {
 					SigningEntitlementsView(
 						bindingValue: config.options.appEntitlementsFile
 					)
 				}
 				#endif
-				NavigationLink(String.localized("Tweaks")) {
+				NavigationLink(String.localized("插件")) {
 					SigningTweaksView(
 						options: config.options
 					)
 				}
 			}
 			
-			NavigationLink(String.localized("Properties")) {
+			NavigationLink(String.localized("属性")) {
 				Form { SigningOptionsView(
 					options: config.options,
 					temporaryOptions: _optionsManager.options
 				)}
-			.navigationTitle(.localized("Properties"))
+			.navigationTitle(.localized("属性"))
 		}
 	}
 
@@ -233,7 +233,7 @@ extension BulkSigningView {
 			destination()
 		} label: {
 			LabeledContent(title) {
-				Text(desc ?? .localized("Unknown"))
+				Text(desc ?? .localized("未知"))
 			}
 		}
 	}
@@ -242,8 +242,8 @@ extension BulkSigningView {
 		let canSign = _selectedCert() != nil || _configs.allSatisfy { $0.options.doAdhocSigning || $0.options.onlyModify }
 		guard canSign else {
 			UIAlertController.showAlertWithOk(
-				title: .localized("No Certificate"),
-				message: .localized("Please go to settings and import a valid certificate"),
+				title: .localized("暂无证书"),
+				message: .localized("请前往设置，导入一个有效的证书"),
 				isCancel: true
 			)
 			return

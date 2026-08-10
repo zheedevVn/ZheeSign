@@ -51,15 +51,15 @@ public struct NBToolbarButton: ToolbarContent {
 		
 		switch role {
 		case .cancel:
-			self._title = .localized("Cancel")
+			self._title = .localized("取消")
 			self._icon = "xmark"
 			self._style = .text
 		case .dismiss:
-			self._title = .localized("Dismiss")
+			self._title = .localized("关闭")
 			self._icon = "chevron.left"
 			self._style = .icon
 		case .close:
-			self._title = .localized("Close")
+			self._title = .localized("关闭")
 			self._icon = "xmark"
 			self._style = .icon
 			self._placement = .topBarTrailing

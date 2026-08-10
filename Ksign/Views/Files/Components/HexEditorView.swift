@@ -39,17 +39,17 @@ struct HexEditorView: View {
         .onAppear {
             viewModel.loadFile(fileURL)
         }
-        .alert("Unsaved Changes", isPresented: $showingUnsavedAlert) {
-            Button("Save") {
+        .alert("未保存的更改", isPresented: $showingUnsavedAlert) {
+            Button("保存") {
                 viewModel.saveChanges()
                 dismiss()
             }
-            Button("Discard", role: .destructive) {
+            Button("放弃更改", role: .destructive) {
                 dismiss()
             }
-            Button("Cancel", role: .cancel) { }
+            Button("取消", role: .cancel) { }
         } message: {
-            Text("You have unsaved changes. Do you want to save them before closing?")
+            Text("你有尚未保存的更改，要在关闭前保存吗？")
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
@@ -91,7 +91,7 @@ struct HexEditorView: View {
     }
     
     private var viewModeSegmentedControl: some View {
-        Picker("View Mode", selection: $currentViewMode) {
+        Picker("查看模式", selection: $currentViewMode) {
             ForEach(ViewMode.allCases, id: \.self) { mode in
                 Text(mode.title).tag(mode)
             }
@@ -109,7 +109,7 @@ struct HexEditorView: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(.secondary)
                 
-                TextField("Search hex or ASCII", text: $searchText)
+                TextField("搜索十六进制或 ASCII", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
                     .autocapitalization(.none)
                     .disableAutocorrection(true)
@@ -133,7 +133,7 @@ struct HexEditorView: View {
             .cornerRadius(8)
             
             if viewModel.hasSearchResults {
-                Button("Next") {
+                Button("下一个") {
                     viewModel.nextSearchMatch()
                 }
                 .font(.caption)
@@ -207,7 +207,7 @@ struct HexEditorView: View {
     
     private var stringView: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("String representation:")
+            Text("字符串表示：")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .padding(.horizontal, 16)

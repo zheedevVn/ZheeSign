@@ -19,13 +19,13 @@ public class NBFetchService {
 		public var errorDescription: String? {
 			switch self {
 			case .invalidURL:
-				return "The URL is invalid."
+				return "链接无效。"
 			case .networkError(let error):
 				return "Network error: \(error.localizedDescription)"
 			case .noData:
-				return "No data received."
+				return "未接收到数据。"
 			case .parsingError(let error):
-				return "Failed to parse data: \(error)"
+				return "解析数据失败：\(error)"
 			}
 		}
 	}

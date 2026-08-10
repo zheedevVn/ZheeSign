@@ -14,10 +14,10 @@ extension UIUserInterfaceStyle: @retroactive CaseIterable {
 	
 	var label: String {
 		switch self {
-		case .unspecified: .localized("Default")
-		case .dark: .localized("Dark")
-		case .light: .localized("Light")
-		@unknown default: .localized("Unknown")
+		case .unspecified: .localized("默认")
+		case .dark: .localized("深色")
+		case .light: .localized("浅色")
+		@unknown default: .localized("未知")
 		}
 	}
 }

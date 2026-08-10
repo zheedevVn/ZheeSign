@@ -1,24 +1,23 @@
-
 <img src="https://github.com/user-attachments/assets/986892f9-c32f-448d-a24e-ba8659203fbf" height="200">
 
-# Ksign 
+# Ksign（中文版）
 [![GitHub Release](https://img.shields.io/github/v/release/nyasami/ksign?style=for-the-badge&color=3c94fc)](https://github.com/nyasami/ksign/releases/latest) 
 [![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/nyasami/ksign/total?style=for-the-badge&color=6bc563)](https://github.com/nyasami/ksign/releases)
 
-Yet another codesigning app, have you ever wondered what if Feather and Esign had a child?
+又一个 iOS 自签应用 —— 你有没有想过，如果 Feather 和轻松签（Esign）有一个“孩子”会是什么样？
 
-## Why?
-Since Esign is end of service so people been moving to other signing apps, but Esign was a really big part of the community, so with the help of Feather as the base app, I tried to recreate Esign as close as possible so you guys can easier to get familiar and less app switching for smooth sideloading.
+## 为什么做这个？
+自从轻松签停止维护后，大家都在迁移到其他签名 App。但轻松签曾陪伴社区走过很长一段时间，因此本项目以 Feather 为基础，尽可能贴近地复刻了轻松签的体验，让大家更容易上手、减少在多个工具之间来回切换，获得更顺滑的自签体验。
 
-Another reason is this app was built specifically for Khoindvn to share his certificates, allowing more people to access to sideloading without even have to buy a certificate!
+做这个项目的另一个原因，是为了方便 Khoindvn 分享他的证书，让更多人无需购买证书就能用上自签！
 
-## Help
-You can create your Issue at [Issue](https://github.com/Nyasami/Ksign-public/issues), this will also be the place for you to request a new feature so feel free to make one!
+## 帮助与反馈
+你可以在 [Issue](https://github.com/Nyasami/Ksign-public/issues) 页面提交问题，这也是提交新功能建议的地方，欢迎随时提出！
 
-You can also join Ksign Discord [here](https://discord.gg/sfbZfQzVdQ) for better communication.
+你也可以加入 Ksign 的 Discord [交流群](https://discord.gg/sfbZfQzVdQ)，方便沟通。
 
-## Download
-Go to [Releases](https://github.com/Nyasami/Ksign-public/releases) and download the newest ipa from there.
+## 下载
+前往 [Releases](https://github.com/Nyasami/Ksign-public/releases) 下载最新的 ipa 安装包。
 
 ## Star History
 
@@ -30,13 +29,17 @@ Go to [Releases](https://github.com/Nyasami/Ksign-public/releases) and download 
  </picture>
 </a>
 
-## Special thanks
-- Feather by [claration](https://github.com/claration/Feather)  
+## 特别鸣谢
+- Feather，作者 [claration](https://github.com/claration/Feather)  
 
-- Product manager Khoindvn
+- 产品经理 Khoindvn
 
-- And you! for using the app ❤️
+- 还有你！感谢使用本应用 ❤️
 
-## Disclaimer
+## 免责声明
 
-This project is maintained here, on GitHub. Releases are distributed here, on GitHub. We do not currently have a project website outside of this repository. Please make sure to avoid any sites that host our software as they are often malicious and are there to mislead to user.
+本项目仅在 GitHub 上维护，安装包也仅通过 GitHub 发布。我们目前在仓库之外没有任何项目官网。请务必警惕其他第三方网站 —— 它们托管的所谓“我们的软件”往往带有恶意目的，目的是误导用户。
+
+---
+
+> 本仓库为 Ksign 的**简体中文本地化版本**：已将应用内全部用户可见文本（导航、设置、签名、证书、源、文件、下载、日志、各类提示与错误信息等）地道地汉化为中文，仅保留中文，不再包含其他语言。术语参考了全能签、轻松签（Esign）等常见 iOS 签名工具的中文习惯。如有翻译不当之处，欢迎提 Issue 指出。

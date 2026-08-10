@@ -18,35 +18,35 @@ struct SigningTweaksView: View {
 	
 	// MARK: Body
 	var body: some View {
-		NBList(.localized("Tweaks")) {
-			NBSection(.localized("Injection")) {
+		NBList(.localized("插件")) {
+			NBSection(.localized("注入")) {
 				Picker(selection: $options.injectPath) {
 					ForEach(Options.InjectPath.allCases, id: \.rawValue) { path in
 						Text(path.localizedDescription).tag(path)
 					}
 				} label: {
-					Label(.localized("Injection Path"), systemImage: "doc.badge.gearshape")
+					Label(.localized("注入路径"), systemImage: "doc.badge.gearshape")
 				}
 				Picker(selection: $options.injectFolder) {
 					ForEach(Options.InjectFolder.allCases, id: \.rawValue) { folder in
 						Text(folder.localizedDescription).tag(folder)
 					}
 				} label: {
-					Label(.localized("Injection Folder"), systemImage: "folder.badge.gearshape")
+					Label(.localized("注入文件夹"), systemImage: "folder.badge.gearshape")
 				}
 				Toggle(isOn: $options.injectIntoExtensions) {
-					Label(.localized("Inject into Extensions"), systemImage: "syringe")
+					Label(.localized("注入到扩展"), systemImage: "syringe")
 				}
 			}
 			if !options.injectionFiles.isEmpty {
-				NBSection(.localized("Added Tweaks")) {
+				NBSection(.localized("已添加的插件")) {
 					ForEach(options.injectionFiles, id: \.absoluteString) { tweak in
 						_file(tweak: tweak, isFromOptions: true)
 					}
 				}
 			}
 			if !_tweaksInDirectory.isEmpty {
-				NBSection(.localized("Available Tweaks")) {
+				NBSection(.localized("可用插件")) {
 					ForEach(_tweaksInDirectory, id: \.absoluteString) { tweak in
 						_file(tweak: tweak, isFromOptions: false)
 					}
@@ -57,25 +57,25 @@ struct SigningTweaksView: View {
 			if options.injectionFiles.isEmpty && _tweaksInDirectory.isEmpty {
 				if #available(iOS 17, *) {
 					ContentUnavailableView {
-						Label(.localized("No Tweaks"), systemImage: "gear.badge.questionmark")
+						Label(.localized("暂无插件"), systemImage: "gear.badge.questionmark")
 					} description: {
-						Text(.localized("Importing your .dylib, .deb or .framework files \n These will also be automatically added to Tweaks folder"))
+						Text(.localized("导入你的 .dylib、.deb 或 .framework 文件\n这些文件会自动添加到“插件”文件夹"))
                     } actions: {
 						Button {
 							_isAddingPresenting = true
 						} label: {
-							Text("Import").bg()
+							Text("导入").bg()
 						}
 					}
 				} else {
-					Text(.localized("Importing your .dylib, .deb or .framework files \n These will also be automatically added to Tweaks folder"))
+					Text(.localized("导入你的 .dylib、.deb 或 .framework 文件\n这些文件会自动添加到“插件”文件夹"))
 						.foregroundColor(.secondary)
 						.frame(maxWidth: .infinity, alignment: .center)
 						.padding()
 				}
 			}
 		}
-		.navigationTitle(.localized("Tweaks"))
+		.navigationTitle(.localized("插件"))
 		.listStyle(.plain)
 		.toolbar {
 			NBToolbarButton(
@@ -199,7 +199,7 @@ extension SigningTweaksView {
 					}
 				}
 			} label: {
-				Label(.localized("Delete"), systemImage: "trash")
+				Label(.localized("删除"), systemImage: "trash")
 			}
 		}
 	}

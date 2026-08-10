@@ -16,8 +16,8 @@ struct SigningOptionsView: View {
     // MARK: Body
     var body: some View {
         if (temporaryOptions == nil) {
-            NBSection(.localized("Protection")) {
-                _toggle(.localized("PPQ Protection"),
+            NBSection(.localized("保护")) {
+                _toggle(.localized("PPQ 保护"),
                         systemImage: "shield.fill",
                         isOn: $options.ppqProtection,
                         temporaryValue: temporaryOptions?.ppqProtection
@@ -30,27 +30,27 @@ struct SigningOptionsView: View {
 //                )
 //                    .disabled(!options.ppqProtection)
             } footer: {
-                Text(.localized("Enabling any protection will append a random string to the bundleidentifiers of the apps you sign, this is to ensure your Apple ID does not get flagged by Apple. However, when using a signing service you can ignore this."))
+                Text(.localized("开启任何保护都会在你签名的应用包名后追加一段随机字符串，以防 Apple ID 被 Apple 标记。但如果你使用的是签名服务，可忽略此项。"))
             }
             Section {
-                _toggle(.localized("Remove app after signed"),
+                _toggle(.localized("签名后移除应用"),
                         systemImage: "trash",
                         isOn: $options.removeApp,
                         temporaryValue: temporaryOptions?.removeApp
                 )
             } footer: {
-                Text(.localized("This will remove app after signed (Downloaded apps)"))
+                Text(.localized("签名后移除应用（针对已下载的应用）"))
             }
         } else {
-            NBSection(.localized("General")) {
-                _picker(.localized("Appearance"),
+            NBSection(.localized("通用")) {
+                _picker(.localized("外观"),
                         systemImage: "paintpalette",
                         selection: $options.appAppearance,
                         values: Options.appAppearanceValues,
                         id: \.description
                 )
                 
-                _picker(.localized("Minimum Requirement"),
+                _picker(.localized("最低要求"),
                         systemImage: "ruler",
                         selection: $options.minimumAppRequirement,
                         values: Options.appMinimumAppRequirementValues,
@@ -58,12 +58,12 @@ struct SigningOptionsView: View {
                 )
             }
             Section {
-                _toggle(.localized("Remove app after signed"),
+                _toggle(.localized("签名后移除应用"),
                         systemImage: "trash",
                         isOn: $options.removeApp,
                         temporaryValue: temporaryOptions?.removeApp
                 )
-                _toggle(.localized("Only modify (No signing)"),
+                _toggle(.localized("仅修改（不签名）"),
                         systemImage: "pencil.slash",
                         isOn: $options.onlyModify,
                         temporaryValue: temporaryOptions?.onlyModify
@@ -71,14 +71,14 @@ struct SigningOptionsView: View {
             }
         }
         
-        NBSection(.localized("App Features")) {
-            _toggle(.localized("File Sharing"),
+        NBSection(.localized("应用功能")) {
+            _toggle(.localized("文件共享"),
                     systemImage: "folder.badge.person.crop",
                     isOn: $options.fileSharing,
                     temporaryValue: temporaryOptions?.fileSharing
             )
             
-            _toggle(.localized("iTunes File Sharing"),
+            _toggle(.localized("iTunes 文件共享"),
                     systemImage: "music.note.list",
                     isOn: $options.itunesFileSharing,
                     temporaryValue: temporaryOptions?.itunesFileSharing
@@ -90,79 +90,79 @@ struct SigningOptionsView: View {
                     temporaryValue: temporaryOptions?.proMotion
             )
             
-            _toggle("GameMode",
+            _toggle("游戏模式",
                     systemImage: "gamecontroller",
                     isOn: $options.gameMode,
                     temporaryValue: temporaryOptions?.gameMode
             )
             
-            _toggle(.localized("iPad Fullscreen"),
+            _toggle(.localized("iPad 全屏"),
                     systemImage: "ipad.landscape",
                     isOn: $options.ipadFullscreen,
                     temporaryValue: temporaryOptions?.ipadFullscreen
             )
         } footer: {
-            Text(.localized("These options will change apps behaviours"))
+            Text(.localized("这些选项会改变应用的行为"))
         }
         
-        NBSection(.localized("Removal")) {
-            _toggle(.localized("Remove Supported Devices"),
+        NBSection(.localized("移除")) {
+            _toggle(.localized("移除支持的设备"),
                     systemImage: "iphone.slash",
                     isOn: $options.removeSupportedDevices,
                     temporaryValue: temporaryOptions?.removeSupportedDevices
             )
             
-            _toggle(.localized("Remove URL Scheme"),
+            _toggle(.localized("移除 URL Scheme"),
                     systemImage: "ellipsis.curlybraces",
                     isOn: $options.removeURLScheme,
                     temporaryValue: temporaryOptions?.removeURLScheme
             )
             
-            _toggle(.localized("Remove Provisioning"),
+            _toggle(.localized("移除描述文件"),
                     systemImage: "doc.badge.gearshape",
                     isOn: $options.removeProvisioning,
                     temporaryValue: temporaryOptions?.removeProvisioning
             )
             
-            _toggle(.localized("Remove Watch Placeholder"),
+            _toggle(.localized("移除 Watch 占位"),
                     systemImage: "applewatch.slash",
                     isOn: $options.removeWatchPlaceholder,
                     temporaryValue: temporaryOptions?.removeWatchPlaceholder
             )
         } footer: {
-            Text(.localized("These options will remove stuff in unsigned IPAs"))
+            Text(.localized("这些选项会移除未签名 IPA 中的部分内容"))
         }
         
         Section {
-            _toggle(.localized("Force Localize"),
+            _toggle(.localized("强制本地化"),
                     systemImage: "character.bubble",
                     isOn: $options.changeLanguageFilesForCustomDisplayName,
                     temporaryValue: temporaryOptions?.changeLanguageFilesForCustomDisplayName
             )
         } footer: {
-            Text(.localized("This will force the app to use localizations"))
+            Text(.localized("强制应用使用本地化语言"))
         }
         
-        NBSection(.localized("Advanced")) {
-            _toggle(.localized("Adhoc Signing"),
+        NBSection(.localized("高级")) {
+            _toggle(.localized("Adhoc 签名"),
                     systemImage: "signature",
                     isOn: $options.doAdhocSigning,
                     temporaryValue: temporaryOptions?.doAdhocSigning
             )
         } footer: {
-            Text(.localized("Only use this when you have Ad Hoc certificates"))
+            Text(.localized("仅在使用 Ad Hoc 证书时启用"))
         }
         
-        NBSection(.localized("Experiments")) {
+        NBSection(.localized("实验性")) {
             _toggle(
-                .localized("Replace Substrate with ElleKit"),
+                .localized("用 ElleKit 替换 Substrate"),
                 systemImage: "pencil",
                 isOn: $options.experiment_replaceSubstrateWithEllekit,
                 temporaryValue: temporaryOptions?.experiment_replaceSubstrateWithEllekit
             )
             
             _toggle(
-                .localized("Enable Liquid Glass"),
+                .localized("启用液态玻璃"),
                 systemImage: "26.circle",
                 isOn: $options.experiment_supportLiquidGlass,
                 temporaryValue: temporaryOptions?.experiment_supportLiquidGlass
@@ -173,12 +173,12 @@ struct SigningOptionsView: View {
 				}
 			}
         } footer: {
-            Text(.localized("This option force converts apps to try to use the new liquid glass redesign iOS 26 introduced, this may not work for all applications due to differing frameworks."))
+            Text(.localized("此选项会强制让应用尝试使用 iOS 26 引入的液态玻璃新设计。由于各应用所用框架不同，可能并不适用于所有应用。"))
         }
 
 		Section {
 			_toggle(
-				.localized("Disable Liquid Glass"),
+				.localized("禁用液态玻璃"),
 				systemImage: "18.circle",
 				isOn: $options.experiment_disableLiquidGlass,
 				temporaryValue: temporaryOptions?.experiment_disableLiquidGlass
@@ -189,7 +189,7 @@ struct SigningOptionsView: View {
 				}
 			}
 		} footer: {
-			Text(.localized("This option try to disable liquid glass on iOS 26 if the app support it (might not work for all apps)."))
+			Text(.localized("此选项会尝试在 iOS 26 上为支持的应用禁用液态玻璃（可能不适用于所有应用）。"))
 		}
     }
     

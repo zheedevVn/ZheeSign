@@ -23,7 +23,7 @@ extension Date {
 		
 		guard timeLeft > 0 else {
 			return ExpirationInfo(
-				formatted: .localized("Expired"),
+				formatted: .localized("已过期"),
 				color: .gray,
 				icon: "xmark.octagon"
 			)
@@ -33,7 +33,7 @@ extension Date {
 		let color = Color.expiration(days: daysLeft)
 		
 		let formatter = Date._expirationFormatter(for: timeLeft)
-		let timeString = formatter.string(from: timeLeft) ?? .localized("%lld days", arguments: daysLeft)
+		let timeString = formatter.string(from: timeLeft) ?? .localized("%lld 天", arguments: daysLeft)
 		
 		return ExpirationInfo(
 			formatted: timeString,

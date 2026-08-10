@@ -26,19 +26,19 @@ struct TunnelView: View {
 				}
 			} footer: {
 				if doesHavePairingFile {
-					Text(.localized("Seems like you've gotten your hands on your pairing file!"))
+					Text(.localized("看来你已经拿到配对文件了！"))
 				} else {
-					Text(.localized("No pairing file found, please import it."))
+					Text(.localized("未找到配对文件，请先导入。"))
 				}
 			}
 			
 			Section {
-				Button(.localized("Import Pairing File"), systemImage: "square.and.arrow.down") {
+				Button(.localized("导入配对文件"), systemImage: "square.and.arrow.down") {
 					_isImportingPairingPresenting = true
 				}
 				if #available(iOS 17.4, *) {
 				} else {
-					Button(.localized("Restart Heartbeat"), systemImage: "arrow.counterclockwise") {
+					Button(.localized("重启心跳"), systemImage: "arrow.counterclockwise") {
 						HeartbeatManager.shared.start(true)
 						
 						DispatchQueue.global(qos: .userInitiated).async {
@@ -46,7 +46,7 @@ struct TunnelView: View {
 								DispatchQueue.main.async {
 									UIAlertController.showAlertWithOk(
 										title: "Socket",
-										message: "Unable to connect to TCP. Make sure you have loopback VPN enabled and you are on WiFi or Airplane mode."
+										message: "无法连接到 TCP。请确保已开启本地回环 VPN，并处于 Wi-Fi 或飞行模式。"
 									)
 								}
 							}
@@ -55,11 +55,11 @@ struct TunnelView: View {
 				}
 			}
 			
-			NBSection(.localized("Help")) {
-				Button(.localized("Pairing File Guide"), systemImage: "questionmark.circle") {
+			NBSection(.localized("帮助")) {
+				Button(.localized("配对文件指南"), systemImage: "questionmark.circle") {
 					UIApplication.open("https://github.com/claration/Impactor#pairing-file")
 				}
-				Button(.localized("Download LocalDevVPN"), systemImage: "arrow.down.app") {
+				Button(.localized("下载 LocalDevVPN"), systemImage: "arrow.down.app") {
 					UIApplication.open("https://apps.apple.com/us/app/localdevvpn/id6755608044")
 				}
 			}
@@ -87,9 +87,9 @@ struct TunnelView: View {
 	private func _tunnelInfo() -> some View {
 		HStack {
 			VStack(alignment: .leading, spacing: 6) {
-				Text(.localized("Heartbeat"))
+				Text(.localized("心跳保活"))
 					.font(.headline)
-				Text(.localized("The heartbeat is activated in the background, it will restart when the app is re-opened or prompted. If the status below is pulsing, that means its healthy."))
+				Text(.localized("心跳保活在后台运行，重新打开应用或被触发时会重启。如果下方状态在跳动，说明运行正常。"))
 					.font(.subheadline)
 					.foregroundStyle(.secondary)
 			}

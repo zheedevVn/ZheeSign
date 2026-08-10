@@ -63,7 +63,7 @@ struct SigningView: View {
 		
 	// MARK: Body
     var body: some View {
-		NBNavigationView(app.name ?? .localized("Unknown"), displayMode: .inline) {
+		NBNavigationView(app.name ?? .localized("未知"), displayMode: .inline) {
 			Form {
 				_customizationOptions(for: app)
 				_cert()
@@ -75,7 +75,7 @@ struct SigningView: View {
 					Button() {
 						_isLogsPresenting = true
 					} label: {
-						NBSheetButton(title: .localized("Show Logs"))
+						NBSheetButton(title: .localized("显示日志"))
 					}
 					.tint(.secondary)
 					.compatMatchedTransitionSource(id: "showLogs", ns: _namespace)
@@ -83,7 +83,7 @@ struct SigningView: View {
 					Button() {
 						_start()
 					} label: {
-						NBSheetButton(title: .localized("Start Signing"))
+						NBSheetButton(title: .localized("开始签名"))
 					}
 				}
 			}
@@ -91,7 +91,7 @@ struct SigningView: View {
 				NBToolbarButton(role: .dismiss)
 				
 				NBToolbarButton(
-					.localized("Reset"),
+					.localized("重置"),
 					style: .text,
 					placement: .topBarTrailing
 				) {
@@ -178,11 +178,11 @@ struct SigningView: View {
 extension SigningView {
 	@ViewBuilder
 	private func _customizationOptions(for app: AppInfoPresentable) -> some View {
-		NBSection(.localized("Customization")) {
+		NBSection(.localized("自定义")) {
 			Menu {
-				Button(.localized("Select Alternative Icon")) { _isAltPickerPresenting = true }
-				Button(.localized("Choose from Files")) { _isFilePickerPresenting = true }
-				Button(.localized("Choose from Photos")) { _isImagePickerPresenting = true }
+				Button(.localized("选择备用图标")) { _isAltPickerPresenting = true }
+				Button(.localized("从“文件”选取")) { _isFilePickerPresenting = true }
+				Button(.localized("从相册选取")) { _isImagePickerPresenting = true }
 			} label: {
 				if let icon = appIcon {
 					Image(uiImage: icon)
@@ -192,24 +192,24 @@ extension SigningView {
 				}
 			}
 			
-			_infoCell(.localized("Name"), desc: _temporaryOptions.appName ?? app.name) {
+			_infoCell(.localized("名称"), desc: _temporaryOptions.appName ?? app.name) {
 				SigningPropertiesView(
-					title: .localized("Name"),
+					title: .localized("名称"),
 					initialValue: _temporaryOptions.appName ?? (app.name ?? ""),
 					bindingValue: $_temporaryOptions.appName
 				)
 			}
-			_infoCell(.localized("Identifier"), desc: _temporaryOptions.appIdentifier ?? app.identifier) {
+			_infoCell(.localized("标识符"), desc: _temporaryOptions.appIdentifier ?? app.identifier) {
 				SigningPropertiesView(
-					title: .localized("Identifier"),
+					title: .localized("标识符"),
 					initialValue: _temporaryOptions.appIdentifier ?? (app.identifier ?? ""),
 					certAppId: _getCertAppID(),
 					bindingValue: $_temporaryOptions.appIdentifier
 				)
 			}
-			_infoCell(.localized("Version"), desc: _temporaryOptions.appVersion ?? app.version) {
+			_infoCell(.localized("版本"), desc: _temporaryOptions.appVersion ?? app.version) {
 				SigningPropertiesView(
-					title: .localized("Version"),
+					title: .localized("版本"),
 					initialValue: _temporaryOptions.appVersion ?? (app.version ?? ""),
 					bindingValue: $_temporaryOptions.appVersion
 				)
@@ -219,7 +219,7 @@ extension SigningView {
 	
 	@ViewBuilder
 	private func _cert() -> some View {
-		NBSection(.localized("Signing")) {
+		NBSection(.localized("签名")) {
 			if let cert = _selectedCert() {
 				NavigationLink {
 					CertificatesView(selectedCert: $_temporaryCertificate)
@@ -234,41 +234,41 @@ extension SigningView {
 	
 	@ViewBuilder
 	private func _customizationProperties(for app: AppInfoPresentable) -> some View {
-		NBSection(.localized("Advanced")) {
-			DisclosureGroup(.localized("Modify")) {
-				NavigationLink(.localized("Existing Dylibs")) {
+		NBSection(.localized("高级")) {
+			DisclosureGroup(.localized("修改")) {
+				NavigationLink(.localized("已有动态库")) {
 					SigningDylibView(
 						app: app,
 						options: $_temporaryOptions.optional()
 					)
 				}
 				
-				NavigationLink(String.localized("Frameworks & PlugIns")) {
+				NavigationLink(String.localized("框架与插件")) {
 					SigningFrameworksView(
 						app: app,
 						options: $_temporaryOptions.optional()
 					)
 				}
 				#if NIGHTLY || DEBUG
-				NavigationLink(String.localized("Entitlements")) {
+				NavigationLink(String.localized("权限")) {
 					SigningEntitlementsView(
 						bindingValue: $_temporaryOptions.appEntitlementsFile
 					)
 				}
 				#endif
-				NavigationLink(String.localized("Tweaks")) {
+				NavigationLink(String.localized("插件")) {
 					SigningTweaksView(
 						options: $_temporaryOptions
 					)
 				}
 			}
 			
-			NavigationLink(String.localized("Properties")) {
+			NavigationLink(String.localized("属性")) {
 				Form { SigningOptionsView(
 					options: $_temporaryOptions,
 					temporaryOptions: _optionsManager.options
 				)}
-				.navigationTitle(.localized("Properties"))
+				.navigationTitle(.localized("属性"))
 			}
 		}
 	}
@@ -279,7 +279,7 @@ extension SigningView {
 			destination()
 		} label: {
 			LabeledContent(title) {
-				Text(desc ?? .localized("Unknown"))
+				Text(desc ?? .localized("未知"))
 			}
 		}
 	}
@@ -290,8 +290,8 @@ extension SigningView {
 	private func _start() {
 		guard _selectedCert() != nil || _temporaryOptions.doAdhocSigning || _temporaryOptions.onlyModify else {
 			UIAlertController.showAlertWithOk(
-				title: .localized("No Certificate"),
-				message: .localized("Please go to settings and import a valid certificate"),
+				title: .localized("暂无证书"),
+				message: .localized("请前往设置，导入一个有效的证书"),
 				isCancel: true
 			)
 			return
@@ -311,12 +311,12 @@ extension SigningView {
 			certificate: _selectedCert()
 		) { [self] error in
 			if let error {
-				let ok = UIAlertAction(title: .localized("Dismiss"), style: .cancel) { _ in
+				let ok = UIAlertAction(title: .localized("关闭"), style: .cancel) { _ in
 					dismiss()
 				}
 				
 				UIAlertController.showAlert(
-					title: .localized("Signing"),
+					title: .localized("签名"),
 					message: error.localizedDescription,
 					actions: [ok]
 				)

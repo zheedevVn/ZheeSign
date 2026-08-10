@@ -352,7 +352,7 @@ extension ASRepository {
         }
         
         public var currentName: String {
-            var name = name ?? "Unknown"
+            var name = name ?? "未知"
             // additional check for blank names
             if name.isEmpty { name = "Unknown" }
             

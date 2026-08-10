@@ -39,31 +39,31 @@ struct CertificatesAddView: View {
 	
 	// MARK: Body
 	var body: some View {
-		NBNavigationView(.localized("New Certificate"), displayMode: .inline) {
+		NBNavigationView(.localized("新建证书"), displayMode: .inline) {
 			Form {
-				NBSection(.localized("Files")) {
-					_importButton(.localized("Import Certificate File"), file: _p12URL, hasData: _p12Data) {
+				NBSection(.localized("文件")) {
+					_importButton(.localized("导入证书文件"), file: _p12URL, hasData: _p12Data) {
 						_isImportingP12Presenting = true
 					}
-					_importButton(.localized("Import Provisioning File"), file: _provisionURL, hasData: _provisionData) {
+					_importButton(.localized("导入描述文件"), file: _provisionURL, hasData: _provisionData) {
 						_isImportingMobileProvisionPresenting = true
 					}
 				}
-				NBSection(.localized("Password")) {
-					SecureField(.localized("Enter Password"), text: $_p12Password)
+				NBSection(.localized("密码")) {
+					SecureField(.localized("输入密码"), text: $_p12Password)
 				} footer: {
-					Text(.localized("Enter the password associated with the private key. Leave it blank if theres no password required."))
+					Text(.localized("输入与私钥对应的密码。若无需密码则留空。"))
 				}
 				
 				Section {
-					TextField(.localized("Nickname (Optional)"), text: $_certificateName)
+					TextField(.localized("昵称（可选）"), text: $_certificateName)
 				}
 			}
 			.toolbar {
 				NBToolbarButton(role: .cancel)
 				
 				NBToolbarButton(
-					.localized("Save"),
+					.localized("保存"),
 					style: .text,
 					placement: .confirmationAction,
 					isDisabled: saveButtonDisabled
@@ -93,16 +93,16 @@ struct CertificatesAddView: View {
 			}
 			.alert(isPresented: $_isPasswordAlertPresenting) {
 				Alert(
-					title: Text(.localized("Bad Password")),
-					message: Text(.localized("Please check the password and try again.")),
-					dismissButton: .default(Text(.localized("OK")))
+					title: Text(.localized("密码错误")),
+					message: Text(.localized("请检查密码后重试。")),
+					dismissButton: .default(Text(.localized("好的")))
 				)
 			}
 			.alert(isPresented: $_isErrorPresenting) {
 				Alert(
-					title: Text(.localized("Import Error")),
+					title: Text(.localized("导入失败")),
 					message: Text(_errorMessage),
-					dismissButton: .default(Text(.localized("OK")))
+					dismissButton: .default(Text(.localized("好的")))
 				)
 			}
 		}

@@ -250,7 +250,7 @@ extension SourceAppsTableRepresentableView { class Coordinator: NSObject, UITabl
         let title: String
         
         switch sortOption {
-        case .default: title = .localized("%lld Apps", arguments: _sortedApps.count)
+        case .default: title = .localized("%lld 个应用", arguments: _sortedApps.count)
         case .name, .date: title = _sortedSectionTitles[section]
         }
         
@@ -287,7 +287,7 @@ extension SourceAppsTableRepresentableView { class Coordinator: NSObject, UITabl
             previewProvider: nil
         ) { _ in
             let versionsMenu = UIMenu(
-                title: .localized("Copy Download URLs"),
+                title: .localized("复制下载链接"),
                 image: UIImage(systemName: "list.bullet"),
                 children: self._contextActions(for: entry.app, with: { version in
                     UIPasteboard.general.string = version?.absoluteString
@@ -295,7 +295,7 @@ extension SourceAppsTableRepresentableView { class Coordinator: NSObject, UITabl
             )
             
             let downloadsMenu = UIMenu(
-                title: .localized("Previous Versions"),
+                title: .localized("历史版本"),
                 image: UIImage(systemName: "square.and.arrow.down.on.square"),
                 children: self._contextActions(for: entry.app, with: { version in
                     if let url = version {

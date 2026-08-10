@@ -211,14 +211,14 @@ struct FilesView: View {
             if filteredFiles.isEmpty {
                 if #available(iOS 17, *) {
                     ContentUnavailableView {
-                        Label(.localized("No Files"), systemImage: "folder.fill.badge.questionmark")
+                        Label(.localized("暂无文件"), systemImage: "folder.fill.badge.questionmark")
                     } description: {
-                        Text(.localized("Get started by importing your first file."))
+                        Text(.localized("先导入你的第一个文件吧。"))
                     } actions: {
                         Button {
                             viewModel.showingImporter = true
                         } label: {
-                            Text("Import Files").bg()
+                            Text("导入文件").bg()
                         }
                     }
                 }
@@ -252,36 +252,36 @@ struct FilesView: View {
             Button {
                 viewModel.showingImporter = true
             } label: {
-                Label(String(localized: "Import Files"), systemImage: "doc.badge.plus")
+                Label(String(localized: "导入文件"), systemImage: "doc.badge.plus")
             }
             Button {
                 UIAlertController.showAlertWithTextBox(
-                    title: .localized("New Folder"),
-                    message: .localized("Enter a name for the new folder"),
-                    textFieldPlaceholder: .localized("Folder name"),
-                    submit: .localized("Create"),
-                    cancel: .localized("Cancel"),
+                    title: .localized("新建文件夹"),
+                    message: .localized("输入新文件夹的名称"),
+                    textFieldPlaceholder: .localized("文件夹名"),
+                    submit: .localized("创建"),
+                    cancel: .localized("取消"),
                     onSubmit: { name in
                         viewModel.createNewFolder(name: name)
                     }
                 )
             } label: {
-                Label(String(localized: "New Folder"), systemImage: "folder.badge.plus")
+                Label(String(localized: "新建文件夹"), systemImage: "folder.badge.plus")
             }
             Button {
                 UIAlertController.showAlertWithTextBox(
-                    title: .localized("New Text File"),
-                    message: .localized("Enter a name for the new text file"),
-                    textFieldPlaceholder: .localized("Text file name"),
+                    title: .localized("新建文本文件"),
+                    message: .localized("输入新文本文件的名称"),
+                    textFieldPlaceholder: .localized("文本文件名"),
                     textFieldText: "Unnamed.txt",
-                    submit: .localized("Create"),
-                    cancel: .localized("Cancel"),
+                    submit: .localized("创建"),
+                    cancel: .localized("取消"),
                     onSubmit: { name in
                        viewModel.createNewTextFile(name: name)
                     }
                 )
             } label: {
-                Label(String(localized: "New Text File"), systemImage: "doc.badge.plus")
+                Label(String(localized: "新建文本文件"), systemImage: "doc.badge.plus")
             }
         } label: {
             Image(systemName: "plus")
@@ -300,7 +300,7 @@ struct FilesView: View {
                 }
             }
         } label: {
-            Text(viewModel.isEditMode == .active ? String(localized: "Done") : String(localized: "Edit"))
+            Text(viewModel.isEditMode == .active ? String(localized: "完成") : String(localized: "编辑"))
         }
     }
     
@@ -322,7 +322,7 @@ struct FilesView: View {
         Button {
             viewModel.showDirectoryPicker = true
         } label: {
-            Label(String(localized: "Move"), systemImage: "folder")
+            Label(String(localized: "移动"), systemImage: "folder")
         }
         .disabled(viewModel.selectedItems.isEmpty)
     }
@@ -382,7 +382,7 @@ struct FilesView: View {
                     }
                     
                 case .failure:
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Whoops!, something went wrong when extracting the file. \nMaybe try switching the extraction library in the settings?"))
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("哎呀，解压文件时出错了。\n试试在设置里切换一下解压库？"))
                 }
                 ExtractManager.shared.finish(item: extractItem)
             }
@@ -407,9 +407,9 @@ struct FilesView: View {
                 switch result {
                 case .success(let ipaFileName):
                     self.viewModel.loadFiles()
-                    UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized("Successfully packaged \(file.name) as \(ipaFileName)"))
+                    UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized("已成功将 \(file.name) 打包为 \(ipaFileName)"))
                 case .failure(let error):
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Failed to package IPA: \(error.localizedDescription)"))
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("打包 IPA 失败：\(error.localizedDescription)"))
                 }
                 ExtractManager.shared.finish(item: extractItem)
             }
@@ -422,7 +422,7 @@ struct FilesView: View {
         downloadManager.handlePachageFile(url: file.url, dl: download) { err in
             DispatchQueue.main.async {
                 if let error = err {
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Whoops!, something went wrong when extracting the file. \nMaybe try switching the extraction library in the settings?"))
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("哎呀，解压文件时出错了。\n试试在设置里切换一下解压库？"))
                 } else {
                 }
                 if let index = DownloadManager.shared.getDownloadIndex(by: download.id) {
@@ -442,7 +442,7 @@ struct FilesView: View {
 
     @ViewBuilder
     private func _sortActions() -> some View {
-        Section(.localized("Filter by")) {
+        Section(.localized("筛选")) {
             ForEach(FilesViewModel.SortOption.allCases, id: \.displayName) { opt in
                 _sortButton(for: opt)
             }

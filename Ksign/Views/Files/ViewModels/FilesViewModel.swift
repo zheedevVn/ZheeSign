@@ -26,9 +26,9 @@ class FilesViewModel: ObservableObject {
         
         var displayName: String {
             switch self {
-            case .name:    .localized("Name")
-            case .date:    .localized("Date")
-            case .type:    .localized("Type")
+            case .name:    .localized("名称")
+            case .date:    .localized("日期")
+            case .type:    .localized("类型")
             }
         }
     }
@@ -75,7 +75,7 @@ class FilesViewModel: ObservableObject {
             files = _applySort(to: mapped)
         } catch {
             DispatchQueue.main.async {
-                UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Error loading files: \(error.localizedDescription)"))
+                UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("加载文件失败：\(error.localizedDescription)"))
             }
         }
     }
@@ -126,7 +126,7 @@ class FilesViewModel: ObservableObject {
             DispatchQueue.main.async {
                 if !errorMessages.isEmpty {
                     let count = errorMessages.count
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Failed to delete \(count) item\(count == 1 ? "" : "s")"))
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("删除 \(count) 项失败"))
                 }
             }
         }
@@ -145,7 +145,7 @@ class FilesViewModel: ObservableObject {
             }
         } catch {
             DispatchQueue.main.async {
-                UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Error creating folder: \(error.localizedDescription)"))
+                UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("创建文件夹失败：\(error.localizedDescription)"))
             }
         }
     }
@@ -165,7 +165,7 @@ class FilesViewModel: ObservableObject {
             }       
         } catch {
             DispatchQueue.main.async {
-                UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Error creating text file: \(error.localizedDescription)"))
+                UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("创建文本文件失败：\(error.localizedDescription)"))
             }
         }
     }
@@ -183,7 +183,7 @@ class FilesViewModel: ObservableObject {
             }
         } catch {
             DispatchQueue.main.async {
-                UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Error renaming file: \(error.localizedDescription)"))
+                UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("重命名文件失败：\(error.localizedDescription)"))
             }
         }
     }
@@ -195,37 +195,37 @@ class FilesViewModel: ObservableObject {
         let provisionFile = CertificateService.shared.findProvisionFile(near: file)
         switch provisionFile {
         case .failure(let err):
-            DispatchQueue.main.async { UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized(err.errorDescription ?? "Unknown error")) }
+            DispatchQueue.main.async { UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized(err.errorDescription ?? "Unknown error")) }
         case .success(let provisionFile):
             CertificateService.shared.importP12Certificate(p12File: file, provisionFile: provisionFile, password: "") { [weak self] result in
                 DispatchQueue.main.async {
                     switch result {
                     case .success(let message):
-                        UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized(message))
+                        UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized(message))
                     case .failure(let importError):
                         if case .invalidPassword = importError {
                             UIAlertController.showAlertWithTextBox(
-                                title: .localized("Enter Certificate Password"),
-                                message: .localized("Enter the password for the certificate. Leave it blank if no password is required."),
-                                textFieldPlaceholder: .localized("Password"),
+                                title: .localized("输入证书密码"),
+                                message: .localized("输入证书的密码。若无需密码则留空。"),
+                                textFieldPlaceholder: .localized("密码"),
                                 textFieldText: "",
-                                submit: .localized("Import"),
-                                cancel: .localized("Cancel"),
+                                submit: .localized("导入"),
+                                cancel: .localized("取消"),
                                 onSubmit: { password in
                                     CertificateService.shared.importP12Certificate(p12File: file, provisionFile: provisionFile, password: password) { result in
                                         DispatchQueue.main.async {
                                             switch result {
                                             case .success(let message):
-                                                UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized(message))
+                                                UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized(message))
                                             case .failure(let finalError):
-                                                UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized(finalError.localizedDescription))
+                                                UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized(finalError.localizedDescription))
                                             }
                                         }
                                     }
                                 }
                             )
                         } else {
-                            UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized(importError.localizedDescription))
+                            UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized(importError.localizedDescription))
                         }
                     }
                 }
@@ -263,7 +263,7 @@ class FilesViewModel: ObservableObject {
             
             DispatchQueue.main.async {
                 if failureCount > 0 {
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Failed to import \(failureCount) file\(failureCount == 1 ? "" : "s")"))
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("导入 \(failureCount) 个文件失败"))
                 }
                 withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
                     self.loadFiles()
@@ -336,11 +336,11 @@ class FilesViewModel: ObservableObject {
                         self?.loadFiles()
                     }
                     
-                    UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized("File extracted successfully"))
+                    UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized("文件解压成功"))
                     
                 case .failure(let error):
                     NotificationCenter.default.post(name: NSNotification.Name("ExtractionFailed"), object: nil)
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Error extracting archive: \(error.localizedDescription)"))
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("解压压缩包失败：\(error.localizedDescription)"))
                 }
             }
         }
@@ -357,11 +357,11 @@ class FilesViewModel: ObservableObject {
                 case .success(let ipaFileName):
                     NotificationCenter.default.post(name: NSNotification.Name("ExtractionCompleted"), object: nil)
                     self?.loadFiles()
-                    UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized("Successfully packaged \(file.name) as \(ipaFileName)"))
+                    UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized("已成功将 \(file.name) 打包为 \(ipaFileName)"))
                     
                 case .failure(let error):
                     NotificationCenter.default.post(name: NSNotification.Name("ExtractionFailed"), object: nil)
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Failed to package IPA: \(error.localizedDescription)"))
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("打包 IPA 失败：\(error.localizedDescription)"))
                 }
             }
         }
@@ -401,9 +401,9 @@ class FilesViewModel: ObservableObject {
     }
     
     private func _fileType(for file: FileItem) -> String {
-        if file.isDirectory { return .localized("Folder") }
+        if file.isDirectory { return .localized("文件夹") }
         let ext = file.url.pathExtension
-        return ext.isEmpty ? .localized("Unknown") : ext.lowercased()
+        return ext.isEmpty ? .localized("未知") : ext.lowercased()
     }
     
 } 

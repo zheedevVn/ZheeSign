@@ -63,11 +63,11 @@ struct LibraryView: View {
 	
 	// MARK: Body
     var body: some View {
-		NBNavigationView(.localized("Library")) {
+		NBNavigationView(.localized("资源库")) {
 			VStack(spacing: 0) {
 				Picker("", selection: $_selectedTab) {
-					Text(.localized("Downloaded Apps")).tag(0)
-					Text(.localized("Signed Apps")).tag(1)
+					Text(.localized("已下载的应用")).tag(0)
+					Text(.localized("已签名的应用")).tag(1)
 				}
 				.pickerStyle(SegmentedPickerStyle())
 				.padding(.horizontal)
@@ -76,7 +76,7 @@ struct LibraryView: View {
 				NBListAdaptable {
 					if _selectedTab == 0 {
 						NBSection(
-							.localized("Downloaded Apps"),
+							.localized("已下载的应用"),
 							secondary: _filteredImportedApps.count.description
 						) {
 							ForEach(_filteredImportedApps, id: \.uuid) { app in
@@ -93,7 +93,7 @@ struct LibraryView: View {
 						}
 					} else {
 						NBSection(
-							.localized("Signed Apps"),
+							.localized("已签名的应用"),
 							secondary: _filteredSignedApps.count.description
 						) {
 							ForEach(_filteredSignedApps, id: \.uuid) { app in
@@ -119,14 +119,14 @@ struct LibraryView: View {
                 {
                     if #available(iOS 17, *) {
                         ContentUnavailableView {
-                            Label(.localized("No Apps"), systemImage: "questionmark.app.fill")
+                            Label(.localized("暂无应用"), systemImage: "questionmark.app.fill")
                         } description: {
-                            Text(.localized("Get started by importing your first IPA file."))
+                            Text(.localized("先导入你的第一个 IPA 文件吧。"))
                         } actions: {
                             Menu {
                                 _importActions()
                             } label: {
-                                Text("Import").bg()
+                                Text("导入").bg()
                             }
                         }
                     }
@@ -142,21 +142,21 @@ struct LibraryView: View {
                             Button {
                                 _isBulkSigningPresenting = true
                             } label: {
-                                NBButton(.localized("Sign"), systemImage: "signature", style: .icon)
+                                NBButton(.localized("签名"), systemImage: "signature", style: .icon)
                             }
                             .disabled(_selectedApps.isEmpty)
                         } else {
                             Button {
                                 _isBulkInstallingPresenting = true
                             } label: {
-                                NBButton(.localized("Install"), systemImage: "square.and.arrow.down")
+                                NBButton(.localized("安装"), systemImage: "square.and.arrow.down")
                             }
                             .disabled(_selectedApps.isEmpty)
                         }
 						Button {
 							_bulkDeleteSelectedApps()
 						} label: {
-							NBButton(.localized("Delete"), systemImage: "trash", style: .icon)
+							NBButton(.localized("删除"), systemImage: "trash", style: .icon)
 						}
 						.disabled(_selectedApps.isEmpty)
 					}
@@ -216,19 +216,19 @@ struct LibraryView: View {
 							let dl = downloadManager.startArchive(from: ipas, id: id)
 							downloadManager.handlePachageFile(url: ipas, dl: dl) { err in
 								if let error = err {
-									UIAlertController.showAlertWithOk(title: "Error", message: .localized("Whoops!, something went wrong when extracting the file. \nMaybe try switching the extraction library in the settings?"))
+									UIAlertController.showAlertWithOk(title: "Error", message: .localized("哎呀，解压文件时出错了。\n试试在设置里切换一下解压库？"))
 								}
 							}
 						}
 					}
 				)
 			}
-			.alert(.localized("Import from URL"), isPresented: $_isDownloadingPresenting) {
-				TextField(.localized("URL"), text: $_alertDownloadString)
-				Button(.localized("Cancel"), role: .cancel) {
+			.alert(.localized("从链接导入"), isPresented: $_isDownloadingPresenting) {
+				TextField(.localized("链接"), text: $_alertDownloadString)
+				Button(.localized("取消"), role: .cancel) {
 					_alertDownloadString = ""
 				}
-				Button(.localized("OK")) {
+				Button(.localized("好的")) {
 					if let url = URL(string: _alertDownloadString) {
 						_ = downloadManager.startDownload(from: url, id: "FeatherManualDownload_\(UUID().uuidString)")
 					}
@@ -255,10 +255,10 @@ struct LibraryView: View {
 extension LibraryView {
     @ViewBuilder
     private func _importActions() -> some View {
-        Button(.localized("Import from Files"), systemImage: "folder") {
+        Button(.localized("从“文件”导入"), systemImage: "folder") {
             _isImportingPresenting = true
         }
-        Button(.localized("Import from URL"), systemImage: "globe") {
+        Button(.localized("从链接导入"), systemImage: "globe") {
             _isDownloadingPresenting = true
         }
     }

@@ -19,9 +19,9 @@ extension SourceAppsView {
         
         var displayName: String {
             switch self {
-            case .default:  .localized("Default")
-            case .name:     .localized("Name")
-            case .date:     .localized("Date")
+            case .default:  .localized("默认")
+            case .name:     .localized("名称")
+            case .date:     .localized("日期")
             }
         }
     }
@@ -42,11 +42,11 @@ struct SourceAppsView: View {
     
     private var _navigationTitle: String {
         if fromAppStore {
-            return .localized("App Store")
+            return .localized("应用商店")
         } else if object.count == 1 {
-            return object[0].name ?? .localized("Unknown")
+            return object[0].name ?? .localized("未知")
         } else {
-            return .localized("%lld Sources", arguments: object.count)
+            return .localized("%lld 个源", arguments: object.count)
         }
     }
     
@@ -79,9 +79,9 @@ struct SourceAppsView: View {
                 if #available(iOS 17, *) {
                     ContentUnavailableView {
                         ProgressView()
-                        Label(.localized("Fetching..."), systemImage: "")
+                        Label(.localized("获取中…"), systemImage: "")
                     } description: {
-                        Text(.localized("Stuck? Check if you have any sources added."))
+                        Text(.localized("卡住了？看看是不是还没添加源。"))
                     }
                 }
                 else { ProgressView() }
@@ -95,13 +95,13 @@ struct SourceAppsView: View {
                 _sources.count == 1
             {
                 if let url = _sources[0].website {
-                    Button(.localized("Visit Website"), systemImage: "globe") {
+                    Button(.localized("访问官网"), systemImage: "globe") {
                         UIApplication.open(url)
                     }
                 }
                 
                 if let url = _sources[0].patreonURL {
-                    Button(.localized("Visit Patreon"), systemImage: "dollarsign.circle") {
+                    Button(.localized("访问 Patreon"), systemImage: "dollarsign.circle") {
                         UIApplication.open(url)
                     }
                 }
@@ -109,7 +109,7 @@ struct SourceAppsView: View {
             
             Divider()
             
-            Button(.localized("Copy"), systemImage: "doc.on.doc") {
+            Button(.localized("复制"), systemImage: "doc.on.doc") {
                 UIPasteboard.general.string = object.map {
                     $0.sourceURL!.absoluteString
                 }.joined(separator: "\n")
@@ -122,7 +122,7 @@ struct SourceAppsView: View {
                     NavigationLink {
                         SourcesView()
                     } label: {
-                        Text(.localized("Sources"))
+                        Text(.localized("源"))
                     }
                 }
             }
@@ -187,7 +187,7 @@ struct SourceAppsView: View {
 extension SourceAppsView {
     @ViewBuilder
     private func _sortActions() -> some View {
-        Section(.localized("Filter by")) {
+        Section(.localized("筛选")) {
             ForEach(SortOption.allCases, id: \.displayName) { opt in
                 _sortButton(for: opt)
             }

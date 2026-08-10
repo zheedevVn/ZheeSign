@@ -16,28 +16,28 @@ struct ConfigurationView: View {
 	
 	// MARK: Body
     var body: some View {
-		NBList(.localized("Signing Options")) {
-			NavigationLink(.localized("Display Names"), destination: ConfigurationDictView(
-				title: .localized("Display Names"),
+		NBList(.localized("签名选项")) {
+			NavigationLink(.localized("显示名称"), destination: ConfigurationDictView(
+				title: .localized("显示名称"),
 					dataDict: $_optionsManager.options.displayNames
 				)
 			)
-			NavigationLink(.localized("Identifers"), destination: ConfigurationDictView(
-					title: .localized("Identifers"),
+			NavigationLink(.localized("标识符"), destination: ConfigurationDictView(
+					title: .localized("标识符"),
 					dataDict: $_optionsManager.options.identifiers
 				)
 			)
 			Section {
-				TextField(.localized("Prefix"), text: Binding(
+				TextField(.localized("前缀"), text: Binding(
 					get: { _optionsManager.options.prefix ?? "" },
 					set: { _optionsManager.options.prefix = $0.isEmpty ? nil : $0 }
 				))
-				TextField(.localized("Suffix"), text: Binding(
+				TextField(.localized("后缀"), text: Binding(
 					get: { _optionsManager.options.suffix ?? "" },
 					set: { _optionsManager.options.suffix = $0.isEmpty ? nil : $0 }
 				))
 			} footer: {
-				Text(.localized("Prefix/Suffix will be added to the app name before and after the app name."))
+				Text(.localized("前缀/后缀会分别添加到应用名称的前面和后面。"))
 			}
 			
 			SigningOptionsView(options: $_optionsManager.options)
@@ -65,10 +65,10 @@ extension ConfigurationView {
 	@ViewBuilder
 	private func _randomMenuItem() -> some View {
 		Section(_optionsManager.options.ppqString) {
-			Button(.localized("Change")) {
+			Button(.localized("修改")) {
 				isRandomAlertPresenting = true
 			}
-			Button(.localized("Copy")) {
+			Button(.localized("复制")) {
 				UIPasteboard.general.string = _optionsManager.options.ppqString
 			}
 		}
@@ -76,13 +76,13 @@ extension ConfigurationView {
 	
 	@ViewBuilder
 	private func _randomMenuAlert() -> some View {
-		TextField(.localized("String"), text: $randomString)
-		Button(.localized("Save")) {
+		TextField(.localized("字符串"), text: $randomString)
+		Button(.localized("保存")) {
 			if !randomString.isEmpty {
 				_optionsManager.options.ppqString = randomString
 			}
 		}
 		
-		Button(.localized("Cancel"), role: .cancel) {}
+		Button(.localized("取消"), role: .cancel) {}
 	}
 }

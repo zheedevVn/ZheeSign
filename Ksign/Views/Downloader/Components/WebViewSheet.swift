@@ -23,11 +23,11 @@ struct WebViewSheet: View {
                 )
                 
             }
-            .navigationTitle("Web Browser")
+            .navigationTitle("浏览器")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Close") {
+                    Button("关闭") {
                         dismiss()
                     }
                 }

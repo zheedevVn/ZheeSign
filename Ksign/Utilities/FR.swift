@@ -206,7 +206,7 @@ enum FR {
 					}
 				} else {
 					DispatchQueue.main.async {
-						UIAlertController.showAlertWithOk(title: "Error", message: "Repository already added.")
+						UIAlertController.showAlertWithOk(title: "Error", message: "该仓库已添加。")
 					}
 				}
 			case .failure(let error):

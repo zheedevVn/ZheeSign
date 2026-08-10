@@ -17,7 +17,7 @@ struct AboutNyaView: View {
 	
 	// MARK: Body
 	var body: some View {
-		NBList(.localized("About")) {
+		NBList(.localized("关于")) {
             Section {
                 VStack {
                     Image(uiImage: (UIImage(named: Bundle.main.iconFileName ?? ""))! )
@@ -29,7 +29,7 @@ struct AboutNyaView: View {
                         .foregroundStyle(.accent)
                     
                     HStack(spacing: 4) {
-                        Text("Version")
+                        Text("版本")
                         Text(Bundle.main.version)
                     }
                     .font(.footnote)
@@ -38,7 +38,7 @@ struct AboutNyaView: View {
                     Button {
                         _showPatchNotes()
                     } label: {
-                        Text("Show patch notes").bg()
+                        Text("查看更新日志").bg()
                     }
                     .font(.footnote)
                     .padding(.top, 4)
@@ -48,23 +48,23 @@ struct AboutNyaView: View {
             .frame(maxWidth: .infinity)
             .listRowBackground(EmptyView())
 			
-			NBSection(.localized("Credits")) {
-				_credit(name: "Nyasami", desc: "Developer", github: "nyasami")
+			NBSection(.localized("鸣谢")) {
+				_credit(name: "Nyasami", desc: "开发者", github: "nyasami")
 			}
 			
-			NBSection("Special thanks!") {
+			NBSection("特别鸣谢！") {
 				Group {
-					Text(.localized("This couldn't have been done without the original Feather devs! ❤️"))
+					Text(.localized("没有原版 Feather 开发者们的付出，就不会有今天的 Ksign！❤️"))
 						.foregroundStyle(.secondary)
 						.padding(.vertical, 2)
 				}
 				.transition(.slide)
 			}
             
-            NBSection("Acknowledgements") {
+            NBSection("鸣谢") {
                 NavigationLink(destination: AboutView()) {
                     HStack {
-                        Text("About the original Feather")
+                        Text("关于原版 Feather")
                         Spacer()
                     }
                 }
@@ -73,7 +73,7 @@ struct AboutNyaView: View {
             }
 		}
 		.onAppear {
-			// Show patch notes when navigating to this view if they haven't been shown before
+			// 查看更新日志 when navigating to this view if they haven't been shown before
 			if !UserDefaults.standard.bool(forKey: "patchNotesShown") {
 				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
 					_showPatchNotes()
@@ -85,8 +85,8 @@ struct AboutNyaView: View {
 	
 	private func _showPatchNotes() {
 		UIAlertController.showAlertWithOk(
-			title: .localized("From Nyasami, Version \(Bundle.main.version)"),
-			message: .localized("This version introduces:\n\n- Optimization for iOS 26\n- Bulk installation support for multiple apps\n- idevice installation method\n- Custom injection path & support for injecting tweaks into App Extensions\n- Support for .bundle files as tweaks (copied directly into the app bundle)\n- rsd support\n- Fix empty display name handling in Info.plist\n- Fix URL scheme issues for Ksign\n- Fix codesigning errors on specific apps with unusual bundle structures\n- Localization updates for German, Russian, Arabic, and Vietnamese"),
+			title: .localized("来自 Nyasami，版本 \(Bundle.main.version)"),
+			message: .localized("本次更新内容：\n\n- 针对 iOS 26 进行优化\n- 支持多个应用批量安装\n- 新增 idevice 安装方式\n- 支持自定义注入路径，并可将插件注入到 App 扩展中\n- 支持将 .bundle 文件作为插件（直接拷贝进应用包）\n- 新增 rsd 支持\n- 修复 Info.plist 中显示名称为空时的处理问题\n- 修复 Ksign 的 URL Scheme 相关问题\n- 修复某些包结构异常的应用在代码签名时出错的问题\n- 新增德语、俄语、阿拉伯语、越南语的本地化"),
 			isCancel: true,
 			thankYou: true
 		)

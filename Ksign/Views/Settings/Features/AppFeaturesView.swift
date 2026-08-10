@@ -13,37 +13,37 @@ struct AppFeaturesView: View {
     @StateObject private var _optionsManager = OptionsManager.shared
     
     var body: some View {
-        NBList(.localized("App Features")) {
+        NBList(.localized("应用功能")) {
             Section {
                 Toggle(isOn: $_optionsManager.options.backgroundAudio) {
-                    Label(.localized("Keep app running in background"), systemImage: "arrow.trianglehead.2.clockwise")
+                    Label(.localized("保持应用后台运行"), systemImage: "arrow.trianglehead.2.clockwise")
                 }
             } footer: {
-                Text(.localized("This will keep the app running even when you close it, helpful with download or installing ipa."))
+                Text(.localized("即使关闭应用也会保持后台运行，便于下载或安装 IPA。"))
             }
             Section {
                 Toggle(isOn: $_optionsManager.options.signingLogs) {
-                    Label(.localized("Show logs when signing"), systemImage: "terminal")
+                    Label(.localized("签名时显示日志"), systemImage: "terminal")
                 }
             } footer: {
-                Text(.localized("This will show the logs of the signing process when you start signing."))
+                Text(.localized("开始签名时会显示签名过程的日志。"))
             }
             Section {
                 Toggle(isOn: $_optionsManager.options.notifications) {
-                    Label(.localized("Notify when download is completed"), systemImage: "bell")
+                    Label(.localized("下载完成时通知"), systemImage: "bell")
                 }
                 .onChange(of: _optionsManager.options.notifications) { enabled in
                     _notificationsAuthorization(enabled)
                 }
             } footer: {
-                Text(.localized("This will notify you when the download is completed."))
+                Text(.localized("下载完成时会通知你。"))
             }
             Section {
                 Toggle(isOn: $_optionsManager.options.saveAppStoreDownloadsToDownloadsFolder) {
-                    Label(.localized("Save App Store downloads to Downloads folder"), systemImage: "square.and.arrow.down.fill")
+                    Label(.localized("将应用商店的下载保存到“下载”文件夹"), systemImage: "square.and.arrow.down.fill")
                 }
             } footer: {
-                Text(.localized("This will save the App Store downloads to the Downloads folder, turning this off will help reduce disk usage."))
+                Text(.localized("将应用商店的下载保存到“下载”文件夹。关闭此项可减少磁盘占用。"))
             }
         }
         .onChange(of: _optionsManager.options) { _ in
@@ -68,15 +68,15 @@ struct AppFeaturesView: View {
                 DispatchQueue.main.async {
                     _optionsManager.options.notifications = false
                     
-                    let cancel = UIAlertAction(title: .localized("Cancel"), style: .cancel)
-                    let ok = UIAlertAction(title: .localized("Open Settings"), style: .default) { _ in
+                    let cancel = UIAlertAction(title: .localized("取消"), style: .cancel)
+                    let ok = UIAlertAction(title: .localized("打开设置"), style: .default) { _ in
                         if let url = URL(string: UIApplication.openSettingsURLString) {
                             UIApplication.shared.open(url)
                         }
                     }
                     UIAlertController.showAlert(
-                        title: .localized("You have denied!"),
-                        message: .localized("Please open settings and grant permission to send notifications."),
+                        title: .localized("你已拒绝！"),
+                        message: .localized("请前往设置，授予发送通知的权限。"),
                         actions: [cancel, ok]
                     )
                 }

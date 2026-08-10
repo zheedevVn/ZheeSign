@@ -13,15 +13,15 @@ struct SigningFrameworksView: View {
 	@State private var _frameworks: [String] = []
 	@State private var _plugins: [String] = []
 	
-	private let _frameworksPath: String = .localized("Frameworks")
-	private let _pluginsPath: String = .localized("PlugIns")
+	private let _frameworksPath: String = .localized("框架")
+	private let _pluginsPath: String = .localized("插件")
 	
 	var app: AppInfoPresentable
 	@Binding var options: Options?
 	
 	// MARK: Body
 	var body: some View {
-		NBList(.localized("Frameworks & PlugIns")) {
+		NBList(.localized("框架与插件")) {
 			Group {
 				if !_frameworks.isEmpty {
 					NBSection(_frameworksPath) {

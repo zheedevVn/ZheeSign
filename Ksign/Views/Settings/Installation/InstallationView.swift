@@ -14,21 +14,21 @@ struct InstallationView: View {
     @State private var _showMethodChangedAlert = false
 
     private let _installationMethods: [String] = [
-        .localized("Server"),
+        .localized("服务器"),
         .localized("idevice")
     ]
     
     // MARK: Body
     var body: some View {
-        NBList(.localized("Installation")) {
+        NBList(.localized("安装")) {
             Section {
-                Picker(.localized("Installation Type"), systemImage: "arrow.down.app", selection: $_installationMethod) {
+                Picker(.localized("安装方式"), systemImage: "arrow.down.app", selection: $_installationMethod) {
                     ForEach(_installationMethods.indices, id: \.description) { index in
                         Text(_installationMethods[index]).tag(index)
                     }
                 }
             } footer: {
-                Text("Server (Recommended):\nUses a locally hosted server and itms-services:// to install applications.\n\nIDevice (advanced):\nUses a VPN and a pairing file. Writes to AFC and manually calls installd, while monitoring install progress by using a callback\nAdvantage: It is very reliable, does not need SSL certificates or a externally hosted server. Rather, works similarly to a computer.")
+                Text("服务器（推荐）：\n通过本地托管的服务器和 itms-services:// 协议来安装应用。\n\nIDevice（高级）：\n使用 VPN 与配对文件，写入 AFC 并手动调用 installd，同时通过回调监控安装进度。\n优点：非常稳定，无需 SSL 证书或外部托管的服务器，工作方式与电脑类似。")
             }
             
             if _installationMethod == 0 {
@@ -41,13 +41,13 @@ struct InstallationView: View {
             guard newValue == 1 else { return }
             _showMethodChangedAlert = true
         }
-        .alert(.localized("Advanced Installation Method"), isPresented: $_showMethodChangedAlert) {
-            Button(.localized("Switch Back"), role: .destructive) {
+        .alert(.localized("高级安装方式"), isPresented: $_showMethodChangedAlert) {
+            Button(.localized("切换回去"), role: .destructive) {
                 _installationMethod = 0
             }
-            Button(.localized("OK"), role: .cancel) {}
+            Button(.localized("好的"), role: .cancel) {}
         } message: {
-            Text(.localized("idevice warning"))
+            Text(.localized("idevice 警告"))
         }
 
 

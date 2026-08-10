@@ -36,7 +36,7 @@ class BackgroundTaskManager: ObservableObject {
             self.registeredTasks.insert(taskIdentifier)
         }
         
-        let request = BGContinuedProcessingTaskRequest(identifier: taskIdentifier, title: filename, subtitle: .localized("Downloading"))
+        let request = BGContinuedProcessingTaskRequest(identifier: taskIdentifier, title: filename, subtitle: .localized("下载中"))
         request.strategy = .queue
         do {
             try BGTaskScheduler.shared.submit(request)

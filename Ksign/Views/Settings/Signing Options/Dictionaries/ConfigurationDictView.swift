@@ -48,7 +48,7 @@ extension ConfigurationDictView {
 		Button(role: .destructive) {
 			dataDict.removeValue(forKey: key)
 		} label: {
-			Label(.localized("Delete"), systemImage: "trash")
+			Label(.localized("删除"), systemImage: "trash")
 		}
 	}
 }

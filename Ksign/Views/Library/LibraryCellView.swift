@@ -46,7 +46,7 @@ struct LibraryCellView: View {
 			FRAppIconView(app: app, size: 57)
 			
 			NBTitleWithSubtitleView(
-				title: app.name ?? .localized("Unknown"),
+				title: app.name ?? .localized("未知"),
 				subtitle: _desc,
 				linelimit: 0
 			)
@@ -85,7 +85,7 @@ struct LibraryCellView: View {
 			}
 		}
 		.confirmationDialog(
-			app.name ?? .localized("Unknown"),
+			app.name ?? .localized("未知"),
 			isPresented: $_showActionSheet,
 			titleVisibility: .visible
 		) {
@@ -116,7 +116,7 @@ struct LibraryCellView: View {
 		{
 			return "\(version) • \(id)"
 		} else {
-			return .localized("Unknown")
+			return .localized("未知")
 		}
 	}
 	
@@ -140,14 +140,14 @@ struct LibraryCellView: View {
 extension LibraryCellView {
 	@ViewBuilder
 	private func _actions(for app: AppInfoPresentable) -> some View {
-		Button(.localized("Delete"), systemImage: "trash", role: .destructive) {
+		Button(.localized("删除"), systemImage: "trash", role: .destructive) {
 			Storage.shared.deleteApp(for: app)
 		}
 	}
 	
 	@ViewBuilder
 	private func _contextActions(for app: AppInfoPresentable) -> some View {
-		Button(.localized("Get Info"), systemImage: "info.circle") {
+		Button(.localized("查看信息"), systemImage: "info.circle") {
 			selectedInfoAppPresenting = AnyApp(base: app)
 		}
 	}
@@ -156,21 +156,21 @@ extension LibraryCellView {
 	private func _contextActionsExtra(for app: AppInfoPresentable) -> some View {
 		if app.isSigned {
 			if let id = app.identifier {
-				Button(.localized("Open"), systemImage: "app.badge.checkmark") {
+				Button(.localized("打开"), systemImage: "app.badge.checkmark") {
 					UIApplication.openApp(with: id)
 				}
 			}
-			Button(.localized("Install"), systemImage: "square.and.arrow.down") {
+			Button(.localized("安装"), systemImage: "square.and.arrow.down") {
 				selectedInstallAppPresenting = AnyApp(base: app)
 			}
-			Button(.localized("Re-sign"), systemImage: "signature") {
+			Button(.localized("重签"), systemImage: "signature") {
 				selectedSigningAppPresenting = AnyApp(base: app)
 			}
-			Button(.localized("Export"), systemImage: "square.and.arrow.up") {
+			Button(.localized("导出"), systemImage: "square.and.arrow.up") {
 				selectedInstallAppPresenting = AnyApp(base: app, archive: true)
 			}
 		} else {
-			Button(.localized("Install"), systemImage: "square.and.arrow.down") {
+			Button(.localized("安装"), systemImage: "square.and.arrow.down") {
 				selectedInstallAppPresenting = AnyApp(base: app)
 			}
 		}
@@ -179,46 +179,46 @@ extension LibraryCellView {
 	@ViewBuilder
 	private func _actionSheetButtons(for app: AppInfoPresentable) -> some View {
 		if app.isSigned {
-			Button(.localized("Install")) {
+			Button(.localized("安装")) {
 				selectedInstallAppPresenting = AnyApp(base: app)
 			}
 			
 			if let id = app.identifier {
-				Button(.localized("Open")) {
+				Button(.localized("打开")) {
 					UIApplication.openApp(with: id)
 				}
 			}
 			
-			Button(.localized("Re-sign")) {
+			Button(.localized("重签")) {
 				selectedSigningAppPresenting = AnyApp(base: app)
 			}
 			
-			Button(.localized("Export")) {
+			Button(.localized("导出")) {
 				selectedInstallAppPresenting = AnyApp(base: app, archive: true)
 			}
 		} else {
-			Button(.localized("Sign & Install")) {
+			Button(.localized("签名并安装")) {
 				selectedSigningAppPresenting = AnyApp(base: app, signAndInstall: true)
 			}
 			
-			Button(.localized("Sign")) {
+			Button(.localized("签名")) {
 				selectedSigningAppPresenting = AnyApp(base: app)
 			}
 			
-			Button(.localized("Export")) {
+			Button(.localized("导出")) {
 				selectedInstallAppPresenting = AnyApp(base: app, archive: true)
 			}
 		}
 		
-		Button(.localized("Show Dylibs")) {
+		Button(.localized("显示动态库")) {
 			selectedAppDylibsPresenting = AnyApp(base: app)
 		}
 		
-		Button(.localized("Get Info")) {
+		Button(.localized("查看信息")) {
 			selectedInfoAppPresenting = AnyApp(base: app)
 		}
 		
-		Button(.localized("Delete"), role: .destructive) {
+		Button(.localized("删除"), role: .destructive) {
 			Storage.shared.deleteApp(for: app)
 		}
 	}
@@ -231,7 +231,7 @@ extension LibraryCellView {
 					selectedInstallAppPresenting = AnyApp(base: app)
 				} label: {
 					FRExpirationPillView(
-						title: .localized("Install"),
+						title: .localized("安装"),
 						showOverlay: _libraryCellAppearance == 0,
 						expiration: certInfo
 					)
@@ -241,7 +241,7 @@ extension LibraryCellView {
 					selectedSigningAppPresenting = AnyApp(base: app)
 				} label: {
 					FRExpirationPillView(
-						title: .localized("Sign"),
+						title: .localized("签名"),
 						showOverlay: true,
 						expiration: nil
 					)

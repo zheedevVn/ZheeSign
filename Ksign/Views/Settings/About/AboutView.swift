@@ -12,14 +12,14 @@ import NimbleJSON
 // MARK: - View
 struct AboutView: View {
 	@State private var _credits: [CreditsModel] = [
-		.init(name: "C", desc: "Developer", github: "claration"),
-		.init(name: "Asami", desc: "Developer", github: "Nyasami"),
-		.init(name: "Lakhan Lothiyi", desc: "AltStore Repositories", github: "llsc12"),
+		.init(name: "C", desc: "开发者", github: "claration"),
+		.init(name: "Asami", desc: "开发者", github: "Nyasami"),
+		.init(name: "Lakhan Lothiyi", desc: "AltStore 仓库", github: "llsc12"),
 	]
 	// MARK: Body
 	var body: some View {
-		NBList(.localized("About")) {
-			NBSection(.localized("Credits")) {
+		NBList(.localized("关于")) {
+			NBSection(.localized("鸣谢")) {
 				if !_credits.isEmpty {
 					ForEach(_credits, id: \.self) { credit in
 						_credit(name: credit.name, desc: credit.desc, github: credit.github)

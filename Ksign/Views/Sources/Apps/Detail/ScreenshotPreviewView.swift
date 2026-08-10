@@ -30,7 +30,7 @@ struct ScreenshotPreviewView: View {
                         if #available(iOS 26.0, *) {
                             Button(role: .close) { dismiss() }
                         } else {
-                            Button(.localized("Close"), role: .cancel) { dismiss() }
+                            Button(.localized("关闭"), role: .cancel) { dismiss() }
                         }
                     }
                     ToolbarItem(placement: .topBarTrailing) {

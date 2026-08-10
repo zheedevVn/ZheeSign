@@ -168,7 +168,7 @@ struct FileRow: View {
             Button {
                 quickLookFileURL = file.url
             } label: {
-                Label(String(localized: "Preview"), systemImage: "eye")
+                Label(String(localized: "预览"), systemImage: "eye")
             }
         }
         
@@ -176,7 +176,7 @@ struct FileRow: View {
             Button {
                 textEditorFileURL = file.url
             } label: {
-                Label(String(localized: "Text Editor"), systemImage: "doc.plaintext")
+                Label(String(localized: "文本编辑器"), systemImage: "doc.plaintext")
             }
         }
         
@@ -184,7 +184,7 @@ struct FileRow: View {
             Button {
                 plistFileURL = file.url
             } label: {
-                Label(String(localized: "Plist Editor"), systemImage: "list.bullet")
+                Label(String(localized: "Plist 编辑器"), systemImage: "list.bullet")
             }
         }
         
@@ -192,7 +192,7 @@ struct FileRow: View {
             Button {
                 hexEditorFileURL = file.url
             } label: {
-                Label(String(localized: "Hex Editor"), systemImage: "doc.text")
+                Label(String(localized: "十六进制编辑器"), systemImage: "doc.text")
             }
         }
         
@@ -200,15 +200,15 @@ struct FileRow: View {
             Button {
                 viewModel.importCertificate(file)
             } label: {
-                Label(String(localized: "Import Certificate"), systemImage: "key")
+                Label(String(localized: "导入证书"), systemImage: "key")
             }
         }
         
         if file.isKsignFile {
             Button {
-                UIAlertController.showAlertWithOk(title: "?", message: .localized("Ksign certificate file (.ksign) is now unsupported from v1.5.1, please refer to use .p12 and .mobileprovision instead."))
+                UIAlertController.showAlertWithOk(title: "?", message: .localized("自 v1.5.1 起不再支持 Ksign 证书文件（.ksign），请改用 .p12 与 .mobileprovision。"))
             } label: {
-                Label(String(localized: "Import Certificate"), systemImage: "questionmark")
+                Label(String(localized: "导入证书"), systemImage: "questionmark")
             }
         }
         
@@ -216,7 +216,7 @@ struct FileRow: View {
             Button {
                 onImportIpa(file)
             } label: {
-                Text(String(localized: "Import to Library"))
+                Text(String(localized: "导入到资源库"))
                 Image(systemName: "square.grid.2x2.fill")
             }
         }
@@ -225,7 +225,7 @@ struct FileRow: View {
             Button {
                 onPackageApp(file)
             } label: {
-                Label(String(localized: "Package as IPA"), systemImage: "doc.zipper")
+                Label(String(localized: "打包为 IPA"), systemImage: "doc.zipper")
             }
         }
         
@@ -233,43 +233,43 @@ struct FileRow: View {
             Button {
                 onExtractArchive(file)
             } label: {
-                Label(String(localized: "Extract"), systemImage: "doc.zipper")
+                Label(String(localized: "解压"), systemImage: "doc.zipper")
             }
         }
 
         Button {
             moveFileItem = file
         } label: {
-            Label(String(localized: "Move"), systemImage: "folder")
+            Label(String(localized: "移动"), systemImage: "folder")
         }
         
         Button {
             UIAlertController.showAlertWithTextBox(
-                title: .localized("Rename"),
-                message: .localized("Enter a new name"),
-                textFieldPlaceholder: .localized("File name"),
+                title: .localized("重命名"),
+                message: .localized("输入新的名称"),
+                textFieldPlaceholder: .localized("文件名"),
                 textFieldText: file.name,
-                submit: .localized("Rename"),
-                cancel: .localized("Cancel"),
+                submit: .localized("重命名"),
+                cancel: .localized("取消"),
                 onSubmit: { name in
                     viewModel.renameFile(newName: name, item: file)
                 }
             )
         } label: {
-            Label(String(localized: "Rename"), systemImage: "pencil")
+            Label(String(localized: "重命名"), systemImage: "pencil")
         }
         
         Button {
             shareItems = [file.url]
             UIActivityViewController.show(activityItems: shareItems)
         } label: {
-            Label(String(localized: "Share"), systemImage: "square.and.arrow.up")
+            Label(String(localized: "分享"), systemImage: "square.and.arrow.up")
         }
         
         Button(role: .destructive) {
             viewModel.deleteFile(file)
         } label: {
-            Label(String(localized: "Delete"), systemImage: "trash")
+            Label(String(localized: "删除"), systemImage: "trash")
         }
     }
 }

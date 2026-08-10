@@ -31,10 +31,10 @@ struct DownloaderView: View {
     }
 
     var body: some View {
-        NBNavigationView(.localized("Downloads")) {
+        NBNavigationView(.localized("下载")) {
             List {
                 if !libraryManager.downloads.isEmpty || !downloadManager.activeItems.isEmpty {
-                    NBSection(.localized("Downloading"), secondary: (libraryManager.downloads.count + downloadManager.activeItems.count).description) {
+                    NBSection(.localized("下载中"), secondary: (libraryManager.downloads.count + downloadManager.activeItems.count).description) {
                         ForEach(libraryManager.downloads) { download in
                             AppStoreDownloadItemRow(download: download)
                         }
@@ -50,7 +50,7 @@ struct DownloaderView: View {
                     }
                 }
                 
-                NBSection(.localized("Downloaded"), secondary: filteredDownloadItems.count.description) {
+                NBSection(.localized("已下载"), secondary: filteredDownloadItems.count.description) {
                     ForEach(filteredDownloadItems) { item in
                         DownloadItemRow(
                             item: item,
@@ -67,14 +67,14 @@ struct DownloaderView: View {
                 if downloadManager.finishedItems.isEmpty && downloadManager.activeItems.isEmpty && libraryManager.downloads.isEmpty {
                     if #available(iOS 17, *) {
                         ContentUnavailableView {
-                            Label(.localized("No downloaded IPAs"), systemImage: "square.and.arrow.down.fill")
+                            Label(.localized("暂无已下载的 IPA"), systemImage: "square.and.arrow.down.fill")
                         } description: {
-                            Text(.localized("Get started by downloading your first IPA file."))
+                            Text(.localized("先下载你的第一个 IPA 文件吧。"))
                         } actions: {
                             Button {
                                 _addDownload()
                             } label: {
-                                Text("Add Download").bg()
+                                Text("添加下载").bg()
                             }
                         }
                     }
@@ -113,23 +113,23 @@ private extension DownloaderView {
     @ViewBuilder
     var actionSheetContent: some View {
         if let selectedItem = selectedItem {
-            Button("Share") {
+            Button("分享") {
                 shareItem(selectedItem)
             }
             
-            Button("Import to Library") {
+            Button("导入到资源库") {
                 importIpaToLibrary(selectedItem)
             }
             
-            Button("Export to Files App") {
+            Button("导出到“文件”App") {
                 exportToFiles(selectedItem)
             }
             
-            Button("Delete", role: .destructive) {
+            Button("删除", role: .destructive) {
                 deleteItem(selectedItem)
             }
             
-            Button("Cancel", role: .cancel) {}
+            Button("取消", role: .cancel) {}
         }
     }
     
@@ -160,7 +160,7 @@ private extension DownloaderView {
 private extension DownloaderView {
     func _addDownload() {
         UIAlertController.showAlertWithTextBox(
-            title: .localized("Enter URL"),
+            title: .localized("输入链接"),
             message: .localized("""
 Enter the URL of the website containing the IPA file (Direct install/ITMS Services) or URL to the IPA file, supported: 
 - https://example.com
@@ -168,8 +168,8 @@ Enter the URL of the website containing the IPA file (Direct install/ITMS Servic
 - https://example.com/app.ipa
 """),
             textFieldPlaceholder: .localized("https://example.com"),
-            submit: .localized("OK"),
-            cancel: .localized("Cancel"),
+            submit: .localized("好的"),
+            cancel: .localized("取消"),
             onSubmit: { url in
                 handleURLInput(url: url)
             }
@@ -185,7 +185,7 @@ Enter the URL of the website containing the IPA file (Direct install/ITMS Servic
         }
         
         guard let validUrl = URL(string: finalUrl) else {
-            UIAlertController.showAlertWithOk(title: .localized("Error"), message: .localized("Invalid URL format"))
+            UIAlertController.showAlertWithOk(title: .localized("错误"), message: .localized("链接格式无效"))
             return
         }
         
@@ -195,9 +195,9 @@ Enter the URL of the website containing the IPA file (Direct install/ITMS Servic
             downloadManager.checkFileTypeAndDownload(url: validUrl) { result in
                 switch result {
                 case .success:
-                    UIAlertController.showAlertWithOk(title: .localized("Success"), message: .localized("The IPA file is being downloaded!\nYou can close this window or download more!"))
+                    UIAlertController.showAlertWithOk(title: .localized("成功"), message: .localized("IPA 文件正在下载！\n你可以关闭此窗口，或继续下载其他文件。"))
                 case .failure(let error):
-                    UIAlertController.showAlertWithOk(title: .localized("Error"), message: error.localizedDescription)
+                    UIAlertController.showAlertWithOk(title: .localized("错误"), message: error.localizedDescription)
                 }
             }
         } else {
@@ -218,8 +218,8 @@ Enter the URL of the website containing the IPA file (Direct install/ITMS Servic
             DispatchQueue.main.async {
                 if (err != nil) {
                     UIAlertController.showAlertWithOk(
-                        title: .localized("Error"),
-                        message: .localized("Whoops!, something went wrong when extracting the file. \nMaybe try switching the extraction library in the settings?"),
+                        title: .localized("错误"),
+                        message: .localized("哎呀，解压文件时出错了。\n试试在设置里切换一下解压库？"),
                     )
                 }
                 if let index = libraryManager.getDownloadIndex(by: download.id) {
@@ -249,7 +249,7 @@ Enter the URL of the website containing the IPA file (Direct install/ITMS Servic
                 }
             }
         } catch {
-            UIAlertController.showAlertWithOk(title: .localized("Error"), message: error.localizedDescription)
+            UIAlertController.showAlertWithOk(title: .localized("错误"), message: error.localizedDescription)
         }
     }
 } 

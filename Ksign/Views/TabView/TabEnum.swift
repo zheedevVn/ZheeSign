@@ -18,13 +18,13 @@ enum TabEnum: String, CaseIterable, Hashable {
     case downloader
 	var title: String {
 		switch self {
-        case .files:        return .localized("Files")
-		case .sources:     	return .localized("Sources")
-		case .library: 		return .localized("Library")
-		case .settings: 	return .localized("Settings")
-		case .certificates:	return .localized("Certificates")
-		case .appstore: 	return .localized("App Store")
-        case .downloader:   return .localized("Downloads")
+        case .files:        return .localized("文件")
+		case .sources:     	return .localized("源")
+		case .library: 		return .localized("资源库")
+		case .settings: 	return .localized("设置")
+		case .certificates:	return .localized("证书")
+		case .appstore: 	return .localized("应用商店")
+        case .downloader:   return .localized("下载")
 		}
 	}
 	
@@ -47,7 +47,7 @@ enum TabEnum: String, CaseIterable, Hashable {
 		case .sources: SourcesView()
 		case .library: LibraryView()
 		case .settings: SettingsView()
-		case .certificates: NBNavigationView(.localized("Certificates")) { CertificatesView() }
+		case .certificates: NBNavigationView(.localized("证书")) { CertificatesView() }
 		case .appstore: AppstoreView()
         case .downloader: DownloaderView()
 		}

@@ -12,7 +12,7 @@ struct TunnelHeaderView: View {
 	
 	var body: some View {
 		HStack {
-			Text(.localized("Status"))
+			Text(.localized("状态"))
 			Spacer()
 			TunnelPulseRing(lastHeartbeat: $lastHeartbeatTime)
 		}

@@ -51,7 +51,7 @@ struct SourceAppsDetailView: View {
 							.font(.title2)
 							.fontWeight(.semibold)
 							.foregroundColor(.primary)
-						Text(app.currentDescription ?? .localized("An awesome application"))
+						Text(app.currentDescription ?? .localized("一个超棒的应用"))
 							.font(.subheadline)
 							.foregroundColor(.secondary)
 						
@@ -68,7 +68,7 @@ struct SourceAppsDetailView: View {
 				Divider()
                 
                 if let screenshotURLs = app.screenshotURLs {
-                    NBSection(.localized("Screenshots")) {
+                    NBSection(.localized("截图")) {
                         _screenshots(screenshotURLs: screenshotURLs)
                     }
                     
@@ -79,7 +79,7 @@ struct SourceAppsDetailView: View {
 					let currentVer = app.currentVersion,
 					let whatsNewDesc = app.currentAppVersion?.localizedDescription
 				{
-					NBSection(.localized("What's New")) {
+					NBSection(.localized("更新内容")) {
 						AppVersionInfo(
 							version: currentVer,
 							date: app.currentDate?.date,
@@ -88,10 +88,10 @@ struct SourceAppsDetailView: View {
                         if let versions = app.versions {
                             NavigationLink(
                                 destination: VersionHistoryView(app: app, versions: versions)
-                                    .navigationTitle(.localized("Version History"))
+                                    .navigationTitle(.localized("版本历史"))
                                     .navigationBarTitleDisplayMode(.large)
                             ) {
-                                Text(.localized("Version History"))
+                                Text(.localized("版本历史"))
                             }
                         }
 					}
@@ -100,7 +100,7 @@ struct SourceAppsDetailView: View {
 				}
 				
 				if let appDesc = app.localizedDescription {
-					NBSection(.localized("Description")) {
+					NBSection(.localized("描述")) {
 						VStack(alignment: .leading, spacing: 2) {
 							ExpandableText(text: appDesc, lineLimit: 3)
 						}
@@ -110,48 +110,48 @@ struct SourceAppsDetailView: View {
 					Divider()
 				}
                 
-                NBSection(.localized("Information")) {
+                NBSection(.localized("信息")) {
                     VStack(spacing: 12) {
                         if let sourceName = source.name {
-                            _infoRow(title: .localized("Source"), value: sourceName)
+                            _infoRow(title: .localized("源"), value: sourceName)
                         }
                         
                         if let developer = app.developer, !developer.isEmpty {
-							_infoRow(title: .localized("Developer"), value: developer)
+							_infoRow(title: .localized("开发者"), value: developer)
 						}
 						
 						if let size = app.size {
-							_infoRow(title: .localized("Size"), value: size.formattedByteCount)
+							_infoRow(title: .localized("大小"), value: size.formattedByteCount)
 						}
 						
                         if let category = app.category, !category.isEmpty {
-                            _infoRow(title: .localized("Category"), value: category.capitalized)
+                            _infoRow(title: .localized("分类"), value: category.capitalized)
 						}
 						
                         if let version = app.currentVersion, !version.isEmpty {
-							_infoRow(title: .localized("Version"), value: version)
+							_infoRow(title: .localized("版本"), value: version)
 						}
 						
                         if let date = app.currentDate?.date {
-							_infoRow(title: .localized("Updated"), value: DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .none))
+							_infoRow(title: .localized("已更新"), value: DateFormatter.localizedString(from: date, dateStyle: .medium, timeStyle: .none))
 						}
 						
 						if let bundleId = app.id {
-							_infoRow(title: .localized("Identifier"), value: bundleId)
+							_infoRow(title: .localized("标识符"), value: bundleId)
 						}
 					}
                 }
 				
 				if let appPermissions = app.appPermissions {
-					NBSection(.localized("Permissions")) {
+					NBSection(.localized("权限")) {
 						Group {
 							if let entitlements = appPermissions.entitlements {
 								NBTitleWithSubtitleView(
-									title: .localized("Entitlements"),
+									title: .localized("权限"),
 									subtitle: entitlements.map(\.name).joined(separator: "\n")
 								)
 							} else {
-								Text(.localized("No Entitlements listed."))
+								Text(.localized("未列出权限。"))
 									.font(.subheadline)
 									.foregroundStyle(.secondary)
 							}
@@ -163,7 +163,7 @@ struct SourceAppsDetailView: View {
 									)
 								}
 							} else {
-								Text(.localized("No Privacy Permissions listed."))
+								Text(.localized("未列出隐私权限。"))
 									.font(.subheadline)
 									.foregroundStyle(.secondary)
 							}
@@ -194,7 +194,7 @@ struct SourceAppsDetailView: View {
 			) {
 				let sharedString = """
 				\(app.currentName) - \(app.currentVersion ?? "0")
-				\(app.currentDescription ?? .localized("An awesome application"))
+				\(app.currentDescription ?? .localized("一个超棒的应用"))
 				---
 				\(source.website?.absoluteString ?? source.name ?? "")
 				"""

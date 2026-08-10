@@ -126,14 +126,14 @@ class IPADownloadManager: NSObject, ObservableObject {
               let queryItems = components.queryItems,
               let manifestURLString = queryItems.first(where: { $0.name == "url" })?.value,
               let manifestURL = URL(string: manifestURLString) else {
-            completion(.failure(NSError(domain: "ITMSError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid manifest URL"])))
+            completion(.failure(NSError(domain: "ITMSError", code: 1, userInfo: [NSLocalizedDescriptionKey: "无效的 manifest 链接"])))
             return
         }
         
         urlSession.dataTask(with: manifestURL) { [weak self] data, _, error in
             guard let self = self else { return }
             if let error = error { completion(.failure(error)); return }
-            guard let data = data else { completion(.failure(NSError(domain: "ITMSError", code: 2, userInfo: [NSLocalizedDescriptionKey: "No data"]))); return }
+            guard let data = data else { completion(.failure(NSError(domain: "ITMSError", code: 2, userInfo: [NSLocalizedDescriptionKey: "暂无数据"]))); return }
             
             self.parseManifestPlist(data) { result in
                 switch result {
@@ -153,7 +153,7 @@ class IPADownloadManager: NSObject, ObservableObject {
             startDownload(url: url, filename: url.lastPathComponent)
             completion(.success(url.lastPathComponent))
         } else {
-            completion(.failure(NSError(domain: "FileTypeError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Invalid file type"])))
+            completion(.failure(NSError(domain: "FileTypeError", code: 1, userInfo: [NSLocalizedDescriptionKey: "无效的文件类型"])))
         }
     }
     
@@ -173,7 +173,7 @@ class IPADownloadManager: NSObject, ObservableObject {
                     }
                 }
             }
-            completion(.failure(NSError(domain: "ManifestParseError", code: 2, userInfo: [NSLocalizedDescriptionKey: "No IPA URL found"])))
+            completion(.failure(NSError(domain: "ManifestParseError", code: 2, userInfo: [NSLocalizedDescriptionKey: "未找到 IPA 链接"])))
         } catch {
             completion(.failure(error))
         }

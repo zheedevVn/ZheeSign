@@ -18,23 +18,23 @@ struct FileUIHelpers {
                 viewModel.deleteFile(file)
             }
         } label: {
-            Label(String(localized: "Delete"), systemImage: "trash")
+            Label(String(localized: "删除"), systemImage: "trash")
         }
         
         Button {
             UIAlertController.showAlertWithTextBox(
-                title: .localized("Rename"),
-                message: .localized("Enter a new name"),
-                textFieldPlaceholder: .localized("File name"),
+                title: .localized("重命名"),
+                message: .localized("输入新的名称"),
+                textFieldPlaceholder: .localized("文件名"),
                 textFieldText: file.name,
-                submit: .localized("Rename"),
-                cancel: .localized("Cancel"),
+                submit: .localized("重命名"),
+                cancel: .localized("取消"),
                 onSubmit: { name in
                     viewModel.renameFile(newName: name, item: file)
                 }
             )
         } label: {
-            Label(String(localized: "Rename"), systemImage: "pencil")
+            Label(String(localized: "重命名"), systemImage: "pencil")
         }
         .tint(.blue)
     }

@@ -18,7 +18,7 @@ struct SigningDylibView: View {
 	@Binding var options: Options?
 	
 	var body: some View {
-		NBList(.localized("Dylibs"), type: .list) {
+		NBList(.localized("动态库"), type: .list) {
 			Section {
 				ForEach(_dylibs, id: \.self) { dylib in
 					SigningToggleCellView(
@@ -30,8 +30,8 @@ struct SigningDylibView: View {
 			}
 			.disabled(options == nil)
 			
-			NBSection(.localized("Hidden")) {
-				Text(verbatim: .localized("%lld required system dylibs not shown", arguments: _hiddenDylibCount))
+			NBSection(.localized("隐藏")) {
+				Text(verbatim: .localized("另有 %lld 个系统必需的动态库未显示", arguments: _hiddenDylibCount))
 					.font(.footnote)
 					.foregroundColor(.disabled())
 			}

@@ -24,21 +24,21 @@ struct AppIconView: View {
     private let appIcons: [AppIconOption] = [
         AppIconOption(
             id: "primary",
-            title: "Default",
+            title: "默认",
             subtitle: "Ksign",
             iconName: "AppIcon",
             alternateIconName: nil
         ),
         
-        AppIconOption(id: "kana_peek", title: "Peek", subtitle: "Kana", iconName: "kana_peek", alternateIconName: "kana_peek"),
-        AppIconOption(id: "kana_love", title: "Love", subtitle: "Kana", iconName: "kana_love", alternateIconName: "kana_love"),
-        AppIconOption(id: "kana_ded", title: "Skull", subtitle: "Kana", iconName: "kana_ded", alternateIconName: "kana_ded"),
+        AppIconOption(id: "kana_peek", title: "偷看", subtitle: "Kana", iconName: "kana_peek", alternateIconName: "kana_peek"),
+        AppIconOption(id: "kana_love", title: "爱心", subtitle: "Kana", iconName: "kana_love", alternateIconName: "kana_love"),
+        AppIconOption(id: "kana_ded", title: "骷髅", subtitle: "Kana", iconName: "kana_ded", alternateIconName: "kana_ded"),
     ]
     
     // MARK: Body
     var body: some View {
-        NBList(.localized("App Icon")) {
-            NBSection(.localized("Available Icons")) {
+        NBList(.localized("应用图标")) {
+            NBSection(.localized("可用图标")) {
                 ForEach(appIcons, id: \.id) { iconOption in
                     _iconCell(for: iconOption)
                 }

@@ -24,7 +24,7 @@ extension UIAlertController {
     ) {
         var actions = actions
         actions.append(
-            UIAlertAction(title: .localized("Cancel"), style: .cancel, handler: nil)
+            UIAlertAction(title: .localized("取消"), style: .cancel, handler: nil)
         )
         
         showAlert(
@@ -57,7 +57,7 @@ extension UIAlertController {
 		var actions: [UIAlertAction] = []
 		
 		let alertAction = UIAlertAction(
-            title: thankYou ? "Thank You!" : "OK",
+            title: thankYou ? "谢谢！" : "好的",
 			style: isCancel ? .cancel : .default,
 			handler: { _ in
 				if !isCancel {
@@ -91,12 +91,12 @@ extension UIAlertController {
 	) {
 		var actions: [UIAlertAction] = []
 		actions.append(
-			UIAlertAction(title: "Suspend", style: .default) { _ in
+			UIAlertAction(title: "挂起", style: .default) { _ in
 				UIApplication.shared.suspend()
 			}
 		)
 		actions.append(
-			UIAlertAction(title: "Later", style: .cancel, handler: nil)
+			UIAlertAction(title: "稍后", style: .cancel, handler: nil)
 		)
 		
 		showAlert(

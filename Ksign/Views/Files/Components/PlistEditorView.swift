@@ -29,16 +29,16 @@ struct PlistEditorView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color(.systemBackground))
-        .alert("Edit Value", isPresented: $_showingEditAlert, presenting: _editingItem) { item in
-            TextField("Value", text: $_editValue)
-            Button("Cancel", role: .cancel) {
+        .alert("编辑值", isPresented: $_showingEditAlert, presenting: _editingItem) { item in
+            TextField("值", text: $_editValue)
+            Button("取消", role: .cancel) {
                 _resetEditState()
             }
-            Button("Done") {
+            Button("完成") {
                 _saveEditedValue()
             }
         } message: { item in
-            Text("Edit value for key: \(item.key)")
+            Text("编辑该键对应的值：\(item.key)")
         }
     }
     
@@ -47,7 +47,7 @@ struct PlistEditorView: View {
             Button {
                 dismiss()
             } label: {
-                Text("Close")
+                Text("关闭")
             }
             
             Spacer()
@@ -79,11 +79,11 @@ struct PlistEditorView: View {
                         .font(.system(size: 48))
                         .foregroundColor(.secondary)
                     
-                    Text("Empty Property List")
+                    Text("空的属性列表")
                         .font(.title3)
                         .fontWeight(.semibold)
                     
-                    Text("This property list contains no items")
+                    Text("此属性列表不包含任何条目")
                         .font(.body)
                         .foregroundColor(.secondary)
                 }
@@ -98,7 +98,7 @@ struct PlistEditorView: View {
         VStack(spacing: 0) {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Root Dictionary")
+                    Text("根字典")
                         .font(.headline)
                         .fontWeight(.semibold)
                     

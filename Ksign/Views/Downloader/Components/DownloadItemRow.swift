@@ -119,25 +119,25 @@ struct DownloadItemRow: View {
             shareItems = [item.localPath]
             UIActivityViewController.show(activityItems: shareItems)
         } label: {
-            Label(.localized("Share"), systemImage: "square.and.arrow.up")
+            Label(.localized("分享"), systemImage: "square.and.arrow.up")
         }
         
         Button {
             importIpaToLibrary(item)
         } label: {
-            Label(.localized("Import to Library"), systemImage: "square.grid.2x2.fill")
+            Label(.localized("导入到资源库"), systemImage: "square.grid.2x2.fill")
         }
         
         Button {
             exportToFiles(item)
         } label: {
-            Label(.localized("Export to Files App"), systemImage: "square.and.arrow.up.fill")
+            Label(.localized("导出到“文件”App"), systemImage: "square.and.arrow.up.fill")
         }
         
         Button(role: .destructive) {
             deleteItem(item)
         } label: {
-            Label(.localized("Delete"), systemImage: "trash")
+            Label(.localized("删除"), systemImage: "trash")
         }
     }
 
@@ -148,13 +148,13 @@ struct DownloadItemRow: View {
                 deleteItem(item)
             }
         } label: {
-            Label(.localized("Delete"), systemImage: "trash")
+            Label(.localized("删除"), systemImage: "trash")
         }
 
         Button(role: .cancel) {
             importIpaToLibrary(item)
         } label: {
-            Label(.localized("Import"), systemImage: "square.grid.2x2.fill")
+            Label(.localized("导入"), systemImage: "square.grid.2x2.fill")
         }
     }
 }

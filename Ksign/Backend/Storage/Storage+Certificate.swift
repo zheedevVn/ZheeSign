@@ -36,7 +36,7 @@ extension Storage {
     
     func revokagedCertificate(for cert: CertificatePair) {
         guard !cert.revoked else { return }
-		print("Checking revokage for \(cert.nickname ?? "Unknown")")
+		print("Checking revokage for \(cert.nickname ?? "未知")")
         Zsign.checkRevokage(
             provisionPath: Storage.shared.getFile(.provision, from: cert)?.path ?? "",
             p12Path: Storage.shared.getFile(.certificate, from: cert)?.path ?? "",
