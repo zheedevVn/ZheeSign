@@ -58,7 +58,7 @@ jobs:
           
           REPO="${{ github.repository }}"
           TAG="beta"
-          FILENAME="Ksign.ipa"
+          FILENAME="ZheeSign.ipa"
           
           DOWNLOAD_URL="https://github.com/$REPO/releases/download/$TAG/$FILENAME"
           RELEASE_URL="https://github.com/$REPO/releases/tag/$TAG"
