@@ -44,7 +44,7 @@ jobs:
 
           gh release delete beta --cleanup-tag -y || true
           
-          gh release create beta "packages/Ksign.ipa" \
+          gh release create beta "packages/ZheeSign.ipa" \
             --title "Latest Beta Build" \
             --notes "$(cat release_notes.md)" \
             --prerelease \

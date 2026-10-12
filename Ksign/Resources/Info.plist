@@ -19,7 +19,7 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>nya.asami.ipa</string>
+				<string>vn.zheedev.zheesign.ipa</string>
 			</array>
 		</dict>
 		<dict>
@@ -33,7 +33,7 @@
 			<string>Alternate</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>nya.asami.tipa</string>
+				<string>vn.zheedev.zheesign.tipa</string>
 			</array>
 		</dict>
 		<dict>
@@ -47,7 +47,7 @@
 			<string>Owner</string>
 			<key>LSItemContentTypes</key>
 			<array>
-				<string>nya.asami.ksign.cert</string>
+				<string>vn.zheedev.zheesign.ksign.cert</string>
 			</array>
 		</dict>
 	</array>
@@ -114,7 +114,7 @@
 			<key>CFBundleURLIconFile</key>
 			<string>ksign_extension</string>
 			<key>CFBundleURLName</key>
-			<string>nya.asami.ksign</string>
+			<string>vn.zheedev.zheesign.ksign</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>ksign</string>
@@ -148,7 +148,7 @@
 				<string>IPA</string>
 			</dict>
 			<key>UTTypeIdentifier</key>
-			<string>nya.asami.ipa</string>
+			<string>vn.zheedev.zheesign.ipa</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
@@ -180,7 +180,7 @@
 				<string>TIPA</string>
 			</dict>
 			<key>UTTypeIdentifier</key>
-			<string>nya.asami.tipa</string>
+			<string>vn.zheedev.zheesign.tipa</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>
@@ -209,7 +209,7 @@
 				<string>KSIGN</string>
 			</dict>
 			<key>UTTypeIdentifier</key>
-			<string>nya.asami.ksign.cert</string>
+			<string>vn.zheedev.zheesign.ksign.cert</string>
 			<key>UTTypeTagSpecification</key>
 			<dict>
 				<key>public.filename-extension</key>

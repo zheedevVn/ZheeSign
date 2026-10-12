@@ -1,4 +1,4 @@
-NAME := Ksign
+NAME := ZheeSign
 PLATFORM := iphoneos
 SCHEMES := Ksign
 TMP := $(TMPDIR)/$(NAME)
