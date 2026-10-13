@@ -109,6 +109,8 @@ struct ZheeProfileView: View {
 		}
 		.sheet(isPresented: $showDetail) {
 			ZheeProfileDetailView()
+				.presentationDetents([.medium, .large])
+				.presentationDragIndicator(.visible)
 		}
 		.onAppear {
 			withAnimation(.spring(response: 0.6, dampingFraction: 0.65)) {

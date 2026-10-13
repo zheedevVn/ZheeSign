@@ -28,8 +28,9 @@ struct ZheeLoginView: View {
 	@State private var titleGradientShift = false
 	
 	var body: some View {
-		ZStack {
-			// Nền gradient sâu
+		ScrollView {
+			ZStack {
+				// Nền gradient sâu
 			LinearGradient(
 				colors: [
 					Color(red: 0.06, green: 0.06, blue: 0.18),
@@ -162,6 +163,8 @@ struct ZheeLoginView: View {
 				Spacer()
 					.frame(height: 44)
 			}
+			}
+			.scrollIndicators(.hidden)
 		}
 		.onAppear { startAnimations() }
 	}
