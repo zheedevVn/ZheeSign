@@ -121,11 +121,6 @@ extension SettingsView {
 			NavigationLink(destination: ZheePythonView()) {
 				Label("Python", systemImage: "chevron.left.forwardslash.chevron.right")
 			}
-			Button(role: .destructive) {
-				ZheeAuthManager.shared.logout()
-			} label: {
-				Label("Đăng xuất", systemImage: "rectangle.portrait.and.arrow.right")
-			}
 		}
 	}
 	
