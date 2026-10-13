@@ -51,12 +51,18 @@ struct ZheePythonView: View {
 						.padding(.bottom, 8)
 						
 						// Output (AttributedString co mau rieng cho lenh/ket qua/loi)
-						Text(runner.output.isEmpty ? AttributedString("Gõ 'help' để xem lệnh.\n") : runner.output)
-							.font(.system(size: fontSize, design: .monospaced))
-							.foregroundColor(.green)
-							.textSelection(.enabled)
-							.frame(maxWidth: .infinity, alignment: .leading)
-							.id("bottom")
+						Group {
+							if runner.output.isEmpty {
+								Text("Gõ 'help' để xem lệnh.\n")
+							} else {
+								Text(runner.output)
+							}
+						}
+						.font(.system(size: fontSize, design: .monospaced))
+						.foregroundColor(.green)
+						.textSelection(.enabled)
+						.frame(maxWidth: .infinity, alignment: .leading)
+						.id("bottom")
 					}
 					.padding(10)
 				}
