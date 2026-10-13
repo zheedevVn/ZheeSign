@@ -12,10 +12,14 @@ struct ZheeProfileView: View {
 	@ObservedObject var auth = ZheeAuthManager.shared
 	@State private var appear = false
 	@State private var glowShift = false
+	@State private var showDetail = false
 	
 	var body: some View {
 		Section {
-			ZStack {
+			Button {
+				showDetail = true
+			} label: {
+				ZStack {
 				// Nền gradient card
 				RoundedRectangle(cornerRadius: 20, style: .continuous)
 					.fill(
@@ -97,9 +101,14 @@ struct ZheeProfileView: View {
 				}
 				.padding(16)
 			}
-			.listRowInsets(EdgeInsets())
-			.listRowBackground(Color.clear)
-			.padding(.vertical, 4)
+				.listRowInsets(EdgeInsets())
+				.listRowBackground(Color.clear)
+				.padding(.vertical, 4)
+			}
+			.buttonStyle(.plain)
+		}
+		.sheet(isPresented: $showDetail) {
+			ZheeProfileDetailView()
 		}
 		.onAppear {
 			withAnimation(.spring(response: 0.6, dampingFraction: 0.65)) {
@@ -109,5 +118,116 @@ struct ZheeProfileView: View {
 				glowShift = true
 			}
 		}
+	}
+}
+
+struct ZheeProfileDetailView: View {
+	@ObservedObject var auth = ZheeAuthManager.shared
+	@Environment(\.dismiss) var dismiss
+	@State private var appear = false
+	
+	var body: some View {
+		NavigationView {
+			ScrollView {
+				VStack(spacing: 24) {
+					// Avatar lon
+					ZStack {
+						Circle()
+							.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+							.frame(width: 110, height: 110)
+							.shadow(color: .purple.opacity(0.4), radius: 20)
+						
+						if let avatarURL = auth.avatarURL {
+							AsyncImage(url: avatarURL) { image in
+								image.resizable()
+							} placeholder: {
+								ProgressView().tint(.white)
+							}
+							.frame(width: 100, height: 100)
+							.clipShape(Circle())
+						} else {
+							Text(String(auth.displayName.prefix(1)).uppercased())
+								.font(.system(size: 44, weight: .bold))
+								.foregroundColor(.white)
+						}
+					}
+					.scaleEffect(appear ? 1 : 0.5)
+					.opacity(appear ? 1 : 0)
+					
+					// Ten
+					VStack(spacing: 6) {
+						Text(auth.displayName)
+							.font(.title2.bold())
+						HStack(spacing: 5) {
+							Image(systemName: "checkmark.seal.fill")
+								.foregroundStyle(LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom))
+							Text("Tài khoản Zhee đã xác thực")
+								.font(.subheadline)
+								.foregroundStyle(.secondary)
+						}
+					}
+					
+					// Thong tin chi tiet
+					VStack(spacing: 0) {
+						if let email = auth.userInfo?["email"] as? String {
+							detailRow(icon: "envelope.fill", title: "Email", value: email)
+						}
+						if let sub = auth.userInfo?["sub"] as? String {
+							detailRow(icon: "person.fill", title: "ID người dùng", value: String(sub.prefix(20)) + "...")
+						}
+						detailRow(icon: "calendar", title: "Phiên đăng nhập", value: "30 ngày")
+						detailRow(icon: "shield.fill", title: "Bảo mật", value: "OAuth 2.0")
+					}
+					.background(Color(.secondarySystemBackground))
+					.clipShape(RoundedRectangle(cornerRadius: 16))
+					.padding(.horizontal)
+					
+					// Nut dang xuat
+					Button(role: .destructive) {
+						auth.logout()
+						dismiss()
+					} label: {
+						HStack {
+							Image(systemName: "rectangle.portrait.and.arrow.right")
+							Text("Đăng xuất")
+						}
+						.frame(maxWidth: .infinity)
+						.padding()
+						.background(Color.red.opacity(0.1))
+						.clipShape(RoundedRectangle(cornerRadius: 14))
+					}
+					.padding(.horizontal)
+				}
+				.padding(.vertical, 24)
+			}
+			.navigationTitle("Hồ sơ")
+			.navigationBarTitleDisplayMode(.inline)
+			.toolbar {
+				ToolbarItem(placement: .navigationBarTrailing) {
+					Button("Xong") { dismiss() }
+				}
+			}
+		}
+		.onAppear {
+			withAnimation(.spring(response: 0.6, dampingFraction: 0.65)) {
+				appear = true
+			}
+		}
+	}
+	
+	private func detailRow(icon: String, title: String, value: String) -> some View {
+		HStack {
+			Image(systemName: icon)
+				.foregroundStyle(.blue)
+				.frame(width: 28)
+			Text(title)
+				.foregroundStyle(.secondary)
+			Spacer()
+			Text(value)
+				.font(.subheadline)
+				.lineLimit(1)
+		}
+		.padding(.horizontal, 16)
+		.padding(.vertical, 12)
 	}
 }

@@ -26,6 +26,10 @@ struct FeatherApp: App {
 			Group {
 				if !auth.isLoggedIn {
 					ZheeLoginView()
+						.transition(.asymmetric(
+							insertion: .opacity,
+							removal: .scale(scale: 1.1).combined(with: .opacity)
+						))
 				} else {
 					VStack {
 						ExtractHeaderView(extractManager: extractManager)
@@ -40,7 +44,12 @@ struct FeatherApp: App {
 					.animation(.smooth, value: downloadManager.manualDownloads.description)
 					.animation(.smooth, value: extractManager.extractItems.description)
 				}
+				.transition(.asymmetric(
+					insertion: .scale(scale: 0.9).combined(with: .opacity),
+					removal: .opacity
+				))
 			}
+			.animation(.spring(response: 0.6, dampingFraction: 0.75), value: auth.isLoggedIn)
 			.onReceive(accentColorManager.objectWillChange) { _ in
 				accentColorManager.updateGlobalTintColor()
 			}

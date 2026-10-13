@@ -18,7 +18,6 @@ class ZheeUpdateManager: ObservableObject {
 	@Published var isChecking = false
 	@Published var releaseNotes: String?
 	
-	private let repoAPI = "https://api.github.com/repos/zheedevVn/ZheeSign/releases/tags/beta"
 	private let manifestURL = "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist"
 	
 	var currentVersion: String {
@@ -29,7 +28,7 @@ class ZheeUpdateManager: ObservableObject {
 		guard !isChecking else { return }
 		isChecking = true
 		
-		guard let url = URL(string: repoAPI) else {
+		guard let url = URL(string: manifestURL) else {
 			isChecking = false
 			return
 		}
@@ -38,43 +37,52 @@ class ZheeUpdateManager: ObservableObject {
 			DispatchQueue.main.async {
 				self?.isChecking = false
 				guard let data = data,
-				      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-				      let body = json["body"] as? String else { return }
+				      let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
+				      let items = plist["items"] as? [[String: Any]],
+				      let first = items.first,
+				      let metadata = first["metadata"] as? [String: Any],
+				      let remoteVersion = metadata["bundle-version"] as? String else {
+					return
+				}
 				
-				// Parse version từ release notes hoặc tag
-				self?.parseReleaseInfo(body: body)
+				self?.compareVersions(remote: remoteVersion)
 			}
 		}.resume()
 	}
 	
-	private func parseReleaseInfo(body: String) {
-		// Tìm version trong body (format: ## Commit: ... hoặc version trong notes)
-		// Đơn giản: luôn coi như có update nếu body khác rỗng và khác lần check trước
-		let lastSeen = UserDefaults.standard.string(forKey: "zhee_last_seen_update")
-		if body != lastSeen {
-			// Lấy version từ manifest hoặc hiển thị "Bản mới"
-			self.latestVersion = "Bản mới"
-			self.releaseNotes = body
+	private func compareVersions(remote: String) {
+		let current = currentVersion
+		
+		// So sánh version: chỉ hiện update khi remote mới hơn
+		if isNewer(remote: remote, than: current) {
+			self.latestVersion = remote
 			self.updateAvailable = true
+		} else {
+			self.latestVersion = nil
+			self.updateAvailable = false
 		}
 	}
 	
-	func installUpdate() {
-		// Đánh dấu đã thấy
-		if let notes = releaseNotes {
-			UserDefaults.standard.set(notes, forKey: "zhee_last_seen_update")
+	private func isNewer(remote: String, than current: String) -> Bool {
+		let r = remote.split(separator: ".").compactMap { Int($0) }
+		let c = current.split(separator: ".").compactMap { Int($0) }
+		let maxLen = max(r.count, c.count)
+		for i in 0..<maxLen {
+			let rv = i < r.count ? r[i] : 0
+			let cv = i < c.count ? c[i] : 0
+			if rv > cv { return true }
+			if rv < cv { return false }
 		}
-		
-		// Mở itms-services để cài đặt OTA (ghi đè app cũ, không cần xóa)
+		return false
+	}
+	
+	func installUpdate() {
 		if let url = URL(string: "itms-services://?action=download-manifest&url=\(manifestURL)") {
 			UIApplication.shared.open(url)
 		}
 	}
 	
 	func dismissUpdate() {
-		if let notes = releaseNotes {
-			UserDefaults.standard.set(notes, forKey: "zhee_last_seen_update")
-		}
 		updateAvailable = false
 	}
 }
