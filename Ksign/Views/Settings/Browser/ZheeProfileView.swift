@@ -42,17 +42,13 @@ struct ZheeProfileView: View {
 					)
 				
 				HStack(spacing: 16) {
-					// Avatar với viền gradient
+					// Avatar (không viền)
 					ZStack {
-						Circle()
-							.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
-							.frame(width: 64, height: 64)
-						
 						if let customAvatar = customAvatar {
 							Image(uiImage: customAvatar)
 								.resizable()
 								.scaledToFill()
-								.frame(width: 58, height: 58)
+								.frame(width: 64, height: 64)
 								.clipShape(Circle())
 						} else if let avatarURL = auth.avatarURL {
 							AsyncImage(url: avatarURL) { image in
@@ -60,12 +56,17 @@ struct ZheeProfileView: View {
 							} placeholder: {
 								ProgressView().tint(.white)
 							}
-							.frame(width: 58, height: 58)
+							.frame(width: 64, height: 64)
 							.clipShape(Circle())
 						} else {
-							Text(String(auth.displayName.prefix(1)).uppercased())
-								.font(.system(size: 26, weight: .bold))
-								.foregroundColor(.white)
+							Circle()
+								.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+								.frame(width: 64, height: 64)
+								.overlay(
+									Text(String(auth.displayName.prefix(1)).uppercased())
+										.font(.system(size: 26, weight: .bold))
+										.foregroundColor(.white)
+								)
 						}
 					}
 					.scaleEffect(appear ? 1 : 0.4)
@@ -120,17 +121,28 @@ struct ZheeProfileView: View {
 				.presentationDetents([.medium, .large])
 				.presentationDragIndicator(.visible)
 		}
+		.onReceive(NotificationCenter.default.publisher(for: Notification.Name("zhee.avatarChanged"))) { _ in
+			loadAvatar()
+		}
 		.onAppear {
-			if let data = UserDefaults.standard.data(forKey: "zhee.customAvatar"),
-			   let image = UIImage(data: data) {
-				customAvatar = image
-			}
+			loadAvatar()
 			withAnimation(.spring(response: 0.6, dampingFraction: 0.65)) {
 				appear = true
 			}
 			withAnimation(.linear(duration: 3).repeatForever(autoreverses: true)) {
 				glowShift = true
 			}
+		}
+	}
+}
+
+extension ZheeProfileView {
+	private func loadAvatar() {
+		if let data = UserDefaults.standard.data(forKey: "zhee.customAvatar"),
+		   let image = UIImage(data: data) {
+			customAvatar = image
+		} else {
+			customAvatar = nil
 		}
 	}
 }
@@ -152,29 +164,32 @@ struct ZheeProfileDetailView: View {
 						showPhotoPicker = true
 					} label: {
 						ZStack {
-							Circle()
-								.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
-								.frame(width: 110, height: 110)
-								.shadow(color: .purple.opacity(0.4), radius: 20)
-							
 							if let customAvatar = customAvatar {
 								Image(uiImage: customAvatar)
 									.resizable()
 									.scaledToFill()
-									.frame(width: 100, height: 100)
+									.frame(width: 110, height: 110)
 									.clipShape(Circle())
+									.shadow(color: .purple.opacity(0.4), radius: 20)
 							} else if let avatarURL = auth.avatarURL {
 								AsyncImage(url: avatarURL) { image in
 									image.resizable()
 								} placeholder: {
 									ProgressView().tint(.white)
 								}
-								.frame(width: 100, height: 100)
+								.frame(width: 110, height: 110)
 								.clipShape(Circle())
+								.shadow(color: .purple.opacity(0.4), radius: 20)
 							} else {
-								Text(String(auth.displayName.prefix(1)).uppercased())
-									.font(.system(size: 44, weight: .bold))
-									.foregroundColor(.white)
+								Circle()
+									.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+									.frame(width: 110, height: 110)
+									.shadow(color: .purple.opacity(0.4), radius: 20)
+									.overlay(
+										Text(String(auth.displayName.prefix(1)).uppercased())
+											.font(.system(size: 44, weight: .bold))
+											.foregroundColor(.white)
+									)
 							}
 							
 							// Icon camera
@@ -202,6 +217,8 @@ struct ZheeProfileDetailView: View {
 								if let jpegData = image.jpegData(compressionQuality: 0.8) {
 									UserDefaults.standard.set(jpegData, forKey: "zhee.customAvatar")
 								}
+								// Bao cho card ngoai cap nhat ngay, khong can mo lai app
+								NotificationCenter.default.post(name: Notification.Name("zhee.avatarChanged"), object: nil)
 							}
 						}
 					}

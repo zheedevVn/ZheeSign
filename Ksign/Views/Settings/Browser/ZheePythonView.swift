@@ -68,20 +68,34 @@ struct ZheePythonView: View {
 				}
 			}
 			
-			// Ô nhập lệnh
-			HStack(spacing: 8) {
+			// Ô nhập lệnh nhiều dòng (Enter = xuống dòng, nút gửi để chạy)
+			HStack(alignment: .bottom, spacing: 8) {
 				Text("❯")
 					.font(.system(size: 14, weight: .bold, design: .monospaced))
 					.foregroundColor(.green)
-				TextField("Nhập lệnh hoặc code Python...", text: $inputText)
+					.padding(.bottom, 10)
+				TextEditor(text: $inputText)
 					.font(.system(size: 14, design: .monospaced))
-					.textFieldStyle(.roundedBorder)
+					.frame(minHeight: 38, maxHeight: 110)
+					.padding(6)
+					.background(Color(.secondarySystemBackground))
+					.cornerRadius(10)
 					.focused($inputFocused)
 					.autocapitalization(.none)
 					.autocorrectionDisabled()
-					.onSubmit {
-						executeInput()
-					}
+					.overlay(
+						Group {
+							if inputText.isEmpty {
+								Text("Nhập lệnh / code Python... (Enter xuống dòng)")
+									.font(.system(size: 13, design: .monospaced))
+									.foregroundColor(.gray)
+									.padding(.leading, 12)
+									.padding(.top, 14)
+									.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+									.allowsHitTesting(false)
+							}
+						}
+					)
 				Button {
 					executeInput()
 				} label: {
@@ -89,7 +103,8 @@ struct ZheePythonView: View {
 						.font(.title2)
 						.foregroundColor(.green)
 				}
-				.disabled(inputText.isEmpty || runner.isRunning)
+				.disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || runner.isRunning)
+				.padding(.bottom, 6)
 			}
 			.padding(.horizontal, 10)
 			.padding(.vertical, 8)

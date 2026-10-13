@@ -1,7 +1,7 @@
 {
-  "version": "1.7.5",
-  "build": "1.7.5",
-  "notes": "Remove quick buttons, terminal-only commands",
+  "version": "1.7.6",
+  "build": "1.7.6",
+  "notes": "Terminal nhap nhieu dong, bo vien avatar, avatar cap nhat ngay",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
