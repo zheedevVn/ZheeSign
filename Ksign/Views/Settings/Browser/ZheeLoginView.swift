@@ -143,7 +143,7 @@ private struct ZheeOAuthWebView: UIViewRepresentable {
 		
 		func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
 			if let url = navigationAction.request.url,
-			   url.scheme == "zheesign" {
+			   url.absoluteString.hasPrefix("https://api-zhee.vercel.app/oauth/mobile-callback") {
 				decisionHandler(.cancel)
 				ZheeAuthManager.shared.handleCallback(url: url) { _ in
 					DispatchQueue.main.async {
