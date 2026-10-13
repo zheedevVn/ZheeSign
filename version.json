@@ -1,7 +1,7 @@
 {
-  "version": "1.7.8",
-  "build": "1.7.8",
-  "notes": "Fix Python GIL crash and output capture",
+  "version": "1.7.9",
+  "build": "1.7.9",
+  "notes": "Use latest pure-Python wheels for bundled packages",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
