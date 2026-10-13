@@ -18448,6 +18448,23 @@
           }
         }
       }
+    },
+    "Trình duyệt web": {
+      "extractionState": "manual",
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Trình duyệt web"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Web Browser"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

@@ -113,6 +113,9 @@ extension SettingsView {
 			Button(.localized("GitHub 仓库"), systemImage: "safari") {
 				UIApplication.open(_githubUrl)
 			}
+			NavigationLink(destination: WebBrowserView()) {
+				Label(.localized("Trình duyệt web"), systemImage: "globe")
+			}
 		}
 	}
 	
