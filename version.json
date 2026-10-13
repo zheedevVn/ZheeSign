@@ -1,7 +1,7 @@
 {
-  "version": "1.7.3",
-  "build": "1.7.3",
-  "notes": "Polish reset translations and premium login button",
+  "version": "1.7.4",
+  "build": "1.7.4",
+  "notes": "Doi avatar tu thu vien, them thong tin ho so, console Zhee",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }

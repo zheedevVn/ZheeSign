@@ -49,6 +49,7 @@ class ZheeAuthManager: ObservableObject {
 			if let data = UserDefaults.standard.data(forKey: userKey),
 			   let user = try? JSONSerialization.jsonObject(with: data) as? [String: Any] {
 				userInfo = user
+				UserDefaults.standard.set(Date(), forKey: "zhee.loginDate")
 			}
 		} else {
 			logout(silent: true)
