@@ -15,6 +15,7 @@ struct ZheePythonView: View {
 	@State private var showFilePicker = false
 	@State private var pipPackage: String = ""
 	@State private var selectedTab = 0
+	@State private var fontSize: CGFloat = 13
 	
 	var body: some View {
 		VStack(spacing: 0) {
@@ -56,20 +57,22 @@ struct ZheePythonView: View {
 				selectedTab = 3
 				runner.runCode(code)
 			} label: {
-				HStack {
+				HStack(spacing: 6) {
 					Image(systemName: "play.fill")
+						.font(.caption)
 					Text("Chạy")
-						.fontWeight(.semibold)
+						.font(.subheadline.bold())
 				}
 				.frame(maxWidth: .infinity)
-				.padding()
+				.padding(.vertical, 10)
 				.background(
 					LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
 				)
 				.foregroundColor(.white)
-				.cornerRadius(14)
+				.cornerRadius(10)
 			}
-			.padding()
+			.padding(.horizontal)
+			.padding(.bottom, 8)
 			.disabled(runner.isRunning)
 		}
 	}
@@ -171,35 +174,88 @@ struct ZheePythonView: View {
 		.padding(.top, 40)
 	}
 	
-	// MARK: - Console
+	// MARK: - Console (full man hinh)
 	private var consoleView: some View {
-		VStack {
-			ScrollView {
-				Text(runner.output.isEmpty ? "Console trống\nChạy code để xem kết quả" : runner.output)
-					.font(.system(.body, design: .monospaced))
-					.frame(maxWidth: .infinity, alignment: .leading)
-					.padding()
-					.foregroundColor(runner.output.isEmpty ? .secondary : .primary)
-			}
-			.background(Color(.systemBackground))
-			
-			HStack {
-				Button("Xóa") {
-					runner.clearOutput()
+		VStack(spacing: 6) {
+			// Header nho: branding + chinh font
+			HStack(spacing: 8) {
+				HStack(spacing: 4) {
+					Text("Z")
+						.font(.system(size: 10, weight: .black))
+						.foregroundColor(.white)
+						.frame(width: 18, height: 18)
+						.background(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+						.clipShape(RoundedRectangle(cornerRadius: 5))
+					Text("Zhee Console")
+						.font(.caption2.bold())
+						.foregroundStyle(.secondary)
 				}
-				.buttonStyle(.bordered)
 				
 				Spacer()
 				
+				// Giam font
+				Button { if fontSize > 9 { fontSize -= 1 } } label: {
+					Image(systemName: "textformat.size.smaller")
+						.font(.caption)
+				}
+				.buttonStyle(.bordered)
+				.controlSize(.mini)
+				
+				// Tang font
+				Button { if fontSize < 20 { fontSize += 1 } } label: {
+					Image(systemName: "textformat.size.larger")
+						.font(.caption)
+				}
+				.buttonStyle(.bordered)
+				.controlSize(.mini)
+				
+				// Xoa
+				Button { runner.clearOutput() } label: {
+					Image(systemName: "trash")
+						.font(.caption)
+				}
+				.buttonStyle(.bordered)
+				.controlSize(.mini)
+			}
+			.padding(.horizontal, 10)
+			.padding(.top, 4)
+			
+			// Terminal gan full man hinh
+			ScrollView {
+				ScrollViewReader { _ in
+					Text(runner.output.isEmpty ? "Zhee Python Console v1.0\n© 2026 Hồ Đức Minh\n\nChạy code để xem kết quả..." : runner.output)
+						.font(.system(size: fontSize, design: .monospaced))
+						.frame(maxWidth: .infinity, alignment: .leading)
+						.padding(8)
+						.foregroundColor(runner.output.isEmpty ? .secondary : Color.green)
+						.textSelection(.enabled)
+				}
+			}
+			.background(Color.black.opacity(0.9))
+			.cornerRadius(10)
+			.padding(.horizontal, 8)
+			
+			// Status bar nho
+			HStack {
 				if runner.isRunning {
 					ProgressView()
 						.progressViewStyle(.circular)
+						.scaleEffect(0.7)
 					Text("Đang chạy...")
-						.font(.caption)
+						.font(.caption2)
+						.foregroundStyle(.secondary)
+				} else {
+					Text("Sẵn sàng")
+						.font(.caption2)
 						.foregroundStyle(.secondary)
 				}
+				Spacer()
+				Text("\(Int(fontSize))pt")
+					.font(.caption2)
+					.foregroundStyle(.tertiary)
 			}
-			.padding()
+			.padding(.horizontal, 12)
+			.padding(.bottom, 4)
 		}
 	}
 }
