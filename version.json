@@ -1,7 +1,7 @@
 {
-  "version": "1.7.7",
-  "build": "1.7.7",
-  "notes": "Fix Python stdlib path, crash guard, version.json after IPA upload",
+  "version": "1.7.8",
+  "build": "1.7.8",
+  "notes": "Fix Python GIL crash and output capture",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
