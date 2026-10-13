@@ -18,6 +18,8 @@ class ZheeUpdateManager: ObservableObject {
 	@Published var isChecking = false
 	@Published var releaseNotes: String?
 	
+	// File version.json trên nhánh main - đơn giản, luôn mới nhất
+	private let versionURL = "https://raw.githubusercontent.com/zheedevVn/ZheeSign/main/version.json"
 	private let manifestURL = "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist"
 	
 	var currentVersion: String {
@@ -28,34 +30,37 @@ class ZheeUpdateManager: ObservableObject {
 		guard !isChecking else { return }
 		isChecking = true
 		
-		guard let url = URL(string: manifestURL) else {
+		// Thêm timestamp để tránh cache
+		let urlString = versionURL + "?t=\(Int(Date().timeIntervalSince1970))"
+		guard let url = URL(string: urlString) else {
 			isChecking = false
 			return
 		}
 		
-		URLSession.shared.dataTask(with: url) { [weak self] data, _, _ in
+		var request = URLRequest(url: url)
+		request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+		
+		URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
 			DispatchQueue.main.async {
 				self?.isChecking = false
 				guard let data = data,
-				      let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any],
-				      let items = plist["items"] as? [[String: Any]],
-				      let first = items.first,
-				      let metadata = first["metadata"] as? [String: Any],
-				      let remoteVersion = metadata["bundle-version"] as? String else {
+				      let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+				      let remoteVersion = json["version"] as? String else {
 					return
 				}
 				
-				self?.compareVersions(remote: remoteVersion)
+				let notes = json["notes"] as? String
+				self?.compareVersions(remote: remoteVersion, notes: notes)
 			}
 		}.resume()
 	}
 	
-	private func compareVersions(remote: String) {
+	private func compareVersions(remote: String, notes: String?) {
 		let current = currentVersion
 		
-		// So sánh version: chỉ hiện update khi remote mới hơn
 		if isNewer(remote: remote, than: current) {
 			self.latestVersion = remote
+			self.releaseNotes = notes
 			self.updateAvailable = true
 		} else {
 			self.latestVersion = nil
