@@ -30,9 +30,9 @@ struct AppIconView: View {
             alternateIconName: nil
         ),
         
-        AppIconOption(id: "kana_peek", title: "Nhìn trộm", subtitle: "Kana", iconName: "kana_peek", alternateIconName: "kana_peek"),
-        AppIconOption(id: "kana_love", title: "Trái tim", subtitle: "Kana", iconName: "kana_love", alternateIconName: "kana_love"),
-        AppIconOption(id: "kana_ded", title: "Đầu lâu", subtitle: "Kana", iconName: "kana_ded", alternateIconName: "kana_ded"),
+        AppIconOption(id: "zhee_blue", title: "Z Xanh", subtitle: "ZheeSign", iconName: "zhee_blue", alternateIconName: "zhee_blue"),
+        AppIconOption(id: "zhee_fire", title: "Z Lửa", subtitle: "ZheeSign", iconName: "zhee_fire", alternateIconName: "zhee_fire"),
+        AppIconOption(id: "zhee_green", title: "Z Xanh lá", subtitle: "ZheeSign", iconName: "zhee_green", alternateIconName: "zhee_green"),
     ]
     
     // MARK: Body
