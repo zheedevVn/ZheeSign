@@ -97,6 +97,15 @@ struct ZheePythonView: View {
 						}
 					)
 				Button {
+					showFilePicker = true
+				} label: {
+					Image(systemName: "folder.fill")
+						.font(.title3)
+						.foregroundColor(.blue)
+				}
+				.disabled(runner.isRunning)
+				.padding(.bottom, 8)
+				Button {
 					executeInput()
 				} label: {
 					Image(systemName: "arrow.up.circle.fill")
@@ -170,10 +179,10 @@ struct ZheePythonView: View {
 		
 		let lower = cmd.lowercased()
 		if lower == "open" || lower == "file" {
-			runner.appendOutput("❯ \(cmd)\n")
+			runner.appendCommand("❯ \(cmd)\n")
 			showFilePicker = true
 		} else if lower == "edit" || lower == "code" {
-			runner.appendOutput("❯ \(cmd)\n")
+			runner.appendCommand("❯ \(cmd)\n")
 			showCodeEditor = true
 		} else {
 			runner.executeCommand(cmd)
