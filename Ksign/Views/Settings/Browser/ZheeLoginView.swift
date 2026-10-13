@@ -166,6 +166,18 @@ struct ZheeLoginView: View {
 			}
 			.scrollIndicators(.hidden)
 		}
+		.background(
+			LinearGradient(
+				colors: [
+					Color(red: 0.06, green: 0.06, blue: 0.18),
+					Color(red: 0.12, green: 0.03, blue: 0.25),
+					Color(red: 0.05, green: 0.08, blue: 0.2)
+				],
+				startPoint: .topLeading,
+				endPoint: .bottomTrailing
+			)
+			.ignoresSafeArea()
+		)
 		.onAppear { startAnimations() }
 	}
 	
