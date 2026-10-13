@@ -1,7 +1,7 @@
 {
   "version": "1.7.5",
   "build": "1.7.5",
-  "notes": "Terminal Python duy nhat, fix OTA cache",
+  "notes": "Remove quick buttons, terminal-only commands",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
