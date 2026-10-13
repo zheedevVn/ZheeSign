@@ -101,7 +101,7 @@ extension Storage {
 		]
 		
 		for urlString in builtInSourceURLs {
-			FR.handleSource(urlString) { }
+			FR.handleSource(urlString, silent: true) { }
 		}
 	}
 

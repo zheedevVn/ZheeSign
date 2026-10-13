@@ -25,7 +25,6 @@ struct ZheeLoginView: View {
 	@State private var orb2 = CGSize.zero
 	@State private var orb3 = CGSize.zero
 	@State private var glowPulse = false
-	@State private var shimmer = false
 	@State private var titleGradientShift = false
 	
 	var body: some View {
@@ -122,35 +121,23 @@ struct ZheeLoginView: View {
 				Button {
 					startOAuth()
 				} label: {
-					ZStack {
-						HStack(spacing: 12) {
-							if isAuthenticating {
-								ProgressView()
-									.tint(.primary)
-							} else {
-								ZStack {
-									RoundedRectangle(cornerRadius: 9, style: .continuous)
-										.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
-										.frame(width: 30, height: 30)
-									Text("Z")
-										.font(.system(size: 17, weight: .black))
-										.foregroundColor(.white)
-								}
-								Text("Đăng nhập bằng Zhee")
-									.font(.headline)
-									.foregroundColor(.primary)
+					HStack(spacing: 12) {
+						if isAuthenticating {
+							ProgressView()
+								.tint(.primary)
+						} else {
+							ZStack {
+								RoundedRectangle(cornerRadius: 9, style: .continuous)
+									.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+									.frame(width: 30, height: 30)
+								Text("Z")
+									.font(.system(size: 17, weight: .black))
+									.foregroundColor(.white)
 							}
+							Text("Đăng nhập bằng Zhee")
+								.font(.headline)
+								.foregroundColor(.primary)
 						}
-						
-						// Shimmer sweep
-						LinearGradient(
-							colors: [.clear, .white.opacity(0.5), .clear],
-							startPoint: .leading,
-							endPoint: .trailing
-						)
-						.frame(width: 80)
-						.offset(x: shimmer ? 200 : -200)
-						.blur(radius: 2)
 					}
 					.frame(maxWidth: .infinity)
 					.padding(.vertical, 17)

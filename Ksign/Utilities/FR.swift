@@ -191,6 +191,7 @@ enum FR {
 	
 	static func handleSource(
 		_ urlString: String,
+		silent: Bool = false,
 		competion: @escaping () -> Void
 	) {
 		guard let url = URL(string: urlString) else { return }
@@ -210,8 +211,10 @@ enum FR {
 					}
 				}
 			case .failure(let error):
-				DispatchQueue.main.async {
-					UIAlertController.showAlertWithOk(title: "Error", message: error.localizedDescription)
+				if !silent {
+					DispatchQueue.main.async {
+						UIAlertController.showAlertWithOk(title: "Error", message: error.localizedDescription)
+					}
 				}
 			}
 		}
