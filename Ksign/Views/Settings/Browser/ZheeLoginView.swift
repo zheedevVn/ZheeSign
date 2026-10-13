@@ -140,7 +140,7 @@ struct ZheeLoginView: View {
 							}
 							Text("Đăng nhập bằng Zhee")
 								.font(.headline)
-								.foregroundColor(.primary)
+								.foregroundColor(.black)
 						}
 					}
 					.frame(maxWidth: .infinity)

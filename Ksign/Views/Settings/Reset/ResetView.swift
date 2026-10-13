@@ -14,7 +14,7 @@ import CoreData
 struct ResetView: View {
 	// MARK: Body
     var body: some View {
-		NBList( ("重置")) {
+		NBList( ("Đặt lại")) {
 			_cache()
 			_coredata()
 			_all()
@@ -64,15 +64,15 @@ extension ResetView {
 	@ViewBuilder
 	private func _cache() -> some View {
 		Section {
-			Button("重置工作缓存", systemImage: "xmark.rectangle.portrait") {
-				Self.resetAlert(title: "重置工作缓存") {
+			Button("Xóa cache công việc", systemImage: "xmark.rectangle.portrait") {
+				Self.resetAlert(title: "Xóa cache công việc") {
 					Self.clearWorkCache()
 				}
 			}
 			
-			Button("重置网络缓存", systemImage: "xmark.rectangle.portrait") {
+			Button("Xóa cache mạng", systemImage: "xmark.rectangle.portrait") {
 				Self.resetAlert(
-					title: "重置网络缓存",
+					title: "Xóa cache mạng",
 					message: _cacheSize()
 				) {
 					Self.clearNetworkCache()
@@ -84,36 +84,36 @@ extension ResetView {
 	@ViewBuilder
 	private func _coredata() -> some View {
 		Section {
-			Button("重置源", systemImage: "xmark.circle") {
+			Button("Đặt lại nguồn", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "重置已签名的应用",
+					title: "Xóa ứng dụng đã ký",
 					message: Storage.shared.countContent(for: AltSource.self)
 				) {
 					Self.resetSources()
 				}
 			}
 			
-			Button("重置已签名的应用", systemImage: "xmark.circle") {
+			Button("Xóa ứng dụng đã ký", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "重置已签名的应用",
+					title: "Xóa ứng dụng đã ký",
 					message: Storage.shared.countContent(for: Signed.self)
 				) {
 					Self.deleteSignedApps()
 				}
 			}
 			
-			Button("重置已导入的应用", systemImage: "xmark.circle") {
+			Button("Xóa ứng dụng đã nhập", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "重置已导入的应用",
+					title: "Xóa ứng dụng đã nhập",
 					message: Storage.shared.countContent(for: Imported.self)
 				) {
 					Self.deleteImportedApps()
 				}
 			}
 			
-			Button("重置证书", systemImage: "xmark.circle") {
+			Button("Đặt lại chứng chỉ", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "重置证书",
+					title: "Đặt lại chứng chỉ",
 					message: Storage.shared.countContent(for: CertificatePair.self)
 				) {
 					Self.resetCertificates()
@@ -125,14 +125,14 @@ extension ResetView {
 	@ViewBuilder
 	private func _all() -> some View {
 		Section {
-			Button("重置设置", systemImage: "xmark.octagon") {
-				Self.resetAlert(title: "重置设置") {
+			Button("Đặt lại cài đặt", systemImage: "xmark.octagon") {
+				Self.resetAlert(title: "Đặt lại cài đặt") {
 					Self.resetUserDefaults()
 				}
 			}
 			
-			Button("重置全部", systemImage: "xmark.octagon") {
-				Self.resetAlert(title: "重置全部") {
+			Button("Đặt lại tất cả", systemImage: "xmark.octagon") {
+				Self.resetAlert(title: "Đặt lại tất cả") {
 					Self.resetAll()
 				}
 			}
