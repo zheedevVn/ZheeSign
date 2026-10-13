@@ -68,31 +68,6 @@ struct ZheePythonView: View {
 				}
 			}
 			
-			// Thanh lệnh nhanh (nhỏ gọn)
-			ScrollView(.horizontal, showsIndicators: false) {
-				HStack(spacing: 8) {
-					quickButton("▶ Chạy", icon: "play.fill") {
-						showCodeEditor = true
-					}
-					quickButton("📁 File", icon: "folder.fill") {
-						showFilePicker = true
-					}
-					quickButton("📦 Pip", icon: "shippingbox.fill") {
-						inputText = "pip install "
-						inputFocused = true
-					}
-					quickButton("🗑 Xóa", icon: "trash.fill") {
-						runner.clearOutput()
-					}
-					quickButton("❓ Help", icon: "questionmark.circle.fill") {
-						runner.showHelp()
-					}
-				}
-				.padding(.horizontal, 10)
-				.padding(.vertical, 6)
-			}
-			.background(Color(.secondarySystemBackground))
-			
 			// Ô nhập lệnh
 			HStack(spacing: 8) {
 				Text("❯")
@@ -172,26 +147,22 @@ struct ZheePythonView: View {
 		}
 	}
 	
-	private func quickButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
-		Button(action: action) {
-			HStack(spacing: 4) {
-				Image(systemName: icon).font(.caption2)
-				Text(title).font(.caption)
-			}
-			.padding(.horizontal, 10)
-			.padding(.vertical, 6)
-			.background(Color(.tertiarySystemBackground))
-			.cornerRadius(8)
-		}
-		.buttonStyle(.plain)
-	}
-	
 	private func executeInput() {
 		let cmd = inputText.trimmingCharacters(in: .whitespaces)
 		guard !cmd.isEmpty else { return }
 		inputText = ""
 		inputFocused = false
-		runner.executeCommand(cmd)
+		
+		let lower = cmd.lowercased()
+		if lower == "open" || lower == "file" {
+			runner.appendOutput("❯ \(cmd)\n")
+			showFilePicker = true
+		} else if lower == "edit" || lower == "code" {
+			runner.appendOutput("❯ \(cmd)\n")
+			showCodeEditor = true
+		} else {
+			runner.executeCommand(cmd)
+		}
 	}
 }
 

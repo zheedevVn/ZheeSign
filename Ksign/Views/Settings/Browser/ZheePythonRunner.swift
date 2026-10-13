@@ -119,6 +119,8 @@ class ZheePythonRunner: ObservableObject {
 		Lệnh có sẵn:
 		  help              - Hiện trợ giúp
 		  clear             - Xóa màn hình
+		  open              - Mở file .py từ máy
+		  edit              - Mở trình viết code
 		  pip install <pkg> - Cài thư viện
 		  <code python>     - Chạy code Python trực tiếp
 		
