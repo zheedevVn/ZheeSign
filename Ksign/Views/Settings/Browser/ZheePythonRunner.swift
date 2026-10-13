@@ -7,11 +7,19 @@
 //
 
 import Foundation
+import SwiftUI
+
+enum ZheeOutputStyle {
+	case command  // lenh nguoi dung go - noi bat
+	case result   // ket qua chay - xanh la
+	case error    // loi - do
+	case info     // thong tin - xam
+}
 
 class ZheePythonRunner: ObservableObject {
 	static let shared = ZheePythonRunner()
 	
-	@Published var output: String = ""
+	@Published var output = AttributedString("")
 	@Published var isRunning = false
 	@Published var installedPackages: [String] = []
 	
@@ -24,19 +32,19 @@ class ZheePythonRunner: ObservableObject {
 		guard !pythonInitialized else { return }
 		
 		guard PythonBridge.shared.isAvailable else {
-			appendOutput("Lỗi: Python framework chưa được nhúng\n")
+			appendError("Lỗi: Python framework chưa được nhúng\n")
 			return
 		}
 		
 		// Đường dẫn thư viện Python trong bundle - KIEM TRA KY truoc khi init
 		guard let resourcePath = Bundle.main.resourcePath else {
-			appendOutput("Lỗi: không tìm thấy bundle\n")
+			appendError("Lỗi: không tìm thấy bundle\n")
 			return
 		}
 		let pythonHome = (resourcePath as NSString).appendingPathComponent("python")
 		let stdlibCheck = (pythonHome as NSString).appendingPathComponent("lib/python3.15/os.py")
 		guard FileManager.default.fileExists(atPath: stdlibCheck) else {
-			appendOutput("Lỗi: thiếu thư viện chuẩn Python (os.py)\n")
+			appendError("Lỗi: thiếu thư viện chuẩn Python (os.py)\n")
 			appendOutput("Hãy cài bản mới nhất từ Releases.\n")
 			return
 		}
@@ -51,6 +59,12 @@ class ZheePythonRunner: ObservableObject {
 			+ userSite
 		setenv("PYTHONPATH", pythonPath, 1)
 		
+		// SSL cert cho pip (dung certifi di kem)
+		let certPath = (pythonHome as NSString).appendingPathComponent("lib/python3.15/site-packages/certifi/cacert.pem")
+		if FileManager.default.fileExists(atPath: certPath) {
+			setenv("SSL_CERT_FILE", certPath, 1)
+		}
+		
 		// Khởi tạo Python
 		PythonBridge.shared.initialize()
 		pythonInitialized = true
@@ -64,14 +78,18 @@ class ZheePythonRunner: ObservableObject {
 		initialize()
 		
 		isRunning = true
-		appendOutput("$ python\n")
+		appendCommand("$ python\n")
 		
 		DispatchQueue.global(qos: .userInitiated).async { [weak self] in
 			// Chuyển hướng stdout/stderr
 			let result = self?.executePython(code) ?? "Lỗi: không thể chạy Python"
 			
 			DispatchQueue.main.async {
-				self?.appendOutput(result + "\n")
+				if result.contains("Traceback") || result.contains("[Lỗi khi chạy code]") {
+					self?.appendError(result + "\n")
+				} else {
+					self?.appendOutput(result + "\n")
+				}
 				self?.isRunning = false
 			}
 		}
@@ -80,10 +98,10 @@ class ZheePythonRunner: ObservableObject {
 	// Chạy file Python
 	func runFile(at url: URL) {
 		guard let code = try? String(contentsOf: url, encoding: .utf8) else {
-			appendOutput("Lỗi: không đọc được file\n")
+			appendError("Lỗi: không đọc được file\n")
 			return
 		}
-		appendOutput("Chạy file: \(url.lastPathComponent)\n")
+		appendCommand("Chạy file: \(url.lastPathComponent)\n")
 		runCode(code)
 	}
 	
@@ -94,7 +112,7 @@ class ZheePythonRunner: ObservableObject {
 		guard pythonInitialized else { return }
 		
 		isRunning = true
-		appendOutput("$ pip install \(package)\n")
+		appendCommand("$ pip install \(package)\n")
 		
 		DispatchQueue.global(qos: .userInitiated).async { [weak self] in
 			let safePkg = package.replacingOccurrences(of: "\"", with: "")
@@ -128,7 +146,11 @@ class ZheePythonRunner: ObservableObject {
 			let result = self?.executePython(code) ?? "Lỗi"
 			
 			DispatchQueue.main.async {
-				self?.appendOutput(result + "\n")
+				if result.contains("Loi:") || result.contains("Traceback") {
+					self?.appendError(result + "\n")
+				} else {
+					self?.appendOutput(result + "\n")
+				}
 				self?.isRunning = false
 				self?.refreshPackages()
 			}
@@ -146,7 +168,7 @@ class ZheePythonRunner: ObservableObject {
 	}
 	
 	func clearOutput() {
-		output = ""
+		output = AttributedString("")
 	}
 	
 	func showHelp() {
@@ -173,7 +195,7 @@ class ZheePythonRunner: ObservableObject {
 		let lower = trimmed.lowercased()
 		
 		// Hiển thị lệnh đã nhập
-		appendOutput("❯ \(trimmed)\n")
+		appendCommand("❯ \(trimmed)\n")
 		
 		if lower == "help" {
 			showHelp()
@@ -195,8 +217,33 @@ class ZheePythonRunner: ObservableObject {
 	}
 	
 	func appendOutput(_ text: String) {
+		appendStyled(text, .result)
+	}
+	
+	func appendCommand(_ text: String) {
+		appendStyled(text, .command)
+	}
+	
+	func appendError(_ text: String) {
+		appendStyled(text, .error)
+	}
+	
+	func appendStyled(_ text: String, _ style: ZheeOutputStyle) {
+		var attr = AttributedString(text)
+		switch style {
+		case .command:
+			attr.foregroundColor = .cyan
+			attr.inlinePresentationIntent = .stronglyEmphasized
+		case .result:
+			attr.foregroundColor = .green
+		case .error:
+			attr.foregroundColor = .red
+			attr.inlinePresentationIntent = .stronglyEmphasized
+		case .info:
+			attr.foregroundColor = .gray
+		}
 		DispatchQueue.main.async { [weak self] in
-			self?.output += text
+			self?.output += attr
 		}
 	}
 	
@@ -221,8 +268,20 @@ class ZheePythonRunner: ObservableObject {
 		_ = bridge.runSimpleString("open(r'\(outPath)','w',encoding='utf-8').write(_output_buffer.getvalue())\n")
 		_ = bridge.runSimpleString("sys.stdout, sys.stderr = _old_stdout, _old_stderr\n")
 		
-		let out = (try? String(contentsOfFile: outPath, encoding: .utf8)) ?? ""
+		var out = (try? String(contentsOfFile: outPath, encoding: .utf8)) ?? ""
 		try? FileManager.default.removeItem(atPath: outPath)
+		
+		// Goi y pip install khi thieu thu vien
+		if out.contains("ModuleNotFoundError") {
+			let pattern = "No module named '([^']+)'"
+			if let regex = try? NSRegularExpression(pattern: pattern),
+			   let match = regex.firstMatch(in: out, range: NSRange(out.startIndex..., in: out)),
+			   let range = Range(match.range(at: 1), in: out) {
+				let fullName = String(out[range])
+				let modName = fullName.split(separator: ".").first.map(String.init) ?? fullName
+				out += "\n💡 Thiếu thư viện '\(modName)' — gõ: pip install \(modName)"
+			}
+		}
 		
 		if runResult != 0 {
 			return out.isEmpty ? "[Lỗi khi chạy code]" : out + "\n[Lỗi khi chạy code]"
