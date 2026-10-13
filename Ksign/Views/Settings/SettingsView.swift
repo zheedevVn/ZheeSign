@@ -30,7 +30,6 @@ struct SettingsView: View {
     
 	private let _donationsUrl = "https://github.com/sponsors/zheedevVn"
 	private let _githubUrl = "https://github.com/zheedevVn/ZheeSign"
-    private let _discordUrl = "https://discord.gg/sfbZfQzVdQ"
 	// MARK: Body
     var body: some View {
 		NBNavigationView(.localized("设置")) {
@@ -109,14 +108,11 @@ extension SettingsView {
                 Label(.localized("关于"), systemImage: "info.circle")
             }
 			Button(.localized("Telegram 频道"), systemImage: "paperplane.circle") {
-				UIApplication.open("https://t.me/KhoinDNS")
+				UIApplication.open("https://t.me/zheevipv1")
 			}
 			Button(.localized("GitHub 仓库"), systemImage: "safari") {
 				UIApplication.open(_githubUrl)
 			}
-            Button(.localized("Discord 服务器"), systemImage: "safari") {
-                UIApplication.open(_discordUrl)
-            }
 		}
 	}
 	
