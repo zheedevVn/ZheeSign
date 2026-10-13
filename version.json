@@ -1,7 +1,7 @@
 {
   "version": "1.7.3",
   "build": "1.7.3",
-  "notes": "Hoan thien viet hoa, nut login premium",
+  "notes": "Polish reset translations and premium login button",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
