@@ -42,7 +42,13 @@ class ZheePythonRunner: ObservableObject {
 		}
 		
 		setenv("PYTHONHOME", pythonHome, 1)
-		let pythonPath = pythonHome + "/lib/python3.15:" + pythonHome + "/lib/python3.15/lib-dynload"
+		let docsPath = (NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true).first! as NSString)
+		let userSite = docsPath.appendingPathComponent("site-packages")
+		try? FileManager.default.createDirectory(atPath: userSite, withIntermediateDirectories: true)
+		let pythonPath = pythonHome + "/lib/python3.15:"
+			+ pythonHome + "/lib/python3.15/lib-dynload:"
+			+ pythonHome + "/lib/python3.15/site-packages:"
+			+ userSite
 		setenv("PYTHONPATH", pythonPath, 1)
 		
 		// Khởi tạo Python
@@ -81,23 +87,43 @@ class ZheePythonRunner: ObservableObject {
 		runCode(code)
 	}
 	
-	// Cài package bằng pip
+	// pip install that: tai wheel pure-Python tu PyPI (khong can pip/subprocess)
 	func pipInstall(_ package: String) {
 		guard !isRunning else { return }
 		initialize()
+		guard pythonInitialized else { return }
 		
 		isRunning = true
 		appendOutput("$ pip install \(package)\n")
 		
 		DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+			let safePkg = package.replacingOccurrences(of: "\"", with: "")
 			let code = """
-			import subprocess
-			import sys
+			import urllib.request, zipfile, json, os
+			_pkg = "\(safePkg)"
+			_site = os.path.expanduser("~/Documents/site-packages")
+			os.makedirs(_site, exist_ok=True)
 			try:
-			    subprocess.check_call([sys.executable, "-m", "pip", "install", "\(package)"])
-			    print("Đã cài đặt \(package) thành công")
-			except Exception as e:
-			    print(f"Lỗi cài đặt: {e}")
+			    _api = "https://pypi.org/pypi/" + _pkg + "/json"
+			    _data = json.loads(urllib.request.urlopen(_api, timeout=30).read())
+			    _whl = None
+			    for _f in _data.get("urls", []):
+			        _fn = _f.get("filename", "")
+			        if _f.get("packagetype") == "bdist_wheel" and (_fn.endswith("-py3-none-any.whl") or _fn.endswith("-py2.py3-none-any.whl")):
+			            _whl = _f["url"]
+			            break
+			    if not _whl:
+			        print("Khong co ban pure-Python cho " + _pkg)
+			    else:
+			        print("Dang tai " + _pkg + "...")
+			        _tmp = "/tmp/_zheepkg.whl"
+			        urllib.request.urlretrieve(_whl, _tmp)
+			        with zipfile.ZipFile(_tmp) as _z:
+			            _z.extractall(_site)
+			        os.remove(_tmp)
+			        print("Da cai " + _pkg)
+			except Exception as _e:
+			    print("Loi: " + str(_e))
 			"""
 			let result = self?.executePython(code) ?? "Lỗi"
 			
