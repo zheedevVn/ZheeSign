@@ -20,7 +20,7 @@ class ZheeUpdateManager: ObservableObject {
 	
 	// File version.json trên nhánh main - đơn giản, luôn mới nhất
 	private let versionURL = "https://raw.githubusercontent.com/zheedevVn/ZheeSign/main/version.json"
-	private let manifestURL = "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist"
+	private let ipaURL = "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 	
 	var currentVersion: String {
 		Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
@@ -81,13 +81,95 @@ class ZheeUpdateManager: ObservableObject {
 		return false
 	}
 	
-	func installUpdate() {
-		// Them timestamp de tranh iOS cache manifest cu
-		let urlWithCache = "\(manifestURL)?t=\(Int(Date().timeIntervalSince1970))"
-		if let encoded = urlWithCache.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
-		   let url = URL(string: "itms-services://?action=download-manifest&url=\(encoded)") {
-			UIApplication.shared.open(url)
+	@Published var isDownloading = false
+	@Published var downloadProgress: Double = 0
+	@Published var downloadedFileURL: URL?
+	@Published var downloadError: String?
+	
+	private var downloadTask: URLSessionDownloadTask?
+	private var progressTimer: Timer?
+	
+	// Tai IPA ve may roi mo bang app cai dat (TrollStore/ESign...)
+	// itms-services khong dung duoc vi IPA unsigned
+	func downloadUpdate() {
+		guard !isDownloading else { return }
+		downloadError = nil
+		downloadedFileURL = nil
+		
+		guard let url = URL(string: ipaURL) else {
+			downloadError = "URL không hợp lệ"
+			return
 		}
+		
+		isDownloading = true
+		downloadProgress = 0
+		
+		let task = URLSession.shared.downloadTask(with: url) { [weak self] tempURL, response, error in
+			DispatchQueue.main.async {
+				self?.progressTimer?.invalidate()
+				self?.progressTimer = nil
+				self?.isDownloading = false
+				
+				if let error = error {
+					self?.downloadError = error.localizedDescription
+					return
+				}
+				guard let tempURL = tempURL else {
+					self?.downloadError = "Tải thất bại"
+					return
+				}
+				
+				let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+				let fileName = "ZheeSign-\(self?.latestVersion ?? "new").ipa"
+				let dest = docs.appendingPathComponent(fileName)
+				try? FileManager.default.removeItem(at: dest)
+				do {
+					try FileManager.default.moveItem(at: tempURL, to: dest)
+					self?.downloadedFileURL = dest
+					self?.downloadProgress = 1
+				} catch {
+					self?.downloadError = "Không lưu được file"
+				}
+			}
+		}
+		downloadTask = task
+		
+		// Cap nhat tien trinh
+		progressTimer = Timer.scheduledTimer(withTimeInterval: 0.2, repeats: true) { [weak self] _ in
+			DispatchQueue.main.async {
+				self?.downloadProgress = task.progress.fractionCompleted
+			}
+		}
+		task.resume()
+	}
+	
+	func cancelDownload() {
+		downloadTask?.cancel()
+		progressTimer?.invalidate()
+		progressTimer = nil
+		isDownloading = false
+		downloadProgress = 0
+	}
+	
+	// Mo share sheet de cai dat bang TrollStore / ESign / Sideloadly
+	func shareDownloadedFile() {
+		guard let url = downloadedFileURL else { return }
+		let avc = UIActivityViewController(activityItems: [url], applicationActivities: nil)
+		guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+		      let root = scene.windows.first?.rootViewController else { return }
+		var top = root
+		while let p = top.presentedViewController { top = p }
+		if let pop = avc.popoverPresentationController {
+			pop.sourceView = top.view
+			pop.sourceRect = CGRect(x: top.view.bounds.midX, y: top.view.bounds.midY, width: 0, height: 0)
+			pop.permittedArrowDirections = []
+		}
+		top.present(avc, animated: true)
+	}
+	
+	// Gi lai tuong thich - gio goi download
+	func installUpdate() {
+		downloadUpdate()
 	}
 	
 	func dismissUpdate() {

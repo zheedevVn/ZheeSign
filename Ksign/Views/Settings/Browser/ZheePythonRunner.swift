@@ -138,7 +138,12 @@ class ZheePythonRunner: ObservableObject {
 	
 	// Xử lý lệnh từ terminal
 	func executeCommand(_ cmd: String) {
-		let trimmed = cmd.trimmingCharacters(in: .whitespaces)
+		let sanitized = cmd
+			.replacingOccurrences(of: "\u{201C}", with: "\"")
+			.replacingOccurrences(of: "\u{201D}", with: "\"")
+			.replacingOccurrences(of: "\u{2018}", with: "'")
+			.replacingOccurrences(of: "\u{2019}", with: "'")
+		let trimmed = sanitized.trimmingCharacters(in: .whitespacesAndNewlines)
 		let lower = trimmed.lowercased()
 		
 		// Hiển thị lệnh đã nhập
