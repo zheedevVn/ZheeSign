@@ -10,6 +10,7 @@ import SwiftUI
 import WebKit
 
 struct WebBrowserView: View {
+	@ObservedObject private var auth = ZheeAuthManager.shared
 	@State private var urlString: String = "https://"
 	@State private var currentURL: URL? = nil
 	@State private var canGoBack = false
@@ -19,6 +20,32 @@ struct WebBrowserView: View {
 	@FocusState private var urlFieldFocused: Bool
 	
 	var body: some View {
+		Group {
+			if !auth.isLoggedIn {
+				ZheeLoginView()
+			} else {
+				browserContent
+			}
+		}
+		.navigationTitle("Trình duyệt")
+		.navigationBarTitleDisplayMode(.inline)
+		.toolbar {
+			if auth.isLoggedIn {
+				ToolbarItem(placement: .navigationBarTrailing) {
+					Menu {
+						Text(auth.displayName)
+						Button("Đăng xuất", role: .destructive) {
+							auth.logout()
+						}
+					} label: {
+						Image(systemName: "person.circle")
+					}
+				}
+			}
+		}
+	}
+	
+	private var browserContent: some View {
 		VStack(spacing: 0) {
 			// Thanh địa chỉ
 			HStack(spacing: 8) {
@@ -117,8 +144,6 @@ struct WebBrowserView: View {
 				}
 			}
 		}
-		.navigationTitle("Trình duyệt")
-		.navigationBarTitleDisplayMode(.inline)
 		.alert("URL không hợp lệ", isPresented: $showAlert) {
 			Button("OK", role: .cancel) { }
 		}

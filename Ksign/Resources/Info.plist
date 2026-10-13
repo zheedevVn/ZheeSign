@@ -120,6 +120,14 @@
 				<string>ksign</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>vn.zheedev.zheesign.oauth</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>zheesign</string>
+			</array>
+		</dict>
 	</array>
 	<key>UIBackgroundModes</key>
 	<array>
