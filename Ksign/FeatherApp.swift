@@ -23,22 +23,24 @@ struct FeatherApp: App {
 
 	var body: some Scene {
 		WindowGroup {
-			if !auth.isLoggedIn {
-				ZheeLoginView()
-			} else {
-			VStack {
-                ExtractHeaderView(extractManager: extractManager)
-                    .transition(.move(edge: .top).combined(with: .opacity))
-				DownloadHeaderView(downloadManager: downloadManager)
-					.transition(.move(edge: .top).combined(with: .opacity))
-				VariedTabbarView()
-					.environment(\.managedObjectContext, storage.context)
-					.onOpenURL(perform: _handleURL)
-					.transition(.move(edge: .top).combined(with: .opacity))
+			Group {
+				if !auth.isLoggedIn {
+					ZheeLoginView()
+				} else {
+					VStack {
+						ExtractHeaderView(extractManager: extractManager)
+							.transition(.move(edge: .top).combined(with: .opacity))
+						DownloadHeaderView(downloadManager: downloadManager)
+							.transition(.move(edge: .top).combined(with: .opacity))
+						VariedTabbarView()
+							.environment(\.managedObjectContext, storage.context)
+							.onOpenURL(perform: _handleURL)
+							.transition(.move(edge: .top).combined(with: .opacity))
+					}
+					.animation(.smooth, value: downloadManager.manualDownloads.description)
+					.animation(.smooth, value: extractManager.extractItems.description)
+				}
 			}
-			}
-			.animation(.smooth, value: downloadManager.manualDownloads.description)
-            .animation(.smooth, value: extractManager.extractItems.description)
 			.onReceive(accentColorManager.objectWillChange) { _ in
 				accentColorManager.updateGlobalTintColor()
 			}
