@@ -21,7 +21,7 @@ struct AboutNyaView: View {
                     Image(uiImage: (UIImage(named: Bundle.main.iconFileName ?? ""))! )
                         .appIconStyle(size: 72)
 
-                    Text(Bundle.main.exec)
+                    Text("ZheeSign")
                         .font(.largeTitle)
                         .bold()
                         .foregroundStyle(.accent)
