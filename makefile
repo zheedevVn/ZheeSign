@@ -48,14 +48,18 @@ $(SCHEMES): deps
 
 	cp deps/* "$(STAGE)/Payload/$(NAME).app/" || true
 
-	# Nhung Python framework
+	# Nhung Python framework + stdlib (duong dan that trong BeeWare tarball)
 	if [ -d "$(PYTHON_DIR)/Python.xcframework/ios-arm64/Python.framework" ]; then \
 		mkdir -p "$(STAGE)/Payload/$(NAME).app/Frameworks"; \
 		cp -R "$(PYTHON_DIR)/Python.xcframework/ios-arm64/Python.framework" "$(STAGE)/Payload/$(NAME).app/Frameworks/"; \
+		chmod 755 "$(STAGE)/Payload/$(NAME).app/Frameworks/Python.framework/Python"; \
 		echo "Python framework embedded"; \
 	fi
-	if [ -d "$(PYTHON_DIR)/python" ]; then \
-		cp -R "$(PYTHON_DIR)/python" "$(STAGE)/Payload/$(NAME).app/"; \
+	if [ -d "$(PYTHON_DIR)/Python.xcframework/lib/python3.15" ]; then \
+		mkdir -p "$(STAGE)/Payload/$(NAME).app/python/lib"; \
+		cp -R "$(PYTHON_DIR)/Python.xcframework/lib/python3.15" "$(STAGE)/Payload/$(NAME).app/python/lib/"; \
+		mkdir -p "$(STAGE)/Payload/$(NAME).app/python/lib/python3.15/lib-dynload"; \
+		cp "$(PYTHON_DIR)/Python.xcframework/ios-arm64/lib-arm64/python3.15/lib-dynload/"*.so "$(STAGE)/Payload/$(NAME).app/python/lib/python3.15/lib-dynload/" 2>/dev/null || true; \
 		echo "Python stdlib copied"; \
 	fi
 

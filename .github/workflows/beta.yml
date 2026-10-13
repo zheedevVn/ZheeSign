@@ -92,7 +92,16 @@ jobs:
           print("manifest created")
           PYEOF2
           
-          # Cap nhat version.json cho app check update
+          gh release delete beta --cleanup-tag -y || true
+          
+          gh release create beta "packages/ZheeSign.ipa" "packages/manifest.plist" \
+            --title "Latest Beta Build" \
+            --notes "$(cat release_notes.md)" \
+            --prerelease \
+            --target ${{ github.sha }}
+          
+          # Cap nhat version.json SAU KHI IPA da len release
+          # (de app khong bao co ban moi khi IPA chua san sang)
           COMMIT_MSG=$(git log -1 --pretty=%s)
           python3 << PYEOF3
           import json, os
@@ -115,14 +124,6 @@ jobs:
           git add version.json
           git diff --staged --quiet || git commit -m "Update version.json to $VERSION"
           git push origin main || echo "Push version.json failed, continuing..."
-          
-          gh release delete beta --cleanup-tag -y || true
-          
-          gh release create beta "packages/ZheeSign.ipa" "packages/manifest.plist" \
-            --title "Latest Beta Build" \
-            --notes "$(cat release_notes.md)" \
-            --prerelease \
-            --target ${{ github.sha }}
 
       - name: Notify Discord
         env:

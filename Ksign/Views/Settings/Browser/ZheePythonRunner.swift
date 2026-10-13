@@ -25,16 +25,25 @@ class ZheePythonRunner: ObservableObject {
 		
 		guard PythonBridge.shared.isAvailable else {
 			appendOutput("Lỗi: Python framework chưa được nhúng\n")
-			appendOutput("Tính năng đang phát triển...\n")
 			return
 		}
 		
-		// Đường dẫn thư viện Python trong bundle
-		if let resourcePath = Bundle.main.resourcePath {
-			let pythonHome = (resourcePath as NSString).appendingPathComponent("python")
-			setenv("PYTHONHOME", pythonHome, 1)
-			setenv("PYTHONPATH", pythonHome + "/lib/python3.15", 1)
+		// Đường dẫn thư viện Python trong bundle - KIEM TRA KY truoc khi init
+		guard let resourcePath = Bundle.main.resourcePath else {
+			appendOutput("Lỗi: không tìm thấy bundle\n")
+			return
 		}
+		let pythonHome = (resourcePath as NSString).appendingPathComponent("python")
+		let stdlibCheck = (pythonHome as NSString).appendingPathComponent("lib/python3.15/os.py")
+		guard FileManager.default.fileExists(atPath: stdlibCheck) else {
+			appendOutput("Lỗi: thiếu thư viện chuẩn Python (os.py)\n")
+			appendOutput("Hãy cài bản mới nhất từ Releases.\n")
+			return
+		}
+		
+		setenv("PYTHONHOME", pythonHome, 1)
+		let pythonPath = pythonHome + "/lib/python3.15:" + pythonHome + "/lib/python3.15/lib-dynload"
+		setenv("PYTHONPATH", pythonPath, 1)
 		
 		// Khởi tạo Python
 		PythonBridge.shared.initialize()
