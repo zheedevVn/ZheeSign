@@ -1,4 +1,5 @@
 NAME := ZheeSign
+PYTHON_DIR := python-ios
 PLATFORM := iphoneos
 SCHEMES := Ksign
 TMP := $(TMPDIR)/$(NAME)

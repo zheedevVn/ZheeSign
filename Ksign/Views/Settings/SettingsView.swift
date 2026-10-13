@@ -118,6 +118,9 @@ extension SettingsView {
 			NavigationLink(destination: WebBrowserView()) {
 				Label(.localized("Trình duyệt web"), systemImage: "globe")
 			}
+			NavigationLink(destination: ZheePythonView()) {
+				Label("Python", systemImage: "chevron.left.forwardslash.chevron.right")
+			}
 			Button(role: .destructive) {
 				ZheeAuthManager.shared.logout()
 			} label: {
