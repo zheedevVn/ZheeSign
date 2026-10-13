@@ -128,7 +128,7 @@ struct ZheeLoginView: View {
 					HStack(spacing: 12) {
 						if isAuthenticating {
 							ProgressView()
-								.tint(.primary)
+								.tint(.white)
 						} else {
 							ZStack {
 								RoundedRectangle(cornerRadius: 9, style: .continuous)
@@ -139,15 +139,28 @@ struct ZheeLoginView: View {
 									.foregroundColor(.white)
 							}
 							Text("Đăng nhập bằng Zhee")
-								.font(.headline)
-								.foregroundColor(.black)
+								.font(.system(size: 17, weight: .semibold))
+								.foregroundColor(.white)
 						}
 					}
 					.frame(maxWidth: .infinity)
 					.padding(.vertical, 17)
-					.background(.white)
+					.background(
+						LinearGradient(
+							colors: [Color(red: 0.15, green: 0.1, blue: 0.35), Color(red: 0.25, green: 0.12, blue: 0.45)],
+							startPoint: .topLeading,
+							endPoint: .bottomTrailing
+						)
+					)
 					.clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
-					.shadow(color: .purple.opacity(0.4), radius: 15)
+					.overlay(
+						RoundedRectangle(cornerRadius: 18, style: .continuous)
+							.stroke(
+								LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .leading, endPoint: .trailing),
+								lineWidth: 1.5
+							)
+					)
+					.shadow(color: .purple.opacity(0.6), radius: 20)
 				}
 				.disabled(isAuthenticating)
 				.scaleEffect(buttonOpacity > 0 ? 1 : 0.92)

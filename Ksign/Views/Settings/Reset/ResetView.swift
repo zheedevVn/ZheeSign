@@ -35,7 +35,7 @@ struct ResetView: View {
 		action: @escaping () -> Void
 	) {
 		let action = UIAlertAction(
-			title:  ("继续"),
+			title:  ("Tiếp tục"),
 			style: .destructive
 		) { _ in
 			action()
@@ -48,7 +48,7 @@ struct ResetView: View {
 		
 		var msg = ""
 		if !message.isEmpty { msg = message + "\n" }
-		msg.append( ("此操作不可撤销，是否继续？"))
+		msg.append( ("Hành động này không thể hoàn tác. Bạn có chắc chắn muốn tiếp tục?"))
 	
 		UIAlertController.showAlertWithCancel(
 			title: title,
@@ -86,7 +86,7 @@ extension ResetView {
 		Section {
 			Button("Đặt lại nguồn", systemImage: "xmark.circle") {
 				Self.resetAlert(
-					title: "Xóa ứng dụng đã ký",
+					title: "Đặt lại nguồn",
 					message: Storage.shared.countContent(for: AltSource.self)
 				) {
 					Self.resetSources()
