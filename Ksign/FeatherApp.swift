@@ -19,9 +19,13 @@ struct FeatherApp: App {
     @StateObject var extractManager = ExtractManager.shared
 	@StateObject var logsManager = LogsManager.shared
 	let storage = Storage.shared
+	@ObservedObject var auth = ZheeAuthManager.shared
 
 	var body: some Scene {
 		WindowGroup {
+			if !auth.isLoggedIn {
+				ZheeLoginView()
+			} else {
 			VStack {
                 ExtractHeaderView(extractManager: extractManager)
                     .transition(.move(edge: .top).combined(with: .opacity))
@@ -31,6 +35,7 @@ struct FeatherApp: App {
 					.environment(\.managedObjectContext, storage.context)
 					.onOpenURL(perform: _handleURL)
 					.transition(.move(edge: .top).combined(with: .opacity))
+			}
 			}
 			.animation(.smooth, value: downloadManager.manualDownloads.description)
             .animation(.smooth, value: extractManager.extractItems.description)
