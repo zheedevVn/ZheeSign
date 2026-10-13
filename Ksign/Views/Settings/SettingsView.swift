@@ -116,6 +116,11 @@ extension SettingsView {
 			NavigationLink(destination: WebBrowserView()) {
 				Label(.localized("Trình duyệt web"), systemImage: "globe")
 			}
+			Button(role: .destructive) {
+				ZheeAuthManager.shared.logout()
+			} label: {
+				Label("Đăng xuất", systemImage: "rectangle.portrait.and.arrow.right")
+			}
 		}
 	}
 	
