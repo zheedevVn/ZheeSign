@@ -14,7 +14,7 @@ class ZheeAuthManager: ObservableObject {
 	static let shared = ZheeAuthManager()
 	
 	// TODO: Thay bằng client_id thật từ api-zhee.vercel.app/ho-so
-	static let clientId = "zheesign-ios"
+	static let clientId = "zhc_cec13d08004acae37560776b"
 	static let redirectURI = "https://api-zhee.vercel.app/oauth/mobile-callback"
 	static let authorizeURL = "https://api-zhee.vercel.app/oauth/authorize"
 	static let tokenURL = "https://api-zhee.vercel.app/oauth/token"
@@ -119,7 +119,7 @@ class ZheeAuthManager: ObservableObject {
 		var req = URLRequest(url: url)
 		req.httpMethod = "POST"
 		req.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-		let body = "grant_type=authorization_code&code=\(code)&redirect_uri=\(Self.redirectURI)&client_id=\(Self.clientId)"
+		let body = "grant_type=authorization_code&code=\(code)&redirect_uri=\(Self.redirectURI)&client_id=\(Self.clientId)&client_secret=zhs_ac4dac86d909ac485cff28fa4cdb4e4afd0fe9e855cbbfab04230ebc61c48bcc"
 		req.httpBody = body.data(using: .utf8)
 		
 		URLSession.shared.dataTask(with: req) { [weak self] data, _, _ in
