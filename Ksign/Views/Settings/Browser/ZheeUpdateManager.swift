@@ -82,7 +82,10 @@ class ZheeUpdateManager: ObservableObject {
 	}
 	
 	func installUpdate() {
-		if let url = URL(string: "itms-services://?action=download-manifest&url=\(manifestURL)") {
+		// Them timestamp de tranh iOS cache manifest cu
+		let urlWithCache = "\(manifestURL)?t=\(Int(Date().timeIntervalSince1970))"
+		if let encoded = urlWithCache.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+		   let url = URL(string: "itms-services://?action=download-manifest&url=\(encoded)") {
 			UIApplication.shared.open(url)
 		}
 	}

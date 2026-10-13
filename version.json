@@ -1,7 +1,7 @@
 {
-  "version": "1.7.4",
-  "build": "1.7.4",
-  "notes": "Zhee branded full-screen console with font size control",
+  "version": "1.7.5",
+  "build": "1.7.5",
+  "notes": "Terminal Python duy nhat, fix OTA cache",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
