@@ -28,7 +28,8 @@ struct ZheeLoginView: View {
 	@State private var titleGradientShift = false
 	
 	var body: some View {
-		ScrollView {
+		GeometryReader { geo in
+			ScrollView {
 			ZStack {
 				// Nền gradient sâu
 			LinearGradient(
@@ -165,7 +166,8 @@ struct ZheeLoginView: View {
 			}
 			}
 			.scrollIndicators(.hidden)
-		}
+				.frame(minHeight: geo.size.height)
+			}
 		.background(
 			LinearGradient(
 				colors: [
@@ -178,6 +180,7 @@ struct ZheeLoginView: View {
 			)
 			.ignoresSafeArea()
 		)
+		}
 		.onAppear { startAnimations() }
 	}
 	
