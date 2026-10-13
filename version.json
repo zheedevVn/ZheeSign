@@ -1,7 +1,7 @@
 {
-  "version": "1.7.6",
-  "build": "1.7.6",
-  "notes": "Multiline terminal input, no avatar ring, instant avatar update",
+  "version": "1.7.7",
+  "build": "1.7.7",
+  "notes": "Fix Python stdlib path, crash guard, version.json after IPA upload",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
