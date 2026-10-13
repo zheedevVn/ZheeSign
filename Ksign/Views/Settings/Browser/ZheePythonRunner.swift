@@ -169,38 +169,34 @@ class ZheePythonRunner: ObservableObject {
 		}
 	}
 	
-	// Thực thi Python code
+	// Thực thi Python code - lay output qua file tam
 	private func executePython(_ code: String) -> String {
 		let bridge = PythonBridge.shared
 		guard bridge.isAvailable else {
 			return "Python chưa sẵn sàng"
 		}
 		
-		// Tạo StringIO để bắt output
-		let setupCode = """
-		import sys
-		import io
-		_output_buffer = io.StringIO()
-		_old_stdout = sys.stdout
-		_old_stderr = sys.stderr
-		sys.stdout = _output_buffer
-		sys.stderr = _output_buffer
-		"""
-		_ = bridge.runSimpleString(setupCode)
+		let outPath = (NSTemporaryDirectory() as NSString).appendingPathComponent("zhee_py_out.txt")
+		// Xoa file cu
+		try? FileManager.default.removeItem(atPath: outPath)
+		
+		// Chuyen huong stdout/stderr vao StringIO
+		_ = bridge.runSimpleString("import sys, io\n_output_buffer = io.StringIO()\n_old_stdout, _old_stderr = sys.stdout, sys.stderr\nsys.stdout = sys.stderr = _output_buffer\n")
 		
 		// Chạy code người dùng
-		let runResult = bridge.runSimpleString(code)
+		let runResult = bridge.runSimpleString(code + "\n")
 		
-		// Lấy output (đơn giản: dùng biến toàn cục)
-		_ = bridge.runSimpleString("_captured = _output_buffer.getvalue()")
+		// Ghi output ra file tam roi doc lai tu Swift
+		_ = bridge.runSimpleString("open(r'\(outPath)','w',encoding='utf-8').write(_output_buffer.getvalue())\n")
+		_ = bridge.runSimpleString("sys.stdout, sys.stderr = _old_stdout, _old_stderr\n")
 		
-		// Khôi phục
-		_ = bridge.runSimpleString("sys.stdout = _old_stdout; sys.stderr = _old_stderr")
+		let out = (try? String(contentsOfFile: outPath, encoding: .utf8)) ?? ""
+		try? FileManager.default.removeItem(atPath: outPath)
 		
 		if runResult != 0 {
-			return "[Lỗi khi chạy code]"
+			return out.isEmpty ? "[Lỗi khi chạy code]" : out + "\n[Lỗi khi chạy code]"
 		}
-		return "(xem console để biết chi tiết)"
+		return out.isEmpty ? "(không có output)" : out
 	}
 }
 
@@ -230,20 +226,40 @@ class PythonBridge {
 	
 	var isAvailable: Bool { handle != nil }
 	
+	private func lookup<T>(_ name: String, as type: T.Type) -> T? {
+		guard let h = handle, let sym = dlsym(h, name) else { return nil }
+		return unsafeBitCast(sym, to: T.self)
+	}
+	
 	func initialize() {
-		guard let h = handle else { return }
 		typealias Fn = @convention(c) () -> Void
-		if let sym = dlsym(h, "Py_Initialize") {
-			let fn = unsafeBitCast(sym, to: Fn.self)
-			fn()
+		guard let fn: Fn = lookup("Py_Initialize", as: Fn.self) else { return }
+		fn()
+		// Nha GIL de thread khac dung duoc (tranh deadlock/crash)
+		typealias SaveFn = @convention(c) () -> UnsafeMutableRawPointer?
+		if let saveFn: SaveFn = lookup("PyEval_SaveThread", as: SaveFn.self) {
+			_ = saveFn()
 		}
 	}
 	
 	func runSimpleString(_ command: String) -> Int32 {
-		guard let h = handle else { return -1 }
 		typealias Fn = @convention(c) (UnsafePointer<CChar>) -> Int32
-		guard let sym = dlsym(h, "PyRun_SimpleString") else { return -1 }
-		let fn = unsafeBitCast(sym, to: Fn.self)
+		typealias EnsureFn = @convention(c) () -> Int32
+		typealias ReleaseFn = @convention(c) (Int32) -> Void
+		guard let fn: Fn = lookup("PyRun_SimpleString", as: Fn.self) else { return -1 }
+		// Lay GIL truoc khi goi Python API tu background thread
+		let gstate: Int32
+		if let ensureFn: EnsureFn = lookup("PyGILState_Ensure", as: EnsureFn.self) {
+			gstate = ensureFn()
+		} else {
+			gstate = -1
+		}
+		defer {
+			if gstate != -1,
+			   let releaseFn: ReleaseFn = lookup("PyGILState_Release", as: ReleaseFn.self) {
+				releaseFn(gstate)
+			}
+		}
 		return command.withCString { fn($0) }
 	}
 }
