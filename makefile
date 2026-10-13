@@ -40,14 +40,14 @@ $(SCHEMES): deps
 	rm -rf "$(STAGE)/"
 	mkdir -p "$(STAGE)/Payload"
 
-	mv "$(APP)/$@.app" "$(STAGE)/Payload/$@.app"
+	mv "$(APP)/$(NAME).app" "$(STAGE)/Payload/$(NAME).app"
 
-	chmod -R 0755 "$(STAGE)/Payload/$@.app"
-	codesign --force --sign - --timestamp=none "$(STAGE)/Payload/$@.app"
+	chmod -R 0755 "$(STAGE)/Payload/$(NAME).app"
+	codesign --force --sign - --timestamp=none "$(STAGE)/Payload/$(NAME).app"
 
-	cp deps/* "$(STAGE)/Payload/$@.app/" || true
+	cp deps/* "$(STAGE)/Payload/$(NAME).app/" || true
 
-	rm -rf "$(STAGE)/Payload/$@.app/_CodeSignature"
+	rm -rf "$(STAGE)/Payload/$(NAME).app/_CodeSignature"
 	ln -sf "$(STAGE)/Payload" Payload
 	
 	mkdir -p packages
