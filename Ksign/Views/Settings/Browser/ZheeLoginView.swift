@@ -186,9 +186,6 @@ struct ZheeLoginView: View {
 		withAnimation(.easeInOut(duration: 2).repeatForever(autoreverses: true)) {
 			glowPulse = true
 		}
-		withAnimation(.linear(duration: 2.5).repeatForever(autoreverses: false)) {
-			shimmer = true
-		}
 		withAnimation(.linear(duration: 3).repeatForever(autoreverses: true)) {
 			titleGradientShift = true
 		}
