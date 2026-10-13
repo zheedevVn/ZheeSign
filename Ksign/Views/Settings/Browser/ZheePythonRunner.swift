@@ -127,7 +127,7 @@ class ZheePythonRunner: ObservableObject {
 		appendOutput("""
 		Lệnh có sẵn:
 		  help              - Hiện trợ giúp
-		  clear             - Xóa màn hình
+		  clear / cls       - Xóa màn hình
 		  open              - Mở file .py từ máy
 		  edit              - Mở trình viết code
 		  pip install <pkg> - Cài thư viện
@@ -151,7 +151,7 @@ class ZheePythonRunner: ObservableObject {
 		
 		if lower == "help" {
 			showHelp()
-		} else if lower == "clear" {
+		} else if lower == "clear" || lower == "cls" {
 			clearOutput()
 		} else if lower.hasPrefix("pip install ") {
 			let pkg = String(trimmed.dropFirst("pip install ".count)).trimmingCharacters(in: .whitespaces)
