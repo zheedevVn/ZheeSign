@@ -38,7 +38,7 @@ struct SettingsDonationCellView: View {
 	@ViewBuilder
 	private func _title() -> some View {
 		VStack(alignment: .center, spacing: 12) {
-            Image(uiImage: (UIImage(named: "Kana_love"))!).resizable().frame(width: 60, height: 60)
+            Image(uiImage: (UIImage(named: "ZheeLogo"))!).resizable().frame(width: 60, height: 60).clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
 			
 			Text(.localized("赞助"))
 				.font(.title)

@@ -15718,13 +15718,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "支持我们"
+            "value": "Support ZheeSign"
           }
         },
         "vi": {
           "stringUnit": {
             "state": "translated",
-            "value": "Ủng hộ chúng tôi"
+            "value": "Ủng hộ ZheeSign"
           }
         }
       }
@@ -17877,13 +17877,13 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "通过赞助来支持我们！如果暂时无法赞助，帮忙宣传也是一种支持～"
+            "value": "Like the app? Buy me a coffee to keep it going! Sharing with friends helps too~"
           }
         },
         "vi": {
           "stringUnit": {
             "state": "translated",
-            "value": "Hãy ủng hộ chúng tôi qua tài trợ! Nếu chưa thể tài trợ, chia sẻ giúp cũng là một cách ủng hộ～"
+            "value": "Thấy app hữu ích? Ủng hộ mình ly cà phê để tiếp tục phát triển nhé! Chia sẻ cho bạn bè cũng là ủng hộ~"
           }
         }
       }
@@ -18428,6 +18428,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Xem trước"
+          }
+        }
+      }
+    },
+    "添加下载": {
+      "extractionState": "manual",
+      "localizations": {
+        "vi": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Thêm lượt tải"
+          }
+        },
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Add Download"
           }
         }
       }
