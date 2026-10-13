@@ -114,7 +114,45 @@ class ZheePythonRunner: ObservableObject {
 		output = ""
 	}
 	
-	private func appendOutput(_ text: String) {
+	func showHelp() {
+		appendOutput("""
+		Lệnh có sẵn:
+		  help              - Hiện trợ giúp
+		  clear             - Xóa màn hình
+		  pip install <pkg> - Cài thư viện
+		  <code python>     - Chạy code Python trực tiếp
+		
+		""")
+	}
+	
+	// Xử lý lệnh từ terminal
+	func executeCommand(_ cmd: String) {
+		let trimmed = cmd.trimmingCharacters(in: .whitespaces)
+		let lower = trimmed.lowercased()
+		
+		// Hiển thị lệnh đã nhập
+		appendOutput("❯ \(trimmed)\n")
+		
+		if lower == "help" {
+			showHelp()
+		} else if lower == "clear" {
+			clearOutput()
+		} else if lower.hasPrefix("pip install ") {
+			let pkg = String(trimmed.dropFirst("pip install ".count)).trimmingCharacters(in: .whitespaces)
+			if !pkg.isEmpty {
+				pipInstall(pkg)
+			} else {
+				appendOutput("Dùng: pip install <tên package>\n")
+			}
+		} else if lower.hasPrefix("pip ") {
+			appendOutput("Chỉ hỗ trợ: pip install <tên package>\n")
+		} else {
+			// Chạy như code Python
+			runCode(trimmed)
+		}
+	}
+	
+	func appendOutput(_ text: String) {
 		DispatchQueue.main.async { [weak self] in
 			self?.output += text
 		}

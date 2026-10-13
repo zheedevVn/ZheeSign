@@ -2,7 +2,7 @@
 //  ZheePythonView.swift
 //  ZheeSign
 //
-//  Chạy Python trong app: chọn file, viết code, cài pip.
+//  Terminal Python duy nhất: chạy code, pip, xem kết quả trong 1 cửa sổ.
 //  © 2026 Hồ Đức Minh
 //
 
@@ -11,106 +11,117 @@ import UniformTypeIdentifiers
 
 struct ZheePythonView: View {
 	@ObservedObject var runner = ZheePythonRunner.shared
-	@State private var code: String = "# Viết code Python ở đây\nprint('Xin chào từ ZheeSign!')\n\nfor i in range(5):\n    print(f'Dòng {i + 1}')"
-	@State private var showFilePicker = false
-	@State private var pipPackage: String = ""
-	@State private var selectedTab = 0
+	@State private var inputText: String = ""
 	@State private var fontSize: CGFloat = 13
+	@State private var showFilePicker = false
+	@State private var showCodeEditor = false
+	@State private var code: String = "# Viết code Python ở đây\nprint('Xin chào từ ZheeSign!')"
+	@FocusState private var inputFocused: Bool
 	
 	var body: some View {
 		VStack(spacing: 0) {
-			// Tab selector
-			Picker("", selection: $selectedTab) {
-				Text("Code").tag(0)
-				Text("File").tag(1)
-				Text("Pip").tag(2)
-				Text("Console").tag(3)
+			// Terminal - gần full màn hình
+			ScrollViewReader { proxy in
+				ScrollView {
+					VStack(alignment: .leading, spacing: 0) {
+						// Banner
+						HStack(spacing: 6) {
+							Text("Z")
+								.font(.system(size: 11, weight: .black))
+								.foregroundColor(.white)
+								.frame(width: 20, height: 20)
+								.background(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+								.clipShape(RoundedRectangle(cornerRadius: 6))
+							Text("Zhee Python Terminal")
+								.font(.caption.bold())
+							Text("v1.0")
+								.font(.caption2)
+								.foregroundStyle(.tertiary)
+							Spacer()
+							// Chỉnh font
+							Button { if fontSize > 9 { fontSize -= 1 } } label: {
+								Image(systemName: "textformat.size.smaller").font(.caption2)
+							}
+							.controlSize(.mini)
+							Button { if fontSize < 20 { fontSize += 1 } } label: {
+								Image(systemName: "textformat.size.larger").font(.caption2)
+							}
+							.controlSize(.mini)
+						}
+						.padding(.bottom, 8)
+						
+						// Output
+						Text(runner.output.isEmpty ? "Gõ 'help' để xem lệnh.\n" : runner.output)
+							.font(.system(size: fontSize, design: .monospaced))
+							.foregroundColor(.green)
+							.textSelection(.enabled)
+							.frame(maxWidth: .infinity, alignment: .leading)
+							.id("bottom")
+					}
+					.padding(10)
+				}
+				.background(Color.black)
+				.onChange(of: runner.output) { _ in
+					withAnimation {
+						proxy.scrollTo("bottom", anchor: .bottom)
+					}
+				}
 			}
-			.pickerStyle(.segmented)
-			.padding()
 			
-			if selectedTab == 0 {
-				codeEditorView
-			} else if selectedTab == 1 {
-				fileView
-			} else if selectedTab == 2 {
-				pipView
-			} else {
-				consoleView
+			// Thanh lệnh nhanh (nhỏ gọn)
+			ScrollView(.horizontal, showsIndicators: false) {
+				HStack(spacing: 8) {
+					quickButton("▶ Chạy", icon: "play.fill") {
+						showCodeEditor = true
+					}
+					quickButton("📁 File", icon: "folder.fill") {
+						showFilePicker = true
+					}
+					quickButton("📦 Pip", icon: "shippingbox.fill") {
+						inputText = "pip install "
+						inputFocused = true
+					}
+					quickButton("🗑 Xóa", icon: "trash.fill") {
+						runner.clearOutput()
+					}
+					quickButton("❓ Help", icon: "questionmark.circle.fill") {
+						runner.showHelp()
+					}
+				}
+				.padding(.horizontal, 10)
+				.padding(.vertical, 6)
 			}
+			.background(Color(.secondarySystemBackground))
+			
+			// Ô nhập lệnh
+			HStack(spacing: 8) {
+				Text("❯")
+					.font(.system(size: 14, weight: .bold, design: .monospaced))
+					.foregroundColor(.green)
+				TextField("Nhập lệnh hoặc code Python...", text: $inputText)
+					.font(.system(size: 14, design: .monospaced))
+					.textFieldStyle(.roundedBorder)
+					.focused($inputFocused)
+					.autocapitalization(.none)
+					.autocorrectionDisabled()
+					.onSubmit {
+						executeInput()
+					}
+				Button {
+					executeInput()
+				} label: {
+					Image(systemName: "arrow.up.circle.fill")
+						.font(.title2)
+						.foregroundColor(.green)
+				}
+				.disabled(inputText.isEmpty || runner.isRunning)
+			}
+			.padding(.horizontal, 10)
+			.padding(.vertical, 8)
+			.background(Color(.systemBackground))
 		}
 		.navigationTitle("Python")
 		.navigationBarTitleDisplayMode(.inline)
-	}
-	
-	// MARK: - Code Editor
-	private var codeEditorView: some View {
-		VStack {
-			TextEditor(text: $code)
-				.font(.system(.body, design: .monospaced))
-				.padding(8)
-				.background(Color(.secondarySystemBackground))
-				.cornerRadius(12)
-				.padding(.horizontal)
-			
-			Button {
-				selectedTab = 3
-				runner.runCode(code)
-			} label: {
-				HStack(spacing: 6) {
-					Image(systemName: "play.fill")
-						.font(.caption)
-					Text("Chạy")
-						.font(.subheadline.bold())
-				}
-				.frame(maxWidth: .infinity)
-				.padding(.vertical, 10)
-				.background(
-					LinearGradient(colors: [.green, .mint], startPoint: .leading, endPoint: .trailing)
-				)
-				.foregroundColor(.white)
-				.cornerRadius(10)
-			}
-			.padding(.horizontal)
-			.padding(.bottom, 8)
-			.disabled(runner.isRunning)
-		}
-	}
-	
-	// MARK: - File Picker
-	private var fileView: some View {
-		VStack(spacing: 20) {
-			Image(systemName: "doc.text.fill")
-				.font(.system(size: 60))
-				.foregroundStyle(
-					LinearGradient(colors: [.blue, .purple], startPoint: .top, endPoint: .bottom)
-				)
-			
-			Text("Chọn file Python (.py) từ máy")
-				.font(.headline)
-			
-			Text("File sẽ được chạy ngay trong app")
-				.font(.subheadline)
-				.foregroundStyle(.secondary)
-			
-			Button {
-				showFilePicker = true
-			} label: {
-				HStack {
-					Image(systemName: "folder.fill")
-					Text("Chọn file")
-				}
-				.frame(maxWidth: .infinity)
-				.padding()
-				.background(Color.blue)
-				.foregroundColor(.white)
-				.cornerRadius(14)
-			}
-			.padding(.horizontal, 40)
-			
-			Spacer()
-		}
-		.padding(.top, 40)
 		.fileImporter(
 			isPresented: $showFilePicker,
 			allowedContentTypes: [UTType(filenameExtension: "py") ?? .plainText],
@@ -118,145 +129,69 @@ struct ZheePythonView: View {
 		) { result in
 			switch result {
 			case .success(let urls):
-				if let url = urls.first {
-					// Bắt đầu truy cập file
-					if url.startAccessingSecurityScopedResource() {
-						runner.runFile(at: url)
-						url.stopAccessingSecurityScopedResource()
-					}
-					selectedTab = 3
+				if let url = urls.first, url.startAccessingSecurityScopedResource() {
+					runner.runFile(at: url)
+					url.stopAccessingSecurityScopedResource()
 				}
 			case .failure(let error):
-				runner.output += "Lỗi chọn file: \(error.localizedDescription)\n"
-				selectedTab = 3
+				runner.appendOutput("Lỗi chọn file: \(error.localizedDescription)\n")
 			}
 		}
-	}
-	
-	// MARK: - Pip Installer
-	private var pipView: some View {
-		VStack(spacing: 20) {
-			Image(systemName: "shippingbox.fill")
-				.font(.system(size: 60))
-				.foregroundStyle(
-					LinearGradient(colors: [.orange, .red], startPoint: .top, endPoint: .bottom)
-				)
-			
-			Text("Cài thư viện Python")
-				.font(.headline)
-			
-			HStack {
-				TextField("Tên package (vd: requests)", text: $pipPackage)
-					.textFieldStyle(.roundedBorder)
-					.autocapitalization(.none)
-				
-				Button {
-					if !pipPackage.isEmpty {
-						selectedTab = 3
-						runner.pipInstall(pipPackage)
-						pipPackage = ""
+		.sheet(isPresented: $showCodeEditor) {
+			NavigationView {
+				VStack {
+					TextEditor(text: $code)
+						.font(.system(size: 14, design: .monospaced))
+						.padding(8)
+					HStack {
+						Button("Hủy") { showCodeEditor = false }
+							.buttonStyle(.bordered)
+						Spacer()
+						Button {
+							showCodeEditor = false
+							runner.runCode(code)
+						} label: {
+							HStack(spacing: 6) {
+								Image(systemName: "play.fill").font(.caption)
+								Text("Chạy").bold()
+							}
+						}
+						.buttonStyle(.borderedProminent)
+						.tint(.green)
 					}
-				} label: {
-					Image(systemName: "arrow.down.circle.fill")
-						.font(.title2)
-						.foregroundColor(.blue)
+					.padding()
 				}
-				.disabled(runner.isRunning || pipPackage.isEmpty)
+				.navigationTitle("Viết code")
+				.navigationBarTitleDisplayMode(.inline)
 			}
-			.padding(.horizontal)
-			
-			Text("Các package phổ biến: requests, numpy, pillow")
-				.font(.caption)
-				.foregroundStyle(.secondary)
-			
-			Spacer()
 		}
-		.padding(.top, 40)
+		.onAppear {
+			if runner.output.isEmpty {
+				runner.appendOutput("Zhee Python Terminal v1.0\n© 2026 Hồ Đức Minh\nGõ 'help' để xem lệnh.\n\n")
+			}
+		}
 	}
 	
-	// MARK: - Console (full man hinh)
-	private var consoleView: some View {
-		VStack(spacing: 6) {
-			// Header nho: branding + chinh font
-			HStack(spacing: 8) {
-				HStack(spacing: 4) {
-					Text("Z")
-						.font(.system(size: 10, weight: .black))
-						.foregroundColor(.white)
-						.frame(width: 18, height: 18)
-						.background(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
-						.clipShape(RoundedRectangle(cornerRadius: 5))
-					Text("Zhee Console")
-						.font(.caption2.bold())
-						.foregroundStyle(.secondary)
-				}
-				
-				Spacer()
-				
-				// Giam font
-				Button { if fontSize > 9 { fontSize -= 1 } } label: {
-					Image(systemName: "textformat.size.smaller")
-						.font(.caption)
-				}
-				.buttonStyle(.bordered)
-				.controlSize(.mini)
-				
-				// Tang font
-				Button { if fontSize < 20 { fontSize += 1 } } label: {
-					Image(systemName: "textformat.size.larger")
-						.font(.caption)
-				}
-				.buttonStyle(.bordered)
-				.controlSize(.mini)
-				
-				// Xoa
-				Button { runner.clearOutput() } label: {
-					Image(systemName: "trash")
-						.font(.caption)
-				}
-				.buttonStyle(.bordered)
-				.controlSize(.mini)
+	private func quickButton(_ title: String, icon: String, action: @escaping () -> Void) -> some View {
+		Button(action: action) {
+			HStack(spacing: 4) {
+				Image(systemName: icon).font(.caption2)
+				Text(title).font(.caption)
 			}
 			.padding(.horizontal, 10)
-			.padding(.top, 4)
-			
-			// Terminal gan full man hinh
-			ScrollView {
-				ScrollViewReader { _ in
-					Text(runner.output.isEmpty ? "Zhee Python Console v1.0\n© 2026 Hồ Đức Minh\n\nChạy code để xem kết quả..." : runner.output)
-						.font(.system(size: fontSize, design: .monospaced))
-						.frame(maxWidth: .infinity, alignment: .leading)
-						.padding(8)
-						.foregroundColor(runner.output.isEmpty ? .secondary : Color.green)
-						.textSelection(.enabled)
-				}
-			}
-			.background(Color.black.opacity(0.9))
-			.cornerRadius(10)
-			.padding(.horizontal, 8)
-			
-			// Status bar nho
-			HStack {
-				if runner.isRunning {
-					ProgressView()
-						.progressViewStyle(.circular)
-						.scaleEffect(0.7)
-					Text("Đang chạy...")
-						.font(.caption2)
-						.foregroundStyle(.secondary)
-				} else {
-					Text("Sẵn sàng")
-						.font(.caption2)
-						.foregroundStyle(.secondary)
-				}
-				Spacer()
-				Text("\(Int(fontSize))pt")
-					.font(.caption2)
-					.foregroundStyle(.tertiary)
-			}
-			.padding(.horizontal, 12)
-			.padding(.bottom, 4)
+			.padding(.vertical, 6)
+			.background(Color(.tertiarySystemBackground))
+			.cornerRadius(8)
 		}
+		.buttonStyle(.plain)
+	}
+	
+	private func executeInput() {
+		let cmd = inputText.trimmingCharacters(in: .whitespaces)
+		guard !cmd.isEmpty else { return }
+		inputText = ""
+		inputFocused = false
+		runner.executeCommand(cmd)
 	}
 }
 
