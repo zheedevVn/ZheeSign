@@ -24,15 +24,15 @@ struct AppIconView: View {
     private let appIcons: [AppIconOption] = [
         AppIconOption(
             id: "primary",
-            title: "默认",
+            title: "Mặc định",
             subtitle: "ZheeSign",
             iconName: "AppIcon",
             alternateIconName: nil
         ),
         
-        AppIconOption(id: "kana_peek", title: "偷看", subtitle: "Kana", iconName: "kana_peek", alternateIconName: "kana_peek"),
-        AppIconOption(id: "kana_love", title: "爱心", subtitle: "Kana", iconName: "kana_love", alternateIconName: "kana_love"),
-        AppIconOption(id: "kana_ded", title: "骷髅", subtitle: "Kana", iconName: "kana_ded", alternateIconName: "kana_ded"),
+        AppIconOption(id: "kana_peek", title: "Nhìn trộm", subtitle: "Kana", iconName: "kana_peek", alternateIconName: "kana_peek"),
+        AppIconOption(id: "kana_love", title: "Trái tim", subtitle: "Kana", iconName: "kana_love", alternateIconName: "kana_love"),
+        AppIconOption(id: "kana_ded", title: "Đầu lâu", subtitle: "Kana", iconName: "kana_ded", alternateIconName: "kana_ded"),
     ]
     
     // MARK: Body

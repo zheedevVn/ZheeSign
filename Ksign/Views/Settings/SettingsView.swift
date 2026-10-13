@@ -28,8 +28,8 @@ struct SettingsView: View {
     }
     
     
-	private let _donationsUrl = "https://github.com/sponsors/nyasami"
-	private let _githubUrl = "https://github.com/nyasami/ksign"
+	private let _donationsUrl = "https://github.com/sponsors/zheedevVn"
+	private let _githubUrl = "https://github.com/zheedevVn/ZheeSign"
     private let _discordUrl = "https://discord.gg/sfbZfQzVdQ"
 	// MARK: Body
     var body: some View {
@@ -92,7 +92,7 @@ struct SettingsView: View {
                         Label(.localized("重置"), systemImage: "trash")
                     }
                 } footer: {
-                    Text("将重置应用的源、证书、应用以及常规内容。")
+                    Text("Sẽ đặt lại nguồn, chứng chỉ, ứng dụng và nội dung chung của ứng dụng.")
                 }
 
             }
