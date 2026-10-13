@@ -27,7 +27,8 @@ struct FeatherApp: App {
 				if !auth.isLoggedIn {
 					ZheeLoginView()
 				} else {
-					VStack {
+					VStack(spacing: 0) {
+						ZheeUpdateBanner()
 						ExtractHeaderView(extractManager: extractManager)
 							.transition(.move(edge: .top).combined(with: .opacity))
 						DownloadHeaderView(downloadManager: downloadManager)

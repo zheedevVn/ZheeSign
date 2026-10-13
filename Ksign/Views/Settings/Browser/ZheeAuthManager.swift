@@ -88,7 +88,7 @@ class ZheeAuthManager: ObservableObject {
 			URLQueryItem(name: "client_id", value: Self.clientId),
 			URLQueryItem(name: "redirect_uri", value: Self.redirectURI),
 			URLQueryItem(name: "response_type", value: "code"),
-			URLQueryItem(name: "scope", value: "openid profile"),
+			URLQueryItem(name: "scope", value: "openid profile email"),
 			URLQueryItem(name: "state", value: state),
 		]
 		return comps?.url

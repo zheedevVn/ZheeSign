@@ -98,7 +98,9 @@ struct ZheeLoginView: View {
 				VStack(spacing: 12) {
 					// Tiêu đề gradient chuyển màu
 					Text("Chào mừng đến ZheeSign")
-						.font(.system(size: 30, weight: .bold))
+						.font(.system(size: 24, weight: .bold))
+						.minimumScaleFactor(0.8)
+						.lineLimit(1)
 						.foregroundStyle(
 							LinearGradient(
 								colors: titleGradientShift ? [.cyan, .purple, .pink] : [.pink, .cyan, .purple],
