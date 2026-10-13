@@ -71,11 +71,30 @@ jobs:
           fi
           echo "Sending link to Discord..."
           
+          VERSION=$(grep -m1 'MARKETING_VERSION' Ksign.xcodeproj/project.pbxproj | sed 's/.*= //;s/;//;s/ //g')
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
           jq -n \
             --arg commit_msg "$COMMIT_MSG" \
             --arg download_url "$DOWNLOAD_URL" \
             --arg release_url "$RELEASE_URL" \
-            '{content: "**New Beta Released!**\n\nChanges: `\($commit_msg)`\n\n[**Download IPA**](\($download_url))\n[View Release](\($release_url))"}' > discord_payload.json
+            --arg version "$VERSION" \
+            --arg timestamp "$TIMESTAMP" \
+            --arg repo "$REPO" \
+            '{
+              username: "ZheeSign Bot",
+              embeds: [{
+                title: "🚀 ZheeSign Beta Mới!",
+                description: ("**Phiên bản:** `\($version)`\n**Thay đổi:** \($commit_msg)"),
+                color: 9055202,
+                fields: [
+                  {name: "📲 Tải IPA", value: "[Bấm để tải](\($download_url))", inline: true},
+                  {name: "📋 Chi tiết", value: "[Xem release](\($release_url))", inline: true}
+                ],
+                footer: {text: ("ZheeSign • \($repo)")},
+                timestamp: $timestamp
+              }]
+            }' > discord_payload.json
 
           curl -v \
             -H "Content-Type: application/json" \
