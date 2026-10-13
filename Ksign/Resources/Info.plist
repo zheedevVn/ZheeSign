@@ -55,29 +55,29 @@
 	<dict>
 		<key>CFBundleAlternateIcons</key>
 		<dict>
-			<key>zhee_blue</key>
+			<key>kana_ded</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>zhee_blue</string>
+					<string>kana_ded</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
-			<key>zhee_fire</key>
+			<key>kana_love</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>zhee_fire</string>
+					<string>kana_love</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
 			</dict>
-			<key>zhee_green</key>
+			<key>kana_peek</key>
 			<dict>
 				<key>CFBundleIconFiles</key>
 				<array>
-					<string>zhee_green</string>
+					<string>kana_peek</string>
 				</array>
 				<key>UIPrerenderedIcon</key>
 				<false/>
