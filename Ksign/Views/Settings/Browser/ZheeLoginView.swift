@@ -2,7 +2,7 @@
 //  ZheeLoginView.swift
 //  ZheeSign
 //
-//  Màn hình đăng nhập bằng Zhee — đẹp, có đăng ký ngay trong web.
+//  Màn hình đăng nhập bằng Zhee — animation đẹp.
 //  © 2026 Hồ Đức Minh
 //
 
@@ -14,34 +14,49 @@ struct ZheeLoginView: View {
 	@State private var showWebLogin = false
 	@State private var loginState = UUID().uuidString
 	
+	// Animation states
+	@State private var logoScale: CGFloat = 0.5
+	@State private var logoOpacity: Double = 0
+	@State private var titleOffset: CGFloat = 30
+	@State private var titleOpacity: Double = 0
+	@State private var buttonOffset: CGFloat = 50
+	@State private var buttonOpacity: Double = 0
+	@State private var orbOffset: CGFloat = 0
+	@State private var glowPulse = false
+	
 	var body: some View {
 		ZStack {
-			// Nền gradient
+			// Nền gradient động
 			LinearGradient(
-				colors: [Color(red: 0.1, green: 0.1, blue: 0.25), Color(red: 0.15, green: 0.05, blue: 0.3)],
+				colors: [Color(red: 0.08, green: 0.08, blue: 0.22), Color(red: 0.14, green: 0.04, blue: 0.28)],
 				startPoint: .topLeading,
 				endPoint: .bottomTrailing
 			)
 			.ignoresSafeArea()
 			
-			// Orbs trang trí
+			// Orbs trôi
 			Circle()
-				.fill(Color.purple.opacity(0.3))
-				.frame(width: 200, height: 200)
-				.blur(radius: 60)
-				.offset(x: -80, y: -150)
+				.fill(Color.purple.opacity(0.35))
+				.frame(width: 220, height: 220)
+				.blur(radius: 70)
+				.offset(x: -90 + orbOffset, y: -160 - orbOffset * 0.5)
 			Circle()
-				.fill(Color.cyan.opacity(0.25))
-				.frame(width: 180, height: 180)
+				.fill(Color.cyan.opacity(0.28))
+				.frame(width: 190, height: 190)
+				.blur(radius: 70)
+				.offset(x: 110 - orbOffset, y: 190 + orbOffset * 0.4)
+			Circle()
+				.fill(Color.pink.opacity(0.2))
+				.frame(width: 140, height: 140)
 				.blur(radius: 60)
-				.offset(x: 100, y: 180)
+				.offset(x: -40, y: 60 + orbOffset * 0.6)
 			
 			VStack(spacing: 24) {
 				Spacer()
 				
-				// Logo Z
+				// Logo Z với glow pulse
 				ZStack {
-					RoundedRectangle(cornerRadius: 28, style: .continuous)
+					RoundedRectangle(cornerRadius: 30, style: .continuous)
 						.fill(
 							LinearGradient(
 								colors: [.cyan, .purple, .pink],
@@ -49,15 +64,19 @@ struct ZheeLoginView: View {
 								endPoint: .bottomTrailing
 							)
 						)
-						.frame(width: 100, height: 100)
-						.shadow(color: .purple.opacity(0.5), radius: 20)
+						.frame(width: 110, height: 110)
+						.shadow(color: .purple.opacity(glowPulse ? 0.8 : 0.4), radius: glowPulse ? 30 : 15)
+						.scaleEffect(glowPulse ? 1.05 : 1.0)
 					
 					Text("Z")
-						.font(.system(size: 56, weight: .black))
+						.font(.system(size: 62, weight: .black))
 						.foregroundColor(.white)
+						.shadow(radius: 5)
 				}
+				.scaleEffect(logoScale)
+				.opacity(logoOpacity)
 				
-				VStack(spacing: 8) {
+				VStack(spacing: 10) {
 					Text("Chào mừng đến ZheeSign")
 						.font(.title)
 						.bold()
@@ -68,6 +87,8 @@ struct ZheeLoginView: View {
 						.foregroundColor(.white.opacity(0.7))
 						.font(.subheadline)
 				}
+				.offset(y: titleOffset)
+				.opacity(titleOpacity)
 				
 				Spacer()
 				
@@ -93,17 +114,44 @@ struct ZheeLoginView: View {
 					.padding(.vertical, 16)
 					.background(.white)
 					.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
-					.shadow(color: .black.opacity(0.2), radius: 10)
+					.shadow(color: .purple.opacity(0.3), radius: 12)
 				}
+				.scaleEffect(buttonOpacity > 0 ? 1 : 0.9)
+				.offset(y: buttonOffset)
+				.opacity(buttonOpacity)
 				.padding(.horizontal, 32)
 				
 				Text("Chưa có tài khoản? Đăng ký ngay trong\nmàn hình tiếp theo — miễn phí.")
 					.multilineTextAlignment(.center)
 					.font(.caption)
 					.foregroundColor(.white.opacity(0.6))
+					.opacity(buttonOpacity)
 				
 				Spacer()
 					.frame(height: 40)
+			}
+		}
+		.onAppear {
+			// Staggered entrance
+			withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
+				logoScale = 1.0
+				logoOpacity = 1.0
+			}
+			withAnimation(.easeOut(duration: 0.6).delay(0.3)) {
+				titleOffset = 0
+				titleOpacity = 1.0
+			}
+			withAnimation(.spring(response: 0.6, dampingFraction: 0.8).delay(0.5)) {
+				buttonOffset = 0
+				buttonOpacity = 1.0
+			}
+			// Orbs trôi liên tục
+			withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
+				orbOffset = 20
+			}
+			// Glow pulse
+			withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
+				glowPulse = true
 			}
 		}
 		.fullScreenCover(isPresented: $showWebLogin) {
@@ -130,6 +178,13 @@ private struct ZheeOAuthWebView: UIViewRepresentable {
 		let webView = WKWebView(frame: .zero, configuration: config)
 		webView.navigationDelegate = context.coordinator
 		webView.uiDelegate = context.coordinator
+		webView.allowsBackForwardNavigationGestures = true
+		
+		// Nút đóng
+		let closeButton = UIButton(type: .system)
+		closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
+		closeButton.tintColor = .systemGray
+		closeButton.addTarget(context.coordinator, action: #selector(Coordinator.closeTapped), for: .touchUpInside)
 		
 		if let url = ZheeAuthManager.shared.authorizeURL(state: state) {
 			webView.load(URLRequest(url: url))
@@ -145,6 +200,10 @@ private struct ZheeOAuthWebView: UIViewRepresentable {
 		
 		init(_ parent: ZheeOAuthWebView) {
 			self.parent = parent
+		}
+		
+		@objc func closeTapped() {
+			parent.onComplete()
 		}
 		
 		// Chặn redirect để lấy code
@@ -165,15 +224,12 @@ private struct ZheeOAuthWebView: UIViewRepresentable {
 		// Hỗ trợ popup (Google login mở cửa sổ mới)
 		func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
 			if navigationAction.targetFrame == nil {
-				let popup = WKWebView(frame: webView.frame, configuration: configuration)
+				let popup = WKWebView(frame: webView.bounds, configuration: configuration)
 				popup.navigationDelegate = self
 				popup.uiDelegate = self
+				popup.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 				webView.addSubview(popup)
 				popupWebView = popup
-				// Tự đóng popup khi xong
-				DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-					popup.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-				}
 				return popup
 			}
 			return nil
@@ -181,7 +237,9 @@ private struct ZheeOAuthWebView: UIViewRepresentable {
 		
 		func webViewDidClose(_ webView: WKWebView) {
 			webView.removeFromSuperview()
-			popupWebView = nil
+			if webView == popupWebView {
+				popupWebView = nil
+			}
 		}
 	}
 }

@@ -34,6 +34,7 @@ struct SettingsView: View {
     var body: some View {
 		NBNavigationView(.localized("设置")) {
 			Form {
+				ZheeProfileView()
 //				#if !NIGHTLY && !DEBUG
 				SettingsDonationCellView(site: _donationsUrl)
 //				#endif
