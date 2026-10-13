@@ -2,17 +2,17 @@
 //  ZheeLoginView.swift
 //  ZheeSign
 //
-//  Màn hình đăng nhập bằng Zhee — animation đẹp.
+//  Màn hình đăng nhập bằng Zhee — animation đẹp, chia sẻ cookie Safari.
 //  © 2026 Hồ Đức Minh
 //
 
 import SwiftUI
-import WebKit
+import AuthenticationServices
 
 struct ZheeLoginView: View {
 	@ObservedObject var auth = ZheeAuthManager.shared
-	@State private var showWebLogin = false
 	@State private var loginState = UUID().uuidString
+	@State private var isAuthenticating = false
 	
 	// Animation states
 	@State private var logoScale: CGFloat = 0.5
@@ -26,7 +26,6 @@ struct ZheeLoginView: View {
 	
 	var body: some View {
 		ZStack {
-			// Nền gradient động
 			LinearGradient(
 				colors: [Color(red: 0.08, green: 0.08, blue: 0.22), Color(red: 0.14, green: 0.04, blue: 0.28)],
 				startPoint: .topLeading,
@@ -34,7 +33,6 @@ struct ZheeLoginView: View {
 			)
 			.ignoresSafeArea()
 			
-			// Orbs trôi
 			Circle()
 				.fill(Color.purple.opacity(0.35))
 				.frame(width: 220, height: 220)
@@ -54,7 +52,6 @@ struct ZheeLoginView: View {
 			VStack(spacing: 24) {
 				Spacer()
 				
-				// Logo Z với glow pulse
 				ZStack {
 					RoundedRectangle(cornerRadius: 30, style: .continuous)
 						.fill(
@@ -92,23 +89,26 @@ struct ZheeLoginView: View {
 				
 				Spacer()
 				
-				// Nút đăng nhập
 				Button {
-					loginState = UUID().uuidString
-					showWebLogin = true
+					startOAuth()
 				} label: {
 					HStack(spacing: 12) {
-						ZStack {
-							RoundedRectangle(cornerRadius: 8, style: .continuous)
-								.fill(LinearGradient(colors: [.cyan, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
-								.frame(width: 28, height: 28)
-							Text("Z")
-								.font(.system(size: 16, weight: .black))
-								.foregroundColor(.white)
+						if isAuthenticating {
+							ProgressView()
+								.tint(.primary)
+						} else {
+							ZStack {
+								RoundedRectangle(cornerRadius: 8, style: .continuous)
+									.fill(LinearGradient(colors: [.cyan, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+									.frame(width: 28, height: 28)
+								Text("Z")
+									.font(.system(size: 16, weight: .black))
+									.foregroundColor(.white)
+							}
+							Text("Đăng nhập bằng Zhee")
+								.font(.headline)
+								.foregroundColor(.primary)
 						}
-						Text("Đăng nhập bằng Zhee")
-							.font(.headline)
-							.foregroundColor(.primary)
 					}
 					.frame(maxWidth: .infinity)
 					.padding(.vertical, 16)
@@ -116,7 +116,7 @@ struct ZheeLoginView: View {
 					.clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
 					.shadow(color: .purple.opacity(0.3), radius: 12)
 				}
-				.scaleEffect(buttonOpacity > 0 ? 1 : 0.9)
+				.disabled(isAuthenticating)
 				.offset(y: buttonOffset)
 				.opacity(buttonOpacity)
 				.padding(.horizontal, 32)
@@ -132,7 +132,6 @@ struct ZheeLoginView: View {
 			}
 		}
 		.onAppear {
-			// Staggered entrance
 			withAnimation(.spring(response: 0.6, dampingFraction: 0.7).delay(0.1)) {
 				logoScale = 1.0
 				logoOpacity = 1.0
@@ -145,101 +144,44 @@ struct ZheeLoginView: View {
 				buttonOffset = 0
 				buttonOpacity = 1.0
 			}
-			// Orbs trôi liên tục
 			withAnimation(.easeInOut(duration: 4).repeatForever(autoreverses: true)) {
 				orbOffset = 20
 			}
-			// Glow pulse
 			withAnimation(.easeInOut(duration: 1.8).repeatForever(autoreverses: true)) {
 				glowPulse = true
 			}
 		}
-		.fullScreenCover(isPresented: $showWebLogin) {
-			ZheeOAuthWebView(state: loginState) {
-				showWebLogin = false
+	}
+	
+	private func startOAuth() {
+		guard let authURL = auth.authorizeURL(state: loginState) else { return }
+		isAuthenticating = true
+		
+		let session = ASWebAuthenticationSession(
+			url: authURL,
+			callbackURLScheme: "zheesign"
+		) { callbackURL, error in
+			DispatchQueue.main.async {
+				self.isAuthenticating = false
+				if let url = callbackURL {
+					self.auth.handleCallback(url: url) { _ in }
+				}
 			}
 		}
+		session.presentationContextProvider = AuthPresentationProvider.shared
+		// Chia sẻ cookie với Safari — không phải đăng nhập Google lại
+		session.prefersEphemeralWebBrowserSession = false
+		session.start()
 	}
 }
 
-// MARK: - WebView cho OAuth (full screen, hỗ trợ popup)
-private struct ZheeOAuthWebView: UIViewRepresentable {
-	let state: String
-	var onComplete: () -> Void
+private class AuthPresentationProvider: NSObject, ASWebAuthenticationPresentationContextProviding {
+	static let shared = AuthPresentationProvider()
 	
-	func makeCoordinator() -> Coordinator {
-		Coordinator(self)
-	}
-	
-	func makeUIView(context: Context) -> WKWebView {
-		let config = WKWebViewConfiguration()
-		config.preferences.javaScriptEnabled = true
-		
-		let webView = WKWebView(frame: .zero, configuration: config)
-		webView.navigationDelegate = context.coordinator
-		webView.uiDelegate = context.coordinator
-		webView.allowsBackForwardNavigationGestures = true
-		
-		// Nút đóng
-		let closeButton = UIButton(type: .system)
-		closeButton.setImage(UIImage(systemName: "xmark.circle.fill"), for: .normal)
-		closeButton.tintColor = .systemGray
-		closeButton.addTarget(context.coordinator, action: #selector(Coordinator.closeTapped), for: .touchUpInside)
-		
-		if let url = ZheeAuthManager.shared.authorizeURL(state: state) {
-			webView.load(URLRequest(url: url))
-		}
-		return webView
-	}
-	
-	func updateUIView(_ uiView: WKWebView, context: Context) {}
-	
-	class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
-		var parent: ZheeOAuthWebView
-		var popupWebView: WKWebView?
-		
-		init(_ parent: ZheeOAuthWebView) {
-			self.parent = parent
-		}
-		
-		@objc func closeTapped() {
-			parent.onComplete()
-		}
-		
-		// Chặn redirect để lấy code
-		func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-			if let url = navigationAction.request.url,
-			   url.absoluteString.hasPrefix("https://api-zhee.vercel.app/oauth/mobile-callback") {
-				decisionHandler(.cancel)
-				ZheeAuthManager.shared.handleCallback(url: url) { _ in
-					DispatchQueue.main.async {
-						self.parent.onComplete()
-					}
-				}
-				return
-			}
-			decisionHandler(.allow)
-		}
-		
-		// Hỗ trợ popup (Google login mở cửa sổ mới)
-		func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
-			if navigationAction.targetFrame == nil {
-				let popup = WKWebView(frame: webView.bounds, configuration: configuration)
-				popup.navigationDelegate = self
-				popup.uiDelegate = self
-				popup.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-				webView.addSubview(popup)
-				popupWebView = popup
-				return popup
-			}
-			return nil
-		}
-		
-		func webViewDidClose(_ webView: WKWebView) {
-			webView.removeFromSuperview()
-			if webView == popupWebView {
-				popupWebView = nil
-			}
-		}
+	func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+		UIApplication.shared.connectedScenes
+			.compactMap { $0 as? UIWindowScene }
+			.flatMap { $0.windows }
+			.first { $0.isKeyWindow } ?? ASPresentationAnchor()
 	}
 }
