@@ -1,7 +1,7 @@
 {
   "version": "1.7.6",
   "build": "1.7.6",
-  "notes": "Terminal nhap nhieu dong, bo vien avatar, avatar cap nhat ngay",
+  "notes": "Multiline terminal input, no avatar ring, instant avatar update",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
