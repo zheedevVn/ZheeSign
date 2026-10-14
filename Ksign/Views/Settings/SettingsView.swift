@@ -11,6 +11,7 @@ import NimbleViews
 // MARK: - View
 struct SettingsView: View {
     @AppStorage("feather.selectedCert") private var _storedSelectedCert: Int = 0
+    @ObservedObject private var networkMonitor = ZheeNetworkMonitor.shared
     @FetchRequest(
         entity: CertificatePair.entity(),
         sortDescriptors: [NSSortDescriptor(keyPath: \CertificatePair.date, ascending: false)],
@@ -37,6 +38,13 @@ struct SettingsView: View {
 //				#if !NIGHTLY && !DEBUG
 				SettingsDonationCellView(site: _donationsUrl)
 //				#endif
+				
+				// Banner báo mất mạng
+				if !networkMonitor.isConnected {
+					Section {
+						ZheeOfflineBanner()
+					}
+				}
 				
 				ZheeProfileView()
 				ZheeUpdateView()
@@ -127,9 +135,22 @@ extension SettingsView {
 			NavigationLink(destination: ZheePrivacySettingsView()) {
 				Label("Cài đặt và quyền riêng tư", systemImage: "hand.raised")
 			}
-			NavigationLink(destination: WebBrowserView()) {
-				Label("Trình duyệt web", systemImage: "globe")
+			// Trình duyệt web — cần mạng
+			if networkMonitor.isConnected {
+				NavigationLink(destination: WebBrowserView()) {
+					Label("Trình duyệt web", systemImage: "globe")
+				}
+			} else {
+				HStack {
+					Label("Trình duyệt web", systemImage: "globe")
+						.foregroundColor(.secondary)
+					Spacer()
+					Image(systemName: "lock.fill")
+						.foregroundColor(.secondary)
+						.font(.caption)
+				}
 			}
+			// Python — luôn dùng được offline
 			NavigationLink(destination: ZheePythonView()) {
 				Label {
 					Text("Python")
@@ -140,14 +161,34 @@ extension SettingsView {
 						.frame(width: 28, height: 28)
 				}
 			}
-			NavigationLink(destination: ZheeTwitterView()) {
-				Label {
-					Text("Twitter / X")
-				} icon: {
-					Image("XLogo")
-						.resizable()
-						.scaledToFit()
-						.frame(width: 28, height: 28)
+			// Twitter — cần mạng
+			if networkMonitor.isConnected {
+				NavigationLink(destination: ZheeTwitterView()) {
+					Label {
+						Text("Twitter / X")
+					} icon: {
+						Image("XLogo")
+							.resizable()
+							.scaledToFit()
+							.frame(width: 28, height: 28)
+					}
+				}
+			} else {
+				HStack {
+					Label {
+						Text("Twitter / X")
+							.foregroundColor(.secondary)
+					} icon: {
+						Image("XLogo")
+							.resizable()
+							.scaledToFit()
+							.frame(width: 28, height: 28)
+							.opacity(0.5)
+					}
+					Spacer()
+					Image(systemName: "lock.fill")
+						.foregroundColor(.secondary)
+						.font(.caption)
 				}
 			}
 		}

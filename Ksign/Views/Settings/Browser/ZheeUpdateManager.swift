@@ -40,6 +40,13 @@ class ZheeUpdateManager: ObservableObject {
 	
 	func checkForUpdates() {
 		guard !isChecking else { return }
+		
+		// Không có mạng thì báo ngay, không chờ timeout
+		guard ZheeNetworkMonitor.shared.isConnected else {
+			// Không làm gì — banner mất mạng đã hiện
+			return
+		}
+		
 		isChecking = true
 		
 		// Thêm timestamp để tránh cache
@@ -51,6 +58,8 @@ class ZheeUpdateManager: ObservableObject {
 		
 		var request = URLRequest(url: url)
 		request.cachePolicy = .reloadIgnoringLocalAndRemoteCacheData
+		// Timeout ngắn — kiểm tra nhanh hết cỡ theo tốc độ mạng
+		request.timeoutInterval = 8
 		
 		URLSession.shared.dataTask(with: request) { [weak self] data, _, _ in
 			DispatchQueue.main.async {
