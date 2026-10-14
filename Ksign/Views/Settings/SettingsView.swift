@@ -84,8 +84,8 @@ struct SettingsView: View {
 					NavigationLink(destination: InstallationView()) {
                         Label(.localized("安装"), systemImage: "server.rack")
                     }
-					NavigationLink(destination: ZheeAppLockSettingsView()) {
-						Label("Khóa ứng dụng", systemImage: "lock.fill")
+					NavigationLink(destination: ZheePrivacySettingsView()) {
+						Label("Cài đặt và quyền riêng tư", systemImage: "hand.raised.fill")
 					}
 				}
 				
