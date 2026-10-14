@@ -103,7 +103,12 @@ struct ZheePythonView: View {
 							if keeper.isKeepingAlive {
 								keeper.stop()
 							} else {
-								keeper.start()
+								if !keeper.start() {
+									// Báo lỗi cho user biết
+									runner.appendError("Chạy nền lỗi: \(keeper.lastError ?? "không rõ")\n")
+								} else {
+									runner.appendOutput("Đã bật chạy nền - Python sẽ chạy khi thoát app\n")
+								}
 							}
 						} label: {
 							VStack(spacing: 4) {
