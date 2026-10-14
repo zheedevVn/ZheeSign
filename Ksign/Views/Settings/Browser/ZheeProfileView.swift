@@ -151,7 +151,7 @@ struct ZheeProfileDetailView: View {
 									.scaledToFill()
 									.frame(width: 110, height: 110)
 									.clipShape(Circle())
-									.shadow(color: .purple.opacity(0.4), radius: 20)
+									.shadow(color: .accentColor.opacity(0.4), radius: 20)
 							} else if let avatarURL = auth.avatarURL {
 								AsyncImage(url: avatarURL) { image in
 									image.resizable()
@@ -160,12 +160,12 @@ struct ZheeProfileDetailView: View {
 								}
 								.frame(width: 110, height: 110)
 								.clipShape(Circle())
-								.shadow(color: .purple.opacity(0.4), radius: 20)
+								.shadow(color: .accentColor.opacity(0.4), radius: 20)
 							} else {
 								Circle()
-									.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+									.fill(Color.accentColor.gradient)
 									.frame(width: 110, height: 110)
-									.shadow(color: .purple.opacity(0.4), radius: 20)
+									.shadow(color: .accentColor.opacity(0.4), radius: 20)
 									.overlay(
 										Text(String(auth.displayName.prefix(1)).uppercased())
 											.font(.system(size: 44, weight: .bold))
@@ -217,7 +217,7 @@ struct ZheeProfileDetailView: View {
 							.font(.title2.bold())
 						HStack(spacing: 5) {
 							Image(systemName: "checkmark.seal.fill")
-								.foregroundStyle(LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom))
+								.foregroundStyle(Color.accentColor)
 							Text("Tài khoản Zhee đã xác thực")
 								.font(.subheadline)
 								.foregroundStyle(.secondary)
