@@ -138,6 +138,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         
+        // Chống giả mạo — chạy ĐẦU TIÊN, sai là crash ngay không báo
+        ZheeTamperProtection.verifyOrCrash()
+        
         // Hiện thông báo cả khi app đang mở
         UNUserNotificationCenter.current().delegate = self
         
