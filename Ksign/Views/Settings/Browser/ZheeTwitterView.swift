@@ -186,14 +186,17 @@ struct ZheeTwitterView: View {
 					}
 				}
 				
-				// Parse theo format api-zhee trả về
-				let username = (json["username"] as? String) ?? query
-				let name = (json["name"] as? String) ?? (json["display_name"] as? String) ?? username
-				let avatar = (json["avatar"] as? String) ?? (json["profile_image"] as? String) ?? ""
-				let bio = (json["bio"] as? String) ?? (json["description"] as? String)
-				let followers = (json["followers"] as? Int) ?? 0
-				let following = (json["following"] as? Int) ?? 0
-				let tweets = (json["tweets"] as? Int) ?? (json["statuses_count"] as? Int) ?? 0
+				// Parse theo format api-zhee trả về (field tiếng Việt)
+				let info = (json["thong_tin_ca_nhan"] as? [String: Any]) ?? json
+				let stats = (info["thong_ke"] as? [String: Any]) ?? [:]
+				var username = (info["tai_khoan"] as? String) ?? (json["username"] as? String) ?? query
+				if username.hasPrefix("@") { username = String(username.dropFirst()) }
+				let name = (info["ho_ten"] as? String) ?? (json["name"] as? String) ?? username
+				let avatar = (info["anh_dai_dien"] as? String) ?? (json["avatar"] as? String) ?? ""
+				let bio = (info["tieu_su"] as? String) ?? (json["bio"] as? String)
+				let followers = (stats["nguoi_theo_doi"] as? Int) ?? (json["followers"] as? Int) ?? 0
+				let following = (stats["dang_theo_doi"] as? Int) ?? (json["following"] as? Int) ?? 0
+				let tweets = (stats["tong_so_tweet"] as? Int) ?? (json["tweets"] as? Int) ?? 0
 				
 				accountInfo = TwitterAccount(
 					username: username,
