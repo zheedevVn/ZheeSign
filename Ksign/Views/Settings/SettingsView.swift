@@ -141,7 +141,14 @@ extension SettingsView {
 				}
 			}
 			NavigationLink(destination: ZheeTwitterView()) {
-				Label("Twitter / X", systemImage: "x.circle")
+				Label {
+					Text("Twitter / X")
+				} icon: {
+					Image("XLogo")
+						.resizable()
+						.scaledToFit()
+						.frame(width: 28, height: 28)
+				}
 			}
 		}
 	}

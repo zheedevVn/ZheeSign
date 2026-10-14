@@ -21,9 +21,10 @@ struct ZheeTwitterView: View {
 		List {
 			Section {
 				HStack {
-					Image(systemName: "x.circle")
-						.font(.title2)
-						.foregroundColor(.primary)
+					Image("XLogo")
+						.resizable()
+						.scaledToFit()
+						.frame(width: 24, height: 24)
 					TextField("Link tweet hoặc username", text: $input)
 						.autocapitalization(.none)
 						.autocorrectionDisabled()
@@ -39,7 +40,14 @@ struct ZheeTwitterView: View {
 						.disabled(isLoading || input.isEmpty)
 				}
 			} header: {
-				Label("Twitter / X Downloader", systemImage: "x.circle")
+				Label {
+					Text("Twitter / X Downloader")
+				} icon: {
+					Image("XLogo")
+						.resizable()
+						.scaledToFit()
+						.frame(width: 20, height: 20)
+				}
 			}
 			
 			if isLoading {
