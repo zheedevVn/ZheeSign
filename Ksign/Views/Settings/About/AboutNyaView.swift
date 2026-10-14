@@ -21,7 +21,7 @@ struct AboutNyaView: View {
 						Circle()
 							.fill(
 								LinearGradient(
-									colors: [.cyan.opacity(0.5), .purple.opacity(0.5), .pink.opacity(0.4)],
+									colors: [Color.accentColor.opacity(0.5), Color.accentColor.opacity(0.2)],
 									startPoint: .topLeading,
 									endPoint: .bottomTrailing
 								)
@@ -36,7 +36,7 @@ struct AboutNyaView: View {
 								.resizable()
 								.frame(width: 96, height: 96)
 								.clipShape(RoundedRectangle(cornerRadius: 22))
-								.shadow(color: .purple.opacity(0.5), radius: 20)
+								.shadow(color: .accentColor.opacity(0.4), radius: 16)
 								.offset(y: animate ? -4 : 4)
 						}
 					}
@@ -46,7 +46,7 @@ struct AboutNyaView: View {
 						.font(.system(size: 38, weight: .black))
 						.foregroundStyle(
 							LinearGradient(
-								colors: animate ? [.cyan, .purple, .pink] : [.pink, .purple, .cyan],
+								colors: animate ? [Color.accentColor, .blue] : [.blue, Color.accentColor],
 								startPoint: .leading,
 								endPoint: .trailing
 							)
@@ -59,7 +59,7 @@ struct AboutNyaView: View {
 						.padding(.vertical, 5)
 						.background(
 							Capsule()
-								.fill(LinearGradient(colors: [.purple, .pink], startPoint: .leading, endPoint: .trailing))
+								.fill(Color.accentColor)
 						)
 					
 					Text("Công cụ ký và cài đặt IPA cho iOS\nNhanh • Đẹp • Miễn phí")
@@ -76,7 +76,7 @@ struct AboutNyaView: View {
 								image.resizable()
 							} else {
 								Circle()
-									.fill(LinearGradient(colors: [.cyan, .purple], startPoint: .topLeading, endPoint: .bottomTrailing))
+									.fill(Color.accentColor.gradient)
 									.overlay(
 										Text("M")
 											.font(.title.bold())
@@ -86,8 +86,7 @@ struct AboutNyaView: View {
 						}
 						.frame(width: 64, height: 64)
 						.clipShape(Circle())
-						.overlay(Circle().stroke(LinearGradient(colors: [.cyan, .purple], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 2.5))
-						.shadow(color: .purple.opacity(0.4), radius: 10)
+						.shadow(color: .accentColor.opacity(0.3), radius: 8)
 						
 						VStack(alignment: .leading, spacing: 4) {
 							Text("Hồ Đức Minh")
@@ -97,7 +96,7 @@ struct AboutNyaView: View {
 								.foregroundStyle(.secondary)
 							Text("@zheedevVn")
 								.font(.caption)
-								.foregroundColor(.cyan)
+								.foregroundColor(.accentColor)
 						}
 						
 						Spacer()
@@ -110,10 +109,10 @@ struct AboutNyaView: View {
 					
 					// Nút liên hệ
 					HStack(spacing: 12) {
-						LinkButton(icon: "chevron.left.forwardslash.chevron.right", title: "GitHub", colors: [.purple, .pink]) {
+						LinkButton(icon: "chevron.left.forwardslash.chevron.right", title: "GitHub", colors: [Color.accentColor, .blue]) {
 							openURL("https://github.com/zheedevVn")
 						}
-						LinkButton(icon: "paperplane.fill", title: "Telegram", colors: [.cyan, .blue]) {
+						LinkButton(icon: "paperplane.fill", title: "Telegram", colors: [Color.accentColor, .blue]) {
 							openURL("https://t.me/zheevipv1")
 						}
 					}
@@ -124,7 +123,7 @@ struct AboutNyaView: View {
 						.fill(Color(.secondarySystemBackground))
 						.overlay(
 							RoundedRectangle(cornerRadius: 20)
-								.stroke(LinearGradient(colors: [.cyan.opacity(0.4), .purple.opacity(0.4)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1)
+								.stroke(Color(.separator).opacity(0.5), lineWidth: 0.5)
 						)
 				)
 				.padding(.horizontal, 16)
