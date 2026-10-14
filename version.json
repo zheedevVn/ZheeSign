@@ -1,7 +1,7 @@
 {
-  "version": "1.7.12",
-  "build": "1.7.12",
-  "notes": "Lock instantly on launch, blur content in background",
+  "version": "1.7.13",
+  "build": "1.7.13",
+  "notes": "Bump to 1.7.13",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
