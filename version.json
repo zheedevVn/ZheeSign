@@ -1,7 +1,7 @@
 {
   "version": "1.7.20",
   "build": "1.7.20",
-  "notes": "Add concurrency guard to prevent duplicate beta releases",
+  "notes": "Fix Photos 3302 error, add save success message, block tweet URL as profile",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
