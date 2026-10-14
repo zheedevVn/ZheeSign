@@ -78,7 +78,7 @@ struct ZheePythonView: View {
 				}
 			}
 			
-			// Ô nhập lệnh nhiều dòng (Enter = xuống dòng, nút gửi để chạy)
+			// Ô nhập lệnh - gọn như thanh nhắn, tự to ra khi gõ dài
 			HStack(alignment: .bottom, spacing: 8) {
 				Text("❯")
 					.font(.system(size: 14, weight: .bold, design: .monospaced))
@@ -86,21 +86,24 @@ struct ZheePythonView: View {
 					.padding(.bottom, 10)
 				TextEditor(text: $inputText)
 					.font(.system(size: 14, design: .monospaced))
-					.frame(minHeight: 38, maxHeight: 110)
-					.padding(6)
-					.background(Color(.secondarySystemBackground))
-					.cornerRadius(10)
+					.foregroundColor(.white)
+					.frame(minHeight: 36, maxHeight: 120)
+					.fixedSize(horizontal: false, vertical: true)
+					.padding(.horizontal, 10)
+					.padding(.vertical, 8)
+					.background(Color(white: 0.14))
+					.cornerRadius(16)
 					.focused($inputFocused)
 					.autocapitalization(.none)
 					.autocorrectionDisabled()
 					.overlay(
 						Group {
 							if inputText.isEmpty {
-								Text("Nhập lệnh / code Python... (Enter xuống dòng)")
-									.font(.system(size: 13, design: .monospaced))
+								Text("Nhập lệnh / code Python...")
+									.font(.system(size: 14, design: .monospaced))
 									.foregroundColor(.gray)
-									.padding(.leading, 12)
-									.padding(.top, 14)
+									.padding(.leading, 14)
+									.padding(.top, 10)
 									.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
 									.allowsHitTesting(false)
 							}
@@ -127,7 +130,7 @@ struct ZheePythonView: View {
 			}
 			.padding(.horizontal, 10)
 			.padding(.vertical, 8)
-			.background(Color(.systemBackground))
+			.background(Color.black)
 		}
 		.navigationTitle("Python")
 		.navigationBarTitleDisplayMode(.inline)
