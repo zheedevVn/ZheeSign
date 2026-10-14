@@ -141,6 +141,9 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Hiện thông báo cả khi app đang mở
         UNUserNotificationCenter.current().delegate = self
         
+        // Đăng ký Background Fetch để check bản mới khi app ở nền
+        UIApplication.shared.setMinimumBackgroundFetchInterval(1800) // 30 phút
+        
         // Kiểm tra bảo mật: chặn debug/Frida
         if !ZheeSecurity.validateEnvironment() {
             // Phát hiện tấn công — thoát ngay
@@ -173,6 +176,19 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
         completionHandler([.banner, .sound])
+    }
+    
+    // Background Fetch — iOS đánh thức app để check bản mới, gửi thông báo
+    func application(
+        _ application: UIApplication,
+        performFetchWithCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
+    ) {
+        let manager = ZheeUpdateManager()
+        manager.checkForUpdates()
+        // Đợi 3s để request xong rồi báo
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            completionHandler(manager.updateAvailable ? .newData : .noData)
+        }
     }
     
     private func _initializeBuiltInSources() { 
