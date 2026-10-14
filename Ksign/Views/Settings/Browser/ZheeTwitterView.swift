@@ -75,17 +75,29 @@ struct ZheeTwitterView: View {
 			
 			if let error = errorMessage {
 				Section {
-					Text(error)
-						.foregroundColor(.red)
-						.font(.caption)
+					HStack(spacing: 10) {
+						Image(systemName: "exclamationmark.triangle.fill")
+							.foregroundColor(.red)
+							.font(.title3)
+						Text(error)
+							.foregroundColor(.red)
+							.font(.subheadline)
+					}
+					.padding(.vertical, 4)
 				}
 			}
 			
 			if let success = successMessage {
 				Section {
-					Text(success)
-						.foregroundColor(.green)
-						.font(.caption)
+					HStack(spacing: 10) {
+						Image(systemName: "checkmark.circle.fill")
+							.foregroundColor(.green)
+							.font(.title3)
+						Text(success)
+							.foregroundColor(.primary)
+							.font(.subheadline)
+					}
+					.padding(.vertical, 4)
 				}
 			}
 			
