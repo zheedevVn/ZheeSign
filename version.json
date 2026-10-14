@@ -1,7 +1,7 @@
 {
   "version": "1.7.11",
   "build": "1.7.11",
-  "notes": "Beautiful About page with developer info",
+  "notes": "Profile detail view accent color",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
