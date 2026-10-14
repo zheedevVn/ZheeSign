@@ -57,15 +57,9 @@ struct FeatherApp: App {
 				// Dùng != .active (bao gồm .inactive) vì iOS chụp snapshot trước khi vào .background
 				if hasBeenActive && scenePhase != .active {
 					ZStack {
-						Color(.systemBackground).ignoresSafeArea()
-						if let iconName = Bundle.main.iconFileName,
-						   let icon = UIImage(named: iconName) {
-							Image(uiImage: icon)
-								.resizable()
-								.frame(width: 80, height: 80)
-								.clipShape(RoundedRectangle(cornerRadius: 18))
-								.opacity(0.8)
-						}
+						// Blur mờ toàn bộ nội dung bên dưới
+						VisualEffectBlur(style: .systemMaterial)
+							.ignoresSafeArea()
 					}
 					.transition(.opacity)
 				}
@@ -303,4 +297,17 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         }
     }
 #endif
+}
+
+// MARK: - Blur che nội dung khi app inactive
+struct VisualEffectBlur: UIViewRepresentable {
+	var style: UIBlurEffect.Style = .systemMaterial
+	
+	func makeUIView(context: Context) -> UIVisualEffectView {
+		UIVisualEffectView(effect: UIBlurEffect(style: style))
+	}
+	
+	func updateUIView(_ uiView: UIVisualEffectView, context: Context) {
+		uiView.effect = UIBlurEffect(style: style)
+	}
 }
