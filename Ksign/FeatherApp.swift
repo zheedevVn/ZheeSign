@@ -9,6 +9,7 @@ import SwiftUI
 import Nuke
 import OSLog
 import IDeviceSwift
+import UserNotifications
 
 @main
 struct FeatherApp: App {
@@ -131,11 +132,14 @@ struct FeatherApp: App {
 	
 }
 
-class AppDelegate: NSObject, UIApplicationDelegate {
+class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
+        
+        // Hiện thông báo cả khi app đang mở
+        UNUserNotificationCenter.current().delegate = self
         
         _createPipeline()
         _createSourcesDirectory()
@@ -154,6 +158,15 @@ class AppDelegate: NSObject, UIApplicationDelegate {
         _downloadSSLCertificates()
 #endif
         return true
+    }
+    
+    // Hiện banner thông báo cả khi app đang mở
+    func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .sound])
     }
     
     private func _initializeBuiltInSources() { 

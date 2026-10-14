@@ -83,14 +83,17 @@ class ZheeUpdateManager: ObservableObject {
 			self.latestVersion = remote
 			self.releaseNotes = notes
 			self.updateAvailable = true
-			// Gửi thông báo 1 lần cho mỗi version mới
+			// Gửi thông báo mỗi lần mở app thấy bản mới (không spam trong cùng 1 phiên)
 			if notifiedVersion != remote {
 				notifiedVersion = remote
-				sendUpdateNotification(version: remote, notes: notes)
 			}
+			// Luôn thử gửi — iOS tự gộp thông báo trùng
+			sendUpdateNotification(version: remote, notes: notes)
 		} else {
 			self.latestVersion = nil
 			self.updateAvailable = false
+			// Đã cập nhật xong thì reset để lần sau báo tiếp
+			notifiedVersion = nil
 		}
 	}
 	
@@ -101,10 +104,11 @@ class ZheeUpdateManager: ObservableObject {
 			guard settings.authorizationStatus == .authorized else { return }
 			
 			let content = UNMutableNotificationContent()
-			content.title = "ZheeSign có bản mới"
+			content.title = "ZheeSign có bản mới ✨"
 			content.subtitle = "Phiên bản \(version) đã sẵn sàng"
-			content.body = notes?.isEmpty == false ? notes! : "Mở app để cập nhật ngay"
+			content.body = notes?.isEmpty == false ? notes! : "Chạm để mở app và cập nhật ngay"
 			content.sound = .default
+			content.badge = 1
 			
 			// Mở app khi bấm vào thông báo
 			let request = UNNotificationRequest(
