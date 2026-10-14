@@ -94,6 +94,8 @@ final class ZheeAppLockManager: ObservableObject {
 	}
 	
 	func unlock() {
+		// Reset mốc thời gian khi mở khóa thành công - tránh appDidBecomeActive khóa lại ngay gây lặp vô tận
+		defaults.set(Date().timeIntervalSince1970, forKey: "zhee.applock.lastbg")
 		DispatchQueue.main.async { self.isLocked = false }
 	}
 	
