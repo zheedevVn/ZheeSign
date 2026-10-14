@@ -79,11 +79,10 @@ struct ZheePythonView: View {
 			}
 			
 			// Ô nhập lệnh - gọn như thanh nhắn, tự to ra khi gõ dài
-			HStack(alignment: .bottom, spacing: 8) {
+			HStack(alignment: .center, spacing: 8) {
 				Text("❯")
 					.font(.system(size: 14, weight: .bold, design: .monospaced))
 					.foregroundColor(.green)
-					.padding(.bottom, 10)
 				TextEditor(text: $inputText)
 					.scrollContentBackground(.hidden)
 					.font(.system(size: 14, design: .monospaced))
@@ -118,7 +117,6 @@ struct ZheePythonView: View {
 						.foregroundColor(.blue)
 				}
 				.disabled(runner.isRunning)
-				.padding(.bottom, 8)
 				Button {
 					executeInput()
 				} label: {
@@ -127,7 +125,6 @@ struct ZheePythonView: View {
 						.foregroundColor(.green)
 				}
 				.disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || runner.isRunning)
-				.padding(.bottom, 6)
 			}
 			.padding(.horizontal, 10)
 			.padding(.vertical, 8)
