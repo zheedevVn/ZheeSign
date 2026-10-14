@@ -15,6 +15,8 @@ struct ZheeTwitterView: View {
 	@State private var errorMessage: String?
 	@State private var accountInfo: TwitterAccount?
 	@State private var mediaItems: [TwitterMedia] = []
+	@State private var secretKey: String = UserDefaults.standard.string(forKey: "zhee_twitter_secret") ?? ""
+	@State private var showSecretInput = false
 	@ObservedObject var auth = ZheeAuthManager.shared
 	
 	var body: some View {
@@ -48,6 +50,26 @@ struct ZheeTwitterView: View {
 						.scaledToFit()
 						.frame(width: 20, height: 20)
 				}
+			}
+			
+			Section("Secret Key") {
+				if secretKey.isEmpty {
+					Button("Nhập Secret Key từ web") {
+						showSecretInput = true
+					}
+				} else {
+					HStack {
+						Text("Đã lưu key")
+							.foregroundColor(.green)
+						Spacer()
+						Button("Đổi") {
+							showSecretInput = true
+						}
+					}
+				}
+				Text("Lấy key tại web api-zhee → mục tài khoản")
+					.font(.caption)
+					.foregroundColor(.secondary)
 			}
 			
 			if isLoading {
@@ -137,11 +159,37 @@ struct ZheeTwitterView: View {
 		}
 		.navigationTitle("Twitter / X")
 		.navigationBarTitleDisplayMode(.inline)
+		.sheet(isPresented: $showSecretInput) {
+			NavigationView {
+				Form {
+					Section {
+						SecureField("Dán secret key", text: $secretKey)
+					} footer: {
+						Text("Vào web api-zhee, đăng nhập, copy secret key ở mục tài khoản rồi dán vào đây.")
+					}
+				}
+				.navigationTitle("Secret Key")
+				.navigationBarTitleDisplayMode(.inline)
+				.toolbar {
+					ToolbarItem(placement: .cancellationAction) {
+						Button("Hủy") { showSecretInput = false }
+					}
+					ToolbarItem(placement: .confirmationAction) {
+						Button("Lưu") {
+							UserDefaults.standard.set(secretKey.trimmingCharacters(in: .whitespaces), forKey: "zhee_twitter_secret")
+							secretKey = UserDefaults.standard.string(forKey: "zhee_twitter_secret") ?? ""
+							showSecretInput = false
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	private func fetchAccountInfo() {
-		guard let token = auth.accessToken else {
-			errorMessage = "Bạn chưa đăng nhập"
+		let key = secretKey.trimmingCharacters(in: .whitespaces)
+		guard !key.isEmpty else {
+			errorMessage = "Chưa nhập secret key — bấm mục Secret Key ở trên"
 			return
 		}
 		isLoading = true
@@ -149,9 +197,9 @@ struct ZheeTwitterView: View {
 		accountInfo = nil
 		
 		let query = input.trimmingCharacters(in: .whitespaces)
-		var urlString = "https://api-zhee.vercel.app/twitter?action=info&username=\(query)"
+		var urlString = "https://api-zhee.vercel.app/twitter?key=\(key)&action=info&username=\(query)"
 		if query.contains("twitter.com") || query.contains("x.com") {
-			urlString = "https://api-zhee.vercel.app/twitter?action=info&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+			urlString = "https://api-zhee.vercel.app/twitter?key=\(key)&action=info&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 		}
 		
 		guard let url = URL(string: urlString) else {
@@ -160,10 +208,7 @@ struct ZheeTwitterView: View {
 			return
 		}
 		
-		var req = URLRequest(url: url)
-		req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-		
-		URLSession.shared.dataTask(with: req) { data, _, _ in
+		URLSession.shared.dataTask(with: url) { data, _, _ in
 			DispatchQueue.main.async {
 				isLoading = false
 				guard let data = data,
@@ -172,9 +217,17 @@ struct ZheeTwitterView: View {
 					return
 				}
 				
-				if let msg = json["thong_bao"] as? String, json["trang_thai"] as? String == "that_bai" {
-					errorMessage = msg
-					return
+				if let msg = json["thong_bao"] as? String {
+					let status = json["trang_thai"] as? String
+					if status == "that_bai" {
+						// Kiểm tra hết hạn
+						if msg.lowercased().contains("hết hạn") || msg.lowercased().contains("expired") {
+							errorMessage = "Key đã hết hạn — lên web gia hạn thêm"
+						} else {
+							errorMessage = msg
+						}
+						return
+					}
 				}
 				
 				// Parse theo format api-zhee trả về
@@ -200,8 +253,9 @@ struct ZheeTwitterView: View {
 	}
 	
 	private func fetchMedia() {
-		guard let token = auth.accessToken else {
-			errorMessage = "Bạn chưa đăng nhập"
+		let key = secretKey.trimmingCharacters(in: .whitespaces)
+		guard !key.isEmpty else {
+			errorMessage = "Chưa nhập secret key — bấm mục Secret Key ở trên"
 			return
 		}
 		isLoading = true
@@ -209,7 +263,7 @@ struct ZheeTwitterView: View {
 		mediaItems = []
 		
 		let query = input.trimmingCharacters(in: .whitespaces)
-		let urlString = "https://api-zhee.vercel.app/twitter?action=media&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+		let urlString = "https://api-zhee.vercel.app/twitter?key=\(key)&action=media&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 		
 		guard let url = URL(string: urlString) else {
 			isLoading = false
@@ -217,10 +271,7 @@ struct ZheeTwitterView: View {
 			return
 		}
 		
-		var req = URLRequest(url: url)
-		req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
-		
-		URLSession.shared.dataTask(with: req) { data, _, _ in
+		URLSession.shared.dataTask(with: url) { data, _, _ in
 			DispatchQueue.main.async {
 				isLoading = false
 				guard let data = data,
@@ -230,7 +281,11 @@ struct ZheeTwitterView: View {
 				}
 				
 				if let msg = json["thong_bao"] as? String, json["trang_thai"] as? String == "that_bai" {
-					errorMessage = msg
+					if msg.lowercased().contains("hết hạn") || msg.lowercased().contains("expired") {
+						errorMessage = "Key đã hết hạn — lên web gia hạn thêm"
+					} else {
+						errorMessage = msg
+					}
 					return
 				}
 				
