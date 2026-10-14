@@ -43,25 +43,53 @@ class ZheeNetworkMonitor: ObservableObject {
 	}
 }
 
-// Banner mất mạng — hiện trên đầu màn hình
+// Banner mất mạng — kiểu pill đen như Facebook, trên đầu, 3s tự ẩn
 struct ZheeOfflineBanner: View {
 	@ObservedObject var monitor = ZheeNetworkMonitor.shared
+	@State private var showToast = false
 	
 	var body: some View {
-		if !monitor.isConnected {
-			HStack(spacing: 10) {
-				Image(systemName: "wifi.slash")
-					.font(.body)
-				Text("Mất kết nối internet")
-					.font(.subheadline)
-					.fontWeight(.medium)
-				Spacer()
+		Group {
+			if showToast {
+				HStack(spacing: 10) {
+					Image(systemName: monitor.isConnected ? "wifi" : "wifi.slash")
+						.font(.body)
+					Text(monitor.isConnected ? "Đã có mạng trở lại" : "Bạn đang offline.")
+						.font(.subheadline)
+						.fontWeight(.medium)
+				}
+				.foregroundColor(.white)
+				.padding(.horizontal, 20)
+				.padding(.vertical, 12)
+				.background(
+					Capsule()
+						.fill(Color.black.opacity(0.85))
+						.shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+				)
+				.transition(.move(edge: .top).combined(with: .opacity))
 			}
-			.foregroundColor(.white)
-			.padding(.horizontal, 16)
-			.padding(.vertical, 10)
-			.background(Color.red.gradient)
-			.transition(.move(edge: .top).combined(with: .opacity))
+		}
+		.onChange(of: monitor.isConnected) { connected in
+			// Hiện 3s rồi tự ẩn
+			withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+				showToast = true
+			}
+			DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+				withAnimation(.easeOut(duration: 0.3)) {
+					showToast = false
+				}
+			}
+		}
+		.onAppear {
+			// Hiện ngay nếu đang offline khi mở
+			if !monitor.isConnected {
+				showToast = true
+				DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+					withAnimation(.easeOut(duration: 0.3)) {
+						showToast = false
+					}
+				}
+			}
 		}
 	}
 }

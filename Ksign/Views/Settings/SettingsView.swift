@@ -39,13 +39,6 @@ struct SettingsView: View {
 				SettingsDonationCellView(site: _donationsUrl)
 //				#endif
 				
-				// Banner báo mất mạng
-				if !networkMonitor.isConnected {
-					Section {
-						ZheeOfflineBanner()
-					}
-				}
-				
 				ZheeProfileView()
 				ZheeUpdateView()
 				
@@ -126,6 +119,11 @@ extension SettingsView {
 			Button(.localized("GitHub 仓库"), systemImage: "safari") {
 				UIApplication.open(_githubUrl)
 			}
+		}
+		.overlay(alignment: .top) {
+			ZheeOfflineBanner()
+				.padding(.top, 8)
+				.animation(.spring(response: 0.4, dampingFraction: 0.8), value: networkMonitor.isConnected)
 		}
 	}
 	
