@@ -5,6 +5,11 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+# Chi cho 1 run chay tai 1 thoi diem — tranh 2 run cung xoa/tao release "beta" gay trung
+concurrency:
+  group: beta-build
+  cancel-in-progress: false
+
 jobs:
   build:
     name: Build Beta
