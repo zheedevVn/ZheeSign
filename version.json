@@ -1,7 +1,7 @@
 {
   "version": "1.7.20",
   "build": "1.7.20",
-  "notes": "Bump to 1.7.20",
+  "notes": "Add concurrency guard to prevent duplicate beta releases",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
