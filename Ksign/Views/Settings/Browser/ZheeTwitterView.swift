@@ -8,6 +8,7 @@
 
 import SwiftUI
 import Photos
+import UIKit
 
 struct ZheeTwitterView: View {
 	@State private var input = ""
@@ -15,6 +16,7 @@ struct ZheeTwitterView: View {
 	@State private var errorMessage: String?
 	@State private var accountInfo: TwitterAccount?
 	@State private var mediaItems: [TwitterMedia] = []
+	@State private var downloadingIDs: Set<UUID> = []
 	@ObservedObject var auth = ZheeAuthManager.shared
 	
 	var body: some View {
@@ -28,6 +30,16 @@ struct ZheeTwitterView: View {
 					TextField("Link tweet hoặc username", text: $input)
 						.autocapitalization(.none)
 						.autocorrectionDisabled()
+					if UIPasteboard.general.hasStrings {
+						Button {
+							if let s = UIPasteboard.general.string {
+								input = s.trimmingCharacters(in: .whitespacesAndNewlines)
+							}
+						} label: {
+							Image(systemName: "doc.on.clipboard")
+								.foregroundColor(.accentColor)
+						}
+					}
 				}
 				
 				HStack(spacing: 12) {
@@ -104,22 +116,22 @@ struct ZheeTwitterView: View {
 			if !mediaItems.isEmpty {
 				Section("Ảnh / Video (\(mediaItems.count))") {
 					ForEach(mediaItems) { item in
-						HStack {
+						HStack(spacing: 12) {
 							AsyncImage(url: URL(string: item.thumbnailURL)) { image in
 								image.resizable().scaledToFill()
 							} placeholder: {
 								Rectangle().fill(Color.gray.opacity(0.3))
 							}
-							.frame(width: 60, height: 60)
-							.cornerRadius(8)
+							.frame(width: 90, height: 90)
+							.cornerRadius(12)
 							
-							VStack(alignment: .leading) {
+							VStack(alignment: .leading, spacing: 4) {
 								Text(item.type == "video" ? "Video" : "Ảnh")
 									.font(.headline)
-								Text(item.url)
-									.font(.caption)
-									.foregroundColor(.secondary)
-									.lineLimit(1)
+								if downloadingIDs.contains(item.id) {
+									ProgressView()
+										.progressViewStyle(.linear)
+								}
 							}
 							
 							Spacer()
@@ -295,28 +307,72 @@ struct ZheeTwitterView: View {
 	}
 	
 	private func downloadMedia(_ item: TwitterMedia) {
-		guard let url = URL(string: item.url) else { return }
+		guard let url = URL(string: item.url) else {
+			errorMessage = "Link không hợp lệ"
+			return
+		}
 		
-		URLSession.shared.downloadTask(with: url) { tempURL, _, _ in
-			guard let tempURL = tempURL else { return }
+		downloadingIDs.insert(item.id)
+		errorMessage = nil
+		
+		URLSession.shared.downloadTask(with: url) { tempURL, _, err in
+			DispatchQueue.main.async {
+				downloadingIDs.remove(item.id)
+			}
+			if let err = err {
+				DispatchQueue.main.async {
+					errorMessage = "Tải thất bại: \(err.localizedDescription)"
+				}
+				return
+			}
+			guard let tempURL = tempURL else {
+				DispatchQueue.main.async {
+					errorMessage = "Tải thất bại"
+				}
+				return
+			}
 			
-			// Xin quyền và lưu vào Photos
-			PHPhotoLibrary.requestAuthorization { status in
-				guard status == .authorized else { return }
-				
-				PHPhotoLibrary.shared().performChanges {
-					if item.type == "video" {
-						PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: tempURL)
-					} else {
-						PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempURL)
+			// Xin quyền và lưu vào Photos (iOS 14+)
+			if #available(iOS 14, *) {
+				PHPhotoLibrary.requestAuthorization(for: .addOnly) { status in
+					guard status == .authorized || status == .limited else {
+						DispatchQueue.main.async {
+							errorMessage = "Cần cấp quyền Photos để lưu"
+						}
+						return
 					}
-				} completionHandler: { success, _ in
-					DispatchQueue.main.async {
-						errorMessage = success ? nil : "Lưu thất bại"
+					saveToPhotos(tempURL: tempURL, item: item)
+				}
+			} else {
+				PHPhotoLibrary.requestAuthorization { status in
+					guard status == .authorized else {
+						DispatchQueue.main.async {
+							errorMessage = "Cần cấp quyền Photos để lưu"
+						}
+						return
 					}
+					saveToPhotos(tempURL: tempURL, item: item)
 				}
 			}
 		}.resume()
+	}
+	
+	private func saveToPhotos(tempURL: URL, item: TwitterMedia) {
+		PHPhotoLibrary.shared().performChanges {
+			if item.type == "video" {
+				PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: tempURL)
+			} else {
+				PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempURL)
+			}
+		} completionHandler: { success, err in
+			DispatchQueue.main.async {
+				if success {
+					errorMessage = nil
+				} else {
+					errorMessage = "Lưu thất bại: \(err?.localizedDescription ?? "")"
+				}
+			}
+		}
 	}
 }
 
