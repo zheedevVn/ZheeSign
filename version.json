@@ -1,7 +1,7 @@
 {
-  "version": "1.7.9",
-  "build": "1.7.9",
-  "notes": "Use latest pure-Python wheels for bundled packages",
+  "version": "1.7.10",
+  "build": "1.7.10",
+  "notes": "Fix AttributedString isEmpty type-check error",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
