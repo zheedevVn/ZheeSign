@@ -28,7 +28,7 @@ struct InstallationView: View {
                     }
                 }
             } footer: {
-                Text("服务器（推荐）：\n通过本地托管的服务器和 itms-services:// 协议来安装应用。\n\nIDevice（高级）：\n使用 VPN 与配对文件，写入 AFC 并手动调用 installd，同时通过回调监控安装进度。\n优点：非常稳定，无需 SSL 证书或外部托管的服务器，工作方式与电脑类似。")
+                Text("Máy chủ (khuyên dùng):\nCài đặt ứng dụng qua máy chủ lưu trữ cục bộ và giao thức itms-services://.\n\nIDevice (nâng cao):\nDùng VPN với tệp ghép đôi, ghi vào AFC và gọi thủ công installd, đồng thời theo dõi tiến độ cài đặt qua callback.\nƯu điểm: rất ổn định, không cần chứng chỉ SSL hay máy chủ lưu trữ ngoài, cách hoạt động giống như trên máy tính.")
             }
             
             if _installationMethod == 0 {
