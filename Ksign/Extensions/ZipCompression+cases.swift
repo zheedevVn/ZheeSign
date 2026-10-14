@@ -14,10 +14,10 @@ extension ZipCompression {
 	
 	var label: String {
 		switch self {
-		case .NoCompression: return "无"
-		case .BestSpeed: return "速度优先"
-		case .DefaultCompression: return "默认"
-		case .BestCompression: return "最佳"
+		case .NoCompression: return "Không nén"
+		case .BestSpeed: return "Ưu tiên tốc độ"
+		case .DefaultCompression: return "Mặc định"
+		case .BestCompression: return "Nén tốt nhất"
 		}
 	}
 }
