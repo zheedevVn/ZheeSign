@@ -20,6 +20,8 @@ struct FeatherApp: App {
 	@StateObject var logsManager = LogsManager.shared
 	let storage = Storage.shared
 	@ObservedObject var auth = ZheeAuthManager.shared
+	@StateObject var appLock = ZheeAppLockManager.shared
+	@Environment(\.scenePhase) var scenePhase
 
 	var body: some Scene {
 		WindowGroup {
@@ -40,6 +42,22 @@ struct FeatherApp: App {
 					}
 					.animation(.smooth, value: downloadManager.manualDownloads.description)
 					.animation(.smooth, value: extractManager.extractItems.description)
+				}
+			}
+			.overlay {
+				if appLock.isLocked {
+					ZheeLockScreenView()
+						.transition(.opacity)
+				}
+			}
+			.onChange(of: scenePhase) { phase in
+				switch phase {
+				case .active:
+					ZheeAppLockManager.shared.appDidBecomeActive()
+				case .background:
+					ZheeAppLockManager.shared.appDidEnterBackground()
+				default:
+					break
 				}
 			}
 			.animation(.spring(response: 0.6, dampingFraction: 0.75), value: auth.isLoggedIn)

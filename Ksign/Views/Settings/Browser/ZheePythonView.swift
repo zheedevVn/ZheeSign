@@ -180,7 +180,7 @@ struct ZheePythonView: View {
 		}
 		.onAppear {
 			if runner.output.characters.isEmpty {
-				runner.appendOutput("Zhee Python Terminal v1.0\n© 2026 Hồ Đức Minh\nGõ 'help' để xem lệnh.\n\n")
+				runner.appendOutput("Zhee Python Terminal v1.0\n© 2026 Hồ Đức Minh\nPython 3.15 đã sẵn sàng\nGõ 'help' để xem lệnh.\n\n")
 			}
 		}
 	}

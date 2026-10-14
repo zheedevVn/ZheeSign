@@ -68,8 +68,6 @@ class ZheePythonRunner: ObservableObject {
 		// Khởi tạo Python
 		PythonBridge.shared.initialize()
 		pythonInitialized = true
-		
-		appendOutput("Python 3.15 đã sẵn sàng\n")
 	}
 	
 	// Chạy code Python
