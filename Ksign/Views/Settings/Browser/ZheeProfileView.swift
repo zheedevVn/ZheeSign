@@ -20,12 +20,6 @@ struct ZheeProfileView: View {
 			Button {
 				showDetail = true
 			} label: {
-				ZStack {
-				// Card sạch kiểu Apple, tự đổi theo theme
-				RoundedRectangle(cornerRadius: 20, style: .continuous)
-					.fill(Color(.systemBackground))
-					.shadow(color: .black.opacity(0.08), radius: 8, y: 2)
-				
 				HStack(spacing: 16) {
 					// Avatar (không viền)
 					ZStack {
@@ -91,8 +85,7 @@ struct ZheeProfileView: View {
 						.foregroundStyle(.tertiary)
 						.opacity(appear ? 1 : 0)
 				}
-				.padding(16)
-			}
+				.padding(.vertical, 12)
 				.listRowInsets(EdgeInsets())
 				.listRowBackground(Color.clear)
 				.padding(.vertical, 4)
