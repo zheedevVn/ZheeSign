@@ -157,17 +157,16 @@ struct ZheePythonView: View {
 									.font(.system(size: 14, design: .monospaced))
 									.foregroundColor(.gray)
 									.padding(.leading, 14)
-									.padding(.top, 8)
-									.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+									.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
 									.allowsHitTesting(false)
 							}
 						}
 					)
-				// Nút gửi (kiểu Messenger)
+				// Nút gửi
 				Button {
 					executeInput()
 				} label: {
-					Image(systemName: inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "hand.thumbsup.fill" : "arrow.up.circle.fill")
+					Image(systemName: "arrow.up.circle.fill")
 						.font(.title2)
 						.foregroundColor(.accentColor)
 				}
