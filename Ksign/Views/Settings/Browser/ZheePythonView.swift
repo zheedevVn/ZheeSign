@@ -85,6 +85,7 @@ struct ZheePythonView: View {
 					.foregroundColor(.green)
 					.padding(.bottom, 10)
 				TextEditor(text: $inputText)
+					.scrollContentBackground(.hidden)
 					.font(.system(size: 14, design: .monospaced))
 					.foregroundColor(.white)
 					.frame(minHeight: 36, maxHeight: 120)

@@ -12,7 +12,6 @@ import PhotosUI
 struct ZheeProfileView: View {
 	@ObservedObject var auth = ZheeAuthManager.shared
 	@State private var appear = false
-	@State private var glowShift = false
 	@State private var showDetail = false
 	@State private var customAvatar: UIImage?
 	
@@ -22,24 +21,10 @@ struct ZheeProfileView: View {
 				showDetail = true
 			} label: {
 				ZStack {
-				// Nền gradient card
+				// Card sạch kiểu Apple, tự đổi theo theme
 				RoundedRectangle(cornerRadius: 20, style: .continuous)
-					.fill(
-						LinearGradient(
-							colors: glowShift
-								? [Color.purple.opacity(0.25), Color.cyan.opacity(0.15)]
-								: [Color.cyan.opacity(0.15), Color.purple.opacity(0.25)],
-							startPoint: .topLeading,
-							endPoint: .bottomTrailing
-						)
-					)
-					.overlay(
-						RoundedRectangle(cornerRadius: 20, style: .continuous)
-							.stroke(
-								LinearGradient(colors: [.cyan.opacity(0.5), .purple.opacity(0.5), .pink.opacity(0.5)], startPoint: .topLeading, endPoint: .bottomTrailing),
-								lineWidth: 1
-							)
-					)
+					.fill(Color(.systemBackground))
+					.shadow(color: .black.opacity(0.08), radius: 8, y: 2)
 				
 				HStack(spacing: 16) {
 					// Avatar (không viền)
@@ -60,7 +45,7 @@ struct ZheeProfileView: View {
 							.clipShape(Circle())
 						} else {
 							Circle()
-								.fill(LinearGradient(colors: [.cyan, .purple, .pink], startPoint: .topLeading, endPoint: .bottomTrailing))
+								.fill(Color.accentColor.gradient)
 								.frame(width: 64, height: 64)
 								.overlay(
 									Text(String(auth.displayName.prefix(1)).uppercased())
@@ -90,9 +75,7 @@ struct ZheeProfileView: View {
 						HStack(spacing: 5) {
 							Image(systemName: "checkmark.seal.fill")
 								.font(.caption)
-								.foregroundStyle(
-									LinearGradient(colors: [.green, .mint], startPoint: .top, endPoint: .bottom)
-								)
+								.foregroundStyle(Color.accentColor)
 							Text("Tài khoản Zhee")
 								.font(.caption)
 								.foregroundStyle(.secondary)
@@ -129,9 +112,7 @@ struct ZheeProfileView: View {
 			withAnimation(.spring(response: 0.6, dampingFraction: 0.65)) {
 				appear = true
 			}
-			withAnimation(.linear(duration: 3).repeatForever(autoreverses: true)) {
-				glowShift = true
-			}
+
 		}
 	}
 }
