@@ -24,6 +24,9 @@ struct TabbarView: View {
 			// Banner mất mạng — trên cùng ở giữa, mọi tab
 			ZheeOfflineBanner()
 				.padding(.top, 8)
+			
+			// Nút nổi Twitter PiP — kéo thả, dán link tự tải
+			ZheeFloatingTwitter()
 		}
 	}
 }
