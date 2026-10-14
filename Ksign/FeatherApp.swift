@@ -47,7 +47,8 @@ struct FeatherApp: App {
 				}
 			}
 			.overlay {
-				if appLock.isLocked {
+				// Chỉ hiện màn khóa sau khi splash xong - tránh Face ID đè lên animation
+				if appLock.isLocked && !showSplash {
 					ZheeLockScreenView()
 						.transition(.opacity)
 				}
