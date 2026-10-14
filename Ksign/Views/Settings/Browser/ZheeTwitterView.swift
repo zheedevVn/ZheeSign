@@ -140,10 +140,9 @@ struct ZheeTwitterView: View {
 	}
 	
 	private func fetchAccountInfo() {
-		// Key tự lấy khi đăng nhập, lưu ẩn trong app
-		let key = UserDefaults.standard.string(forKey: "zhee_api_secret") ?? ""
-		guard !key.isEmpty else {
-			errorMessage = "Chưa có key — thử đăng xuất rồi đăng nhập lại"
+		// Dùng OAuth token - server tự verify
+		guard let token = auth.accessToken, !token.isEmpty else {
+			errorMessage = "Bạn chưa đăng nhập"
 			return
 		}
 		isLoading = true
@@ -151,9 +150,9 @@ struct ZheeTwitterView: View {
 		accountInfo = nil
 		
 		let query = input.trimmingCharacters(in: .whitespaces)
-		var urlString = "https://api-zhee.vercel.app/twitter?key=\(key)&action=info&username=\(query)"
+		var urlString = "https://api-zhee.vercel.app/twitter?action=info&username=\(query)"
 		if query.contains("twitter.com") || query.contains("x.com") {
-			urlString = "https://api-zhee.vercel.app/twitter?key=\(key)&action=info&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+			urlString = "https://api-zhee.vercel.app/twitter?action=info&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 		}
 		
 		guard let url = URL(string: urlString) else {
@@ -162,7 +161,10 @@ struct ZheeTwitterView: View {
 			return
 		}
 		
-		URLSession.shared.dataTask(with: url) { data, _, _ in
+		var req = URLRequest(url: url)
+		req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+		
+		URLSession.shared.dataTask(with: req) { data, _, _ in
 			DispatchQueue.main.async {
 				isLoading = false
 				guard let data = data,
@@ -207,9 +209,8 @@ struct ZheeTwitterView: View {
 	}
 	
 	private func fetchMedia() {
-		let key = UserDefaults.standard.string(forKey: "zhee_api_secret") ?? ""
-		guard !key.isEmpty else {
-			errorMessage = "Chưa có key — thử đăng xuất rồi đăng nhập lại"
+		guard let token = auth.accessToken, !token.isEmpty else {
+			errorMessage = "Bạn chưa đăng nhập"
 			return
 		}
 		isLoading = true
@@ -217,7 +218,7 @@ struct ZheeTwitterView: View {
 		mediaItems = []
 		
 		let query = input.trimmingCharacters(in: .whitespaces)
-		let urlString = "https://api-zhee.vercel.app/twitter?key=\(key)&action=media&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+		let urlString = "https://api-zhee.vercel.app/twitter?action=media&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 		
 		guard let url = URL(string: urlString) else {
 			isLoading = false
@@ -225,7 +226,10 @@ struct ZheeTwitterView: View {
 			return
 		}
 		
-		URLSession.shared.dataTask(with: url) { data, _, _ in
+		var req = URLRequest(url: url)
+		req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+		
+		URLSession.shared.dataTask(with: req) { data, _, _ in
 			DispatchQueue.main.async {
 				isLoading = false
 				guard let data = data,
