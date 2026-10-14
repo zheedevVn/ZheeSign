@@ -62,7 +62,12 @@ final class ZheeAppLockManager: ObservableObject {
 		return ctx.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
 	}
 	
-	private init() {}
+	private init() {
+		// Khóa ngay từ lúc mở app nếu đã bật - không để lộ nội dung trước
+		if isEnabled && hasPIN {
+			_isLocked = Published(initialValue: true)
+		}
+	}
 	
 	// MARK: - PIN (lưu hash trong Keychain)
 	

@@ -50,6 +50,23 @@ struct FeatherApp: App {
 						.transition(.opacity)
 				}
 			}
+			.overlay {
+				// Che nội dung khi ra background - như app ngân hàng
+				if scenePhase == .background {
+					ZStack {
+						Color(.systemBackground).ignoresSafeArea()
+						if let iconName = Bundle.main.iconFileName,
+						   let icon = UIImage(named: iconName) {
+							Image(uiImage: icon)
+								.resizable()
+								.frame(width: 80, height: 80)
+								.clipShape(RoundedRectangle(cornerRadius: 18))
+								.opacity(0.8)
+						}
+					}
+					.transition(.opacity)
+				}
+			}
 			.onChange(of: scenePhase) { phase in
 				switch phase {
 				case .active:
