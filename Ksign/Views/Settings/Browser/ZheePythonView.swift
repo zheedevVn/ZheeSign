@@ -21,6 +21,7 @@ struct ZheePythonView: View {
 		}
 	}
 	@ObservedObject var runner = ZheePythonRunner.shared
+	@ObservedObject var keeper = ZheeBackgroundKeeper.shared
 	@State private var inputText: String = ""
 	@State private var fontSize: CGFloat = 13
 	@State private var showFilePicker = false
@@ -125,6 +126,19 @@ struct ZheePythonView: View {
 						.foregroundColor(.green)
 				}
 				.disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || runner.isRunning)
+				// Nút giữ Python chạy nền như server
+				Button {
+					if keeper.isKeepingAlive {
+						keeper.stop()
+					} else {
+						keeper.start()
+					}
+				} label: {
+					Image(systemName: keeper.isKeepingAlive ? "server.rack.fill" : "server.rack")
+						.font(.title3)
+						.foregroundColor(keeper.isKeepingAlive ? .orange : .gray)
+				}
+				.help(keeper.isKeepingAlive ? "Đang chạy nền - bấm để tắt" : "Giữ Python chạy dưới nền")
 			}
 			.padding(.horizontal, 10)
 			.padding(.vertical, 8)
