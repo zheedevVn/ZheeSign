@@ -26,7 +26,13 @@ struct ZheeAppLockSettingsView: View {
 			Section {
 				Toggle("Khóa ứng dụng", isOn: Binding(
 					get: { lock.isEnabled },
-					set: { lock.isEnabled = $0; if $0 && !lock.hasPIN { showSetPIN = true } }
+					set: {
+						lock.isEnabled = $0
+						if $0 {
+							if lock.canUseBiometrics { lock.useBiometrics = true }
+							if !lock.hasPIN { showSetPIN = true }
+						}
+					}
 				))
 			} footer: {
 				Text("Yêu cầu Face ID / mã PIN mỗi khi mở app.")

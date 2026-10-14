@@ -86,10 +86,8 @@ struct SettingsView: View {
 					NavigationLink(destination: InstallationView()) {
                         Label(.localized("安装"), systemImage: "server.rack")
                     }
-					NavigationLink(destination: ZheePrivacySettingsView()) {
-						Label("Cài đặt và quyền riêng tư", systemImage: "hand.raised.fill")
-					}
 				}
+
 				
 				_directories()
                 
@@ -126,6 +124,9 @@ extension SettingsView {
 	@ViewBuilder
 	private func _utilities() -> some View {
 		Section("Trợ năng") {
+			NavigationLink(destination: ZheePrivacySettingsView()) {
+				Label("Cài đặt và quyền riêng tư", systemImage: "hand.raised")
+			}
 			NavigationLink(destination: WebBrowserView()) {
 				Label("Trình duyệt web", systemImage: "globe")
 			}
