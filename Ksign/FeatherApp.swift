@@ -23,6 +23,7 @@ struct FeatherApp: App {
 	@StateObject var appLock = ZheeAppLockManager.shared
 	@Environment(\.scenePhase) var scenePhase
 	@State private var hasBeenActive = false
+	@State private var showSplash = true
 
 	var body: some Scene {
 		WindowGroup {
@@ -87,6 +88,18 @@ struct FeatherApp: App {
 			.onAppear {
 				accentColorManager.updateGlobalTintColor()
 				if logsManager.isCapturing { logsManager.startCapture() }
+				// Splash 1.2s rồi mờ dần
+				DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+					withAnimation(.easeOut(duration: 0.4)) {
+						showSplash = false
+					}
+				}
+			}
+			.overlay {
+				if showSplash {
+					ZheeSplashView()
+						.transition(.opacity)
+				}
 			}
 		}
 	}
