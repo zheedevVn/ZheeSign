@@ -17,6 +17,7 @@ struct ZheeTwitterView: View {
 	@State private var accountInfo: TwitterAccount?
 	@State private var mediaItems: [TwitterMedia] = []
 	@State private var downloadingIDs: Set<UUID> = []
+	@State private var successMessage: String?
 	@ObservedObject var auth = ZheeAuthManager.shared
 	
 	var body: some View {
@@ -76,6 +77,14 @@ struct ZheeTwitterView: View {
 				Section {
 					Text(error)
 						.foregroundColor(.red)
+						.font(.caption)
+				}
+			}
+			
+			if let success = successMessage {
+				Section {
+					Text(success)
+						.foregroundColor(.green)
 						.font(.caption)
 				}
 			}
@@ -157,16 +166,20 @@ struct ZheeTwitterView: View {
 			errorMessage = "Bạn chưa đăng nhập"
 			return
 		}
+		
+		let query = input.trimmingCharacters(in: .whitespaces)
+		// Nếu là link tweet thì báo không phải profile
+		if query.contains("twitter.com") || query.contains("x.com") {
+			errorMessage = "Đây là link tweet, không phải profile — dùng nút \"Tải ảnh/video\" để tải"
+			accountInfo = nil
+			return
+		}
+		
 		isLoading = true
 		errorMessage = nil
 		accountInfo = nil
 		
-		let query = input.trimmingCharacters(in: .whitespaces)
-		var urlString = "https://api-zhee.vercel.app/twitter?action=info&username=\(query)"
-		if query.contains("twitter.com") || query.contains("x.com") {
-			urlString = "https://api-zhee.vercel.app/twitter?action=info&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
-		}
-		
+		let urlString = "https://api-zhee.vercel.app/twitter?action=info&username=\(query)"
 		guard let url = URL(string: urlString) else {
 			isLoading = false
 			errorMessage = "Link không hợp lệ"
@@ -358,16 +371,41 @@ struct ZheeTwitterView: View {
 	}
 	
 	private func saveToPhotos(tempURL: URL, item: TwitterMedia) {
+		// Copy sang file có đuôi đúng (tránh lỗi 3302)
+		let ext = item.type == "video" ? "mp4" : "jpg"
+		let destURL = FileManager.default.temporaryDirectory
+			.appendingPathComponent(UUID().uuidString)
+			.appendingPathExtension(ext)
+		do {
+			if FileManager.default.fileExists(atPath: destURL.path) {
+				try FileManager.default.removeItem(at: destURL)
+			}
+			try FileManager.default.copyItem(at: tempURL, to: destURL)
+		} catch {
+			DispatchQueue.main.async {
+				errorMessage = "Lưu thất bại: \(error.localizedDescription)"
+			}
+			return
+		}
+		
 		PHPhotoLibrary.shared().performChanges {
 			if item.type == "video" {
-				PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: tempURL)
+				PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: destURL)
 			} else {
-				PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempURL)
+				PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: destURL)
 			}
 		} completionHandler: { success, err in
+			// Xóa file tạm
+			try? FileManager.default.removeItem(at: destURL)
+			try? FileManager.default.removeItem(at: tempURL)
 			DispatchQueue.main.async {
 				if success {
 					errorMessage = nil
+					successMessage = item.type == "video" ? "Đã lưu video vào thư viện ảnh ✅" : "Đã lưu ảnh vào thư viện ảnh ✅"
+					// Tự ẩn thông báo sau 3 giây
+					DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+						successMessage = nil
+					}
 				} else {
 					errorMessage = "Lưu thất bại: \(err?.localizedDescription ?? "")"
 				}
