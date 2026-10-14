@@ -22,6 +22,7 @@ struct ZheePythonView: View {
 	}
 	@ObservedObject var runner = ZheePythonRunner.shared
 	@ObservedObject var keeper = ZheeBackgroundKeeper.shared
+	@State private var showExtraButtons = false
 	@State private var inputText: String = ""
 	@State private var fontSize: CGFloat = 13
 	@State private var showFilePicker = false
@@ -79,12 +80,64 @@ struct ZheePythonView: View {
 				}
 			}
 			
-			// Ô nhập lệnh - gọn như thanh nhắn, tự to ra khi gõ dài
-			HStack(alignment: .center, spacing: 8) {
-				Text("❯")
-					.font(.system(size: 14, weight: .bold, design: .monospaced))
-					.foregroundColor(.green)
-				TextEditor(text: $inputText)
+			// Ô nhập lệnh kiểu Messenger: mũi tên mở rộng + ô nhập gọn + nút gửi
+			VStack(spacing: 0) {
+				// Hàng nút mở rộng (hiện khi bấm mũi tên)
+				if showExtraButtons {
+					HStack(spacing: 20) {
+						Button {
+							showFilePicker = true
+						} label: {
+							VStack(spacing: 4) {
+								Image(systemName: "folder.fill")
+									.font(.title2)
+									.foregroundColor(.blue)
+								Text("File .py")
+									.font(.caption2)
+									.foregroundColor(.secondary)
+							}
+						}
+						.disabled(runner.isRunning)
+						
+						Button {
+							if keeper.isKeepingAlive {
+								keeper.stop()
+							} else {
+								keeper.start()
+							}
+						} label: {
+							VStack(spacing: 4) {
+								Image(systemName: keeper.isKeepingAlive ? "server.rack.fill" : "server.rack")
+									.font(.title2)
+									.foregroundColor(keeper.isKeepingAlive ? .orange : .secondary)
+								Text(keeper.isKeepingAlive ? "Đang chạy nền" : "Chạy nền")
+									.font(.caption2)
+									.foregroundColor(.secondary)
+							}
+						}
+						
+						Spacer()
+					}
+					.padding(.horizontal, 16)
+					.padding(.vertical, 10)
+					.transition(.move(edge: .bottom).combined(with: .opacity))
+				}
+				
+				HStack(alignment: .center, spacing: 8) {
+					// Mũi tên mở rộng
+					Button {
+						withAnimation(.spring(response: 0.3)) {
+							showExtraButtons.toggle()
+						}
+					} label: {
+						Image(systemName: showExtraButtons ? "chevron.down" : "chevron.right")
+							.font(.system(size: 18, weight: .semibold))
+							.foregroundColor(.accentColor)
+							.frame(width: 32, height: 32)
+					}
+					
+					// Ô nhập gọn
+					TextEditor(text: $inputText)
 					.scrollContentBackground(.hidden)
 					.font(.system(size: 14, design: .monospaced))
 					.foregroundColor(.white)
@@ -110,35 +163,16 @@ struct ZheePythonView: View {
 							}
 						}
 					)
-				Button {
-					showFilePicker = true
-				} label: {
-					Image(systemName: "folder.fill")
-						.font(.title3)
-						.foregroundColor(.blue)
-				}
-				.disabled(runner.isRunning)
+				// Nút gửi (kiểu Messenger)
 				Button {
 					executeInput()
 				} label: {
-					Image(systemName: "arrow.up.circle.fill")
+					Image(systemName: inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "hand.thumbsup.fill" : "arrow.up.circle.fill")
 						.font(.title2)
-						.foregroundColor(.green)
+						.foregroundColor(.accentColor)
 				}
 				.disabled(inputText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || runner.isRunning)
-				// Nút giữ Python chạy nền như server
-				Button {
-					if keeper.isKeepingAlive {
-						keeper.stop()
-					} else {
-						keeper.start()
-					}
-				} label: {
-					Image(systemName: keeper.isKeepingAlive ? "server.rack.fill" : "server.rack")
-						.font(.title3)
-						.foregroundColor(keeper.isKeepingAlive ? .orange : .gray)
 				}
-				.help(keeper.isKeepingAlive ? "Đang chạy nền - bấm để tắt" : "Giữ Python chạy dưới nền")
 			}
 			.padding(.horizontal, 10)
 			.padding(.vertical, 8)
