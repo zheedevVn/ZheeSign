@@ -1,7 +1,7 @@
 {
-  "version": "1.7.26",
-  "build": "1.7.26",
-  "notes": "Fix KERN_INFO build error, floating Twitter PiP, 1.7.26",
+  "version": "1.7.27",
+  "build": "1.7.27",
+  "notes": "Add Background Fetch for update notifications, 1.7.27",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
