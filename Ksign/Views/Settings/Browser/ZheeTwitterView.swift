@@ -250,15 +250,42 @@ struct ZheeTwitterView: View {
 					return
 				}
 				
-				// Parse media list
-				if let mediaArray = json["media"] as? [[String: Any]] {
-					mediaItems = mediaArray.compactMap { m in
+				// Parse media list (field tiếng Việt)
+				var items: [TwitterMedia] = []
+				if let mediaDict = json["media"] as? [String: Any] {
+					// Ảnh
+					if let photos = mediaDict["danh_sach_anh"] as? [[String: Any]] {
+						for p in photos {
+							if let url = (p["file_anh_truc_tiep"] as? String) ?? (p["url"] as? String) {
+								items.append(TwitterMedia(type: "image", url: url, thumbnailURL: url))
+							} else if let url = p["link"] as? String {
+								items.append(TwitterMedia(type: "image", url: url, thumbnailURL: url))
+							}
+						}
+					} else if let photos = mediaDict["danh_sach_anh"] as? [String] {
+						for url in photos {
+							items.append(TwitterMedia(type: "image", url: url, thumbnailURL: url))
+						}
+					}
+					// Video
+					if let videos = mediaDict["danh_sach_video_mp4"] as? [[String: Any]] {
+						for v in videos {
+							if let url = (v["file_mp4_truc_tiep"] as? String) ?? (v["url"] as? String) {
+								let thumb = (v["anh_thumbnail"] as? String) ?? (v["thumbnail"] as? String) ?? url
+								items.append(TwitterMedia(type: "video", url: url, thumbnailURL: thumb))
+							}
+						}
+					}
+				} else if let mediaArray = json["media"] as? [[String: Any]] {
+					// Fallback format cũ
+					items = mediaArray.compactMap { m in
 						guard let url = m["url"] as? String else { return nil }
 						let type = (m["type"] as? String) ?? "image"
 						let thumb = (m["thumbnail"] as? String) ?? url
 						return TwitterMedia(type: type, url: url, thumbnailURL: thumb)
 					}
 				}
+				mediaItems = items
 				
 				if mediaItems.isEmpty {
 					errorMessage = "Không tìm thấy ảnh/video"
