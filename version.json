@@ -1,7 +1,7 @@
 {
   "version": "1.7.12",
   "build": "1.7.12",
-  "notes": "Fix Section header label in app lock settings",
+  "notes": "Move Privacy to Utilities section, auto-enable Face ID with app lock",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
