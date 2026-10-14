@@ -67,10 +67,13 @@ class ZheeAuthManager: ObservableObject {
 			// Tự lưu secret key nếu API trả về - dùng chung cho mọi tool
 			if let secret = user["secret_key"] as? String, !secret.isEmpty {
 				UserDefaults.standard.set(secret, forKey: "zhee_api_secret")
+				UserDefaults.standard.set(Date(), forKey: "zhee_api_secret_date")
 			} else if let secret = user["secret"] as? String, !secret.isEmpty {
 				UserDefaults.standard.set(secret, forKey: "zhee_api_secret")
+				UserDefaults.standard.set(Date(), forKey: "zhee_api_secret_date")
 			} else if let secret = user["api_key"] as? String, !secret.isEmpty {
 				UserDefaults.standard.set(secret, forKey: "zhee_api_secret")
+				UserDefaults.standard.set(Date(), forKey: "zhee_api_secret_date")
 			}
 		}
 		isLoggedIn = true

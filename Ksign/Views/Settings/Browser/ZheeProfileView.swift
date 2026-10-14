@@ -231,6 +231,10 @@ struct ZheeProfileDetailView: View {
 						if let sub = auth.userInfo?["sub"] as? String {
 							detailRow(icon: "person.fill", title: "ID người dùng", value: sub)
 						}
+						// Hiển thị hạn secret key
+						if let expiryText = secretExpiryText {
+							detailRow(icon: "key.fill", title: "Secret key", value: expiryText)
+						}
 						detailRow(icon: "calendar", title: "Phiên đăng nhập", value: "30 ngày")
 						detailRow(icon: "clock.fill", title: "Đăng nhập lúc", value: loginTimeString)
 						detailRow(icon: "shield.fill", title: "Bảo mật", value: "OAuth 2.0")
@@ -279,6 +283,31 @@ struct ZheeProfileDetailView: View {
 		formatter.dateFormat = "HH:mm dd/MM/yyyy"
 		formatter.locale = Locale(identifier: "vi_VN")
 		return formatter.string(from: loginDate)
+	}
+	
+	/// Thời gian còn lại của secret key (10 ngày từ lúc lưu)
+	private var secretExpiryText: String? {
+		guard UserDefaults.standard.string(forKey: "zhee_api_secret") != nil else { return nil }
+		// Ưu tiên expiry từ userinfo nếu API trả về
+		if let expiry = auth.userInfo?["secret_expires_at"] as? Double {
+			let remaining = Int(expiry - Date().timeIntervalSince1970)
+			if remaining <= 0 { return "Đã hết hạn" }
+			let days = remaining / 86400
+			let hours = (remaining % 86400) / 3600
+			if days > 0 { return "Còn \(days) ngày" }
+			return "Còn \(hours) giờ"
+		}
+		// Fallback: tính từ lúc lưu key (giả định 10 ngày)
+		if let savedDate = UserDefaults.standard.object(forKey: "zhee_api_secret_date") as? Date {
+			let expiry = savedDate.addingTimeInterval(10 * 24 * 3600)
+			let remaining = Int(expiry.timeIntervalSinceNow)
+			if remaining <= 0 { return "Đã hết hạn" }
+			let days = remaining / 86400
+			if days > 0 { return "Còn \(days) ngày" }
+			let hours = (remaining % 3600) / 3600
+			return "Còn \(hours) giờ"
+		}
+		return "Không rõ hạn"
 	}
 	
 	private func detailRow(icon: String, title: String, value: String) -> some View {
