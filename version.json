@@ -1,7 +1,7 @@
 {
-  "version": "1.7.14",
-  "build": "1.7.14",
-  "notes": "Bump to 1.7.14",
+  "version": "1.7.15",
+  "build": "1.7.15",
+  "notes": "Bump to 1.7.15",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
