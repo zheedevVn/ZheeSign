@@ -1,7 +1,7 @@
 {
-  "version": "1.7.24",
-  "build": "1.7.24",
-  "notes": "Fix notification display, Facebook-style offline banner, 1.7.24",
+  "version": "1.7.26",
+  "build": "1.7.26",
+  "notes": "Fix KERN_INFO build error, floating Twitter PiP, 1.7.26",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
