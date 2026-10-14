@@ -46,7 +46,7 @@ struct ZheeAppLockSettingsView: View {
 					}
 				}
 				
-				Section("Tự động khóa sau") {
+				Section {
 					Picker("Thời gian", selection: $delaySelection) {
 						ForEach(0..<delays.count, id: \.self) { i in
 							Text(delays[i].0).tag(i)
@@ -55,6 +55,8 @@ struct ZheeAppLockSettingsView: View {
 					.onChange(of: delaySelection) { i in
 						lock.lockDelay = delays[i].1
 					}
+				} header: {
+					Text("Tự động khóa sau")
 				} footer: {
 					Text("App sẽ tự khóa sau khoảng thời gian không dùng.")
 				}
