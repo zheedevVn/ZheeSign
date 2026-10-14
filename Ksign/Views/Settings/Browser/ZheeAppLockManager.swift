@@ -20,23 +20,17 @@ final class ZheeAppLockManager: ObservableObject {
 	private let defaults = UserDefaults.standard
 	private let pinKey = "zhee.applock.pin"
 	
-	var isEnabled: Bool {
-		get { defaults.bool(forKey: "zhee.applock.enabled") }
-		set { defaults.set(newValue, forKey: "zhee.applock.enabled") }
+	@Published var isEnabled: Bool = UserDefaults.standard.bool(forKey: "zhee.applock.enabled") {
+		didSet { defaults.set(isEnabled, forKey: "zhee.applock.enabled") }
 	}
 	
-	var useBiometrics: Bool {
-		get { defaults.bool(forKey: "zhee.applock.biometrics") }
-		set { defaults.set(newValue, forKey: "zhee.applock.biometrics") }
+	@Published var useBiometrics: Bool = UserDefaults.standard.bool(forKey: "zhee.applock.biometrics") {
+		didSet { defaults.set(useBiometrics, forKey: "zhee.applock.biometrics") }
 	}
 	
 	/// Thời gian chờ tự khóa (giây). 0 = ngay lập tức
-	var lockDelay: TimeInterval {
-		get {
-			let v = defaults.double(forKey: "zhee.applock.delay")
-			return v == 0 ? 0 : v
-		}
-		set { defaults.set(newValue, forKey: "zhee.applock.delay") }
+	@Published var lockDelay: TimeInterval = UserDefaults.standard.double(forKey: "zhee.applock.delay") {
+		didSet { defaults.set(lockDelay, forKey: "zhee.applock.delay") }
 	}
 	
 	var hasPIN: Bool {
