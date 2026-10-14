@@ -10,6 +10,16 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct ZheePythonView: View {
+	
+	private var outputText: some View {
+		Group {
+			if runner.output.characters.isEmpty {
+				Text("Gõ 'help' để xem lệnh.\n")
+			} else {
+				Text(runner.output)
+			}
+		}
+	}
 	@ObservedObject var runner = ZheePythonRunner.shared
 	@State private var inputText: String = ""
 	@State private var fontSize: CGFloat = 13
@@ -51,18 +61,12 @@ struct ZheePythonView: View {
 						.padding(.bottom, 8)
 						
 						// Output (AttributedString co mau rieng cho lenh/ket qua/loi)
-						Group {
-							if runner.output.isEmpty {
-								Text("Gõ 'help' để xem lệnh.\n")
-							} else {
-								Text(runner.output)
-							}
-						}
-						.font(.system(size: fontSize, design: .monospaced))
-						.foregroundColor(.green)
-						.textSelection(.enabled)
-						.frame(maxWidth: .infinity, alignment: .leading)
-						.id("bottom")
+						outputText
+							.font(.system(size: fontSize, design: .monospaced))
+							.foregroundColor(.green)
+							.textSelection(.enabled)
+							.frame(maxWidth: .infinity, alignment: .leading)
+							.id("bottom")
 					}
 					.padding(10)
 				}
@@ -171,7 +175,7 @@ struct ZheePythonView: View {
 			}
 		}
 		.onAppear {
-			if runner.output.isEmpty {
+			if runner.output.characters.isEmpty {
 				runner.appendOutput("Zhee Python Terminal v1.0\n© 2026 Hồ Đức Minh\nGõ 'help' để xem lệnh.\n\n")
 			}
 		}
