@@ -64,6 +64,14 @@ class ZheeAuthManager: ObservableObject {
 		   let data = try? JSONSerialization.data(withJSONObject: user) {
 			UserDefaults.standard.set(data, forKey: userKey)
 			userInfo = user
+			// Tự lưu secret key nếu API trả về - dùng chung cho mọi tool
+			if let secret = user["secret_key"] as? String, !secret.isEmpty {
+				UserDefaults.standard.set(secret, forKey: "zhee_api_secret")
+			} else if let secret = user["secret"] as? String, !secret.isEmpty {
+				UserDefaults.standard.set(secret, forKey: "zhee_api_secret")
+			} else if let secret = user["api_key"] as? String, !secret.isEmpty {
+				UserDefaults.standard.set(secret, forKey: "zhee_api_secret")
+			}
 		}
 		isLoggedIn = true
 	}
@@ -72,6 +80,7 @@ class ZheeAuthManager: ObservableObject {
 		UserDefaults.standard.removeObject(forKey: tokenKey)
 		UserDefaults.standard.removeObject(forKey: expiryKey)
 		UserDefaults.standard.removeObject(forKey: userKey)
+		UserDefaults.standard.removeObject(forKey: "zhee_api_secret")
 		userInfo = nil
 		isLoggedIn = false
 	}

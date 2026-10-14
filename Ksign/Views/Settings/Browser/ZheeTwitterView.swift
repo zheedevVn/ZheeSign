@@ -15,8 +15,6 @@ struct ZheeTwitterView: View {
 	@State private var errorMessage: String?
 	@State private var accountInfo: TwitterAccount?
 	@State private var mediaItems: [TwitterMedia] = []
-	@State private var secretKey: String = UserDefaults.standard.string(forKey: "zhee_twitter_secret") ?? ""
-	@State private var showSecretInput = false
 	@ObservedObject var auth = ZheeAuthManager.shared
 	
 	var body: some View {
@@ -50,26 +48,6 @@ struct ZheeTwitterView: View {
 						.scaledToFit()
 						.frame(width: 20, height: 20)
 				}
-			}
-			
-			Section("Secret Key") {
-				if secretKey.isEmpty {
-					Button("Nhập Secret Key từ web") {
-						showSecretInput = true
-					}
-				} else {
-					HStack {
-						Text("Đã lưu key")
-							.foregroundColor(.green)
-						Spacer()
-						Button("Đổi") {
-							showSecretInput = true
-						}
-					}
-				}
-				Text("Lấy key tại web api-zhee → mục tài khoản")
-					.font(.caption)
-					.foregroundColor(.secondary)
 			}
 			
 			if isLoading {
@@ -159,37 +137,13 @@ struct ZheeTwitterView: View {
 		}
 		.navigationTitle("Twitter / X")
 		.navigationBarTitleDisplayMode(.inline)
-		.sheet(isPresented: $showSecretInput) {
-			NavigationView {
-				Form {
-					Section {
-						SecureField("Dán secret key", text: $secretKey)
-					} footer: {
-						Text("Vào web api-zhee, đăng nhập, copy secret key ở mục tài khoản rồi dán vào đây.")
-					}
-				}
-				.navigationTitle("Secret Key")
-				.navigationBarTitleDisplayMode(.inline)
-				.toolbar {
-					ToolbarItem(placement: .cancellationAction) {
-						Button("Hủy") { showSecretInput = false }
-					}
-					ToolbarItem(placement: .confirmationAction) {
-						Button("Lưu") {
-							UserDefaults.standard.set(secretKey.trimmingCharacters(in: .whitespaces), forKey: "zhee_twitter_secret")
-							secretKey = UserDefaults.standard.string(forKey: "zhee_twitter_secret") ?? ""
-							showSecretInput = false
-						}
-					}
-				}
-			}
-		}
 	}
 	
 	private func fetchAccountInfo() {
-		let key = secretKey.trimmingCharacters(in: .whitespaces)
+		// Key tự lấy khi đăng nhập, lưu ẩn trong app
+		let key = UserDefaults.standard.string(forKey: "zhee_api_secret") ?? ""
 		guard !key.isEmpty else {
-			errorMessage = "Chưa nhập secret key — bấm mục Secret Key ở trên"
+			errorMessage = "Chưa có key — thử đăng xuất rồi đăng nhập lại"
 			return
 		}
 		isLoading = true
@@ -253,9 +207,9 @@ struct ZheeTwitterView: View {
 	}
 	
 	private func fetchMedia() {
-		let key = secretKey.trimmingCharacters(in: .whitespaces)
+		let key = UserDefaults.standard.string(forKey: "zhee_api_secret") ?? ""
 		guard !key.isEmpty else {
-			errorMessage = "Chưa nhập secret key — bấm mục Secret Key ở trên"
+			errorMessage = "Chưa có key — thử đăng xuất rồi đăng nhập lại"
 			return
 		}
 		isLoading = true
