@@ -20,19 +20,22 @@ struct WebBrowserView: View {
 	
 	var body: some View {
 		VStack(spacing: 0) {
-			// Thanh địa chỉ
-			HStack(spacing: 8) {
+			// Thanh địa chỉ gọn
+			HStack(spacing: 6) {
 				Button(action: goBack) {
 					Image(systemName: "chevron.left")
+						.font(.subheadline)
 				}
 				.disabled(!canGoBack)
 				
 				Button(action: goForward) {
 					Image(systemName: "chevron.right")
+						.font(.subheadline)
 				}
 				.disabled(!canGoForward)
 				
 				TextField("Nhập link hoặc URL...", text: $urlString)
+					.font(.subheadline)
 					.textFieldStyle(.roundedBorder)
 					.keyboardType(.URL)
 					.autocapitalization(.none)
@@ -42,21 +45,24 @@ struct WebBrowserView: View {
 				
 				if isLoading {
 					ProgressView()
-						.frame(width: 20, height: 20)
+						.frame(width: 16, height: 16)
 				} else {
 					Button(action: reload) {
 						Image(systemName: "arrow.clockwise")
+							.font(.subheadline)
 					}
 				}
 				
-				Button("Mở") {
+				Button {
 					urlFieldFocused = false
 					loadURL()
+				} label: {
+					Image(systemName: "arrow.right.circle.fill")
+						.font(.title3)
 				}
-				.buttonStyle(.borderedProminent)
 			}
-			.padding(.horizontal, 12)
-			.padding(.vertical, 8)
+			.padding(.horizontal, 10)
+			.padding(.vertical, 6)
 			.background(.bar)
 			
 			Divider()
