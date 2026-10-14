@@ -42,6 +42,7 @@ struct SettingsView: View {
 				ZheeUpdateView()
 				
 				_feedback()
+				_utilities()
 				
 				Section {
                     NavigationLink(destination: AppIconView()) {
@@ -119,8 +120,14 @@ extension SettingsView {
 			Button(.localized("GitHub 仓库"), systemImage: "safari") {
 				UIApplication.open(_githubUrl)
 			}
+		}
+	}
+	
+	@ViewBuilder
+	private func _utilities() -> some View {
+		Section("Trợ năng") {
 			NavigationLink(destination: WebBrowserView()) {
-				Label(.localized("Trình duyệt web"), systemImage: "globe")
+				Label("Trình duyệt web", systemImage: "globe")
 			}
 			NavigationLink(destination: ZheePythonView()) {
 				Label("Python", systemImage: "chevron.left.forwardslash.chevron.right")
