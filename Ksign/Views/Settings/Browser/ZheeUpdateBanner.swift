@@ -91,6 +91,8 @@ struct ZheeUpdateBanner: View {
 		}
 		.animation(.spring(response: 0.5), value: showBanner)
 		.onAppear {
+			// Xin quyền thông báo 1 lần
+			updater.requestNotificationPermission()
 			// Check update khi mở app
 			updater.checkForUpdates()
 			// Hiện banner sau 1.5s nếu có update

@@ -9,6 +9,7 @@
 import Foundation
 import SwiftUI
 import UIKit
+import UserNotifications
 
 class ZheeUpdateManager: ObservableObject {
 	static let shared = ZheeUpdateManager()
@@ -22,8 +23,19 @@ class ZheeUpdateManager: ObservableObject {
 	private let versionURL = "https://raw.githubusercontent.com/zheedevVn/ZheeSign/main/version.json"
 	private let ipaURL = "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 	
+	// Lưu version đã thông báo để không spam
+	private var notifiedVersion: String? {
+		get { UserDefaults.standard.string(forKey: "zhee.notifiedVersion") }
+		set { UserDefaults.standard.set(newValue, forKey: "zhee.notifiedVersion") }
+	}
+	
 	var currentVersion: String {
 		Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+	}
+	
+	/// Xin quyền thông báo (gọi 1 lần khi mở app)
+	func requestNotificationPermission() {
+		UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) { _, _ in }
 	}
 	
 	func checkForUpdates() {
@@ -62,9 +74,36 @@ class ZheeUpdateManager: ObservableObject {
 			self.latestVersion = remote
 			self.releaseNotes = notes
 			self.updateAvailable = true
+			// Gửi thông báo 1 lần cho mỗi version mới
+			if notifiedVersion != remote {
+				notifiedVersion = remote
+				sendUpdateNotification(version: remote, notes: notes)
+			}
 		} else {
 			self.latestVersion = nil
 			self.updateAvailable = false
+		}
+	}
+	
+	/// Thông báo iOS kiểu rich notification khi có bản mới
+	private func sendUpdateNotification(version: String, notes: String?) {
+		let center = UNUserNotificationCenter.current()
+		center.getNotificationSettings { settings in
+			guard settings.authorizationStatus == .authorized else { return }
+			
+			let content = UNMutableNotificationContent()
+			content.title = "ZheeSign có bản mới"
+			content.subtitle = "Phiên bản \(version) đã sẵn sàng"
+			content.body = notes?.isEmpty == false ? notes! : "Mở app để cập nhật ngay"
+			content.sound = .default
+			
+			// Mở app khi bấm vào thông báo
+			let request = UNNotificationRequest(
+				identifier: "zhee.update.\(version)",
+				content: content,
+				trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+			)
+			center.add(request)
 		}
 	}
 	

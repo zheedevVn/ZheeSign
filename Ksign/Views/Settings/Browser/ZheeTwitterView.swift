@@ -10,6 +10,35 @@ import SwiftUI
 import Photos
 import UIKit
 
+// Toast thông báo nổi — kiểu dáng hợp với app
+struct ToastView: View {
+	let message: String
+	let isError: Bool
+	
+	var body: some View {
+		HStack(spacing: 12) {
+			Image(systemName: isError ? "xmark.circle.fill" : "checkmark.circle.fill")
+				.font(.title2)
+				.foregroundColor(.white)
+			
+			Text(message)
+				.font(.subheadline)
+				.fontWeight(.medium)
+				.foregroundColor(.white)
+				.multilineTextAlignment(.leading)
+			
+			Spacer(minLength: 0)
+		}
+		.padding(.horizontal, 16)
+		.padding(.vertical, 12)
+		.background(
+			RoundedRectangle(cornerRadius: 16)
+				.fill(isError ? Color.red.gradient : Color.green.gradient)
+				.shadow(color: .black.opacity(0.2), radius: 8, x: 0, y: 4)
+		)
+	}
+}
+
 struct ZheeTwitterView: View {
 	@State private var input = ""
 	@State private var isLoading = false
@@ -21,7 +50,8 @@ struct ZheeTwitterView: View {
 	@ObservedObject var auth = ZheeAuthManager.shared
 	
 	var body: some View {
-		List {
+		ZStack(alignment: .top) {
+			List {
 			Section {
 				HStack {
 					Image("XLogo")
@@ -70,34 +100,6 @@ struct ZheeTwitterView: View {
 						ProgressView()
 						Spacer()
 					}
-				}
-			}
-			
-			if let error = errorMessage {
-				Section {
-					HStack(spacing: 10) {
-						Image(systemName: "exclamationmark.triangle.fill")
-							.foregroundColor(.red)
-							.font(.title3)
-						Text(error)
-							.foregroundColor(.red)
-							.font(.subheadline)
-					}
-					.padding(.vertical, 4)
-				}
-			}
-			
-			if let success = successMessage {
-				Section {
-					HStack(spacing: 10) {
-						Image(systemName: "checkmark.circle.fill")
-							.foregroundColor(.green)
-							.font(.title3)
-						Text(success)
-							.foregroundColor(.primary)
-							.font(.subheadline)
-					}
-					.padding(.vertical, 4)
 				}
 			}
 			
@@ -170,6 +172,24 @@ struct ZheeTwitterView: View {
 		}
 		.navigationTitle("Twitter / X")
 		.navigationBarTitleDisplayMode(.inline)
+		.overlay(alignment: .top) {
+			// Toast thông báo nổi có hiệu ứng
+			VStack(spacing: 8) {
+				if let error = errorMessage {
+					ToastView(message: error, isError: true)
+						.transition(.move(edge: .top).combined(with: .opacity))
+				}
+				if let success = successMessage {
+					ToastView(message: success, isError: false)
+						.transition(.move(edge: .top).combined(with: .opacity))
+				}
+			}
+			.padding(.top, 8)
+			.padding(.horizontal, 16)
+			.animation(.spring(response: 0.4, dampingFraction: 0.8), value: errorMessage)
+			.animation(.spring(response: 0.4, dampingFraction: 0.8), value: successMessage)
+		}
+		} // đóng ZStack
 	}
 	
 	private func fetchAccountInfo() {
@@ -413,7 +433,7 @@ struct ZheeTwitterView: View {
 			DispatchQueue.main.async {
 				if success {
 					errorMessage = nil
-					successMessage = item.type == "video" ? "Đã lưu video vào thư viện ảnh ✅" : "Đã lưu ảnh vào thư viện ảnh ✅"
+					successMessage = item.type == "video" ? "Đã lưu video vào thư viện ảnh" : "Đã lưu ảnh vào thư viện ảnh"
 					// Tự ẩn thông báo sau 3 giây
 					DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
 						successMessage = nil
