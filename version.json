@@ -1,7 +1,7 @@
 {
   "version": "1.7.19",
   "build": "1.7.19",
-  "notes": "Fix Twitter JSON parsing to use Vietnamese field names",
+  "notes": "Fix Twitter media parsing for Vietnamese field names",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
