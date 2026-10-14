@@ -76,7 +76,6 @@ class ZheePythonRunner: ObservableObject {
 		initialize()
 		
 		isRunning = true
-		appendCommand("$ python\n")
 		
 		DispatchQueue.global(qos: .userInitiated).async { [weak self] in
 			// Chuyển hướng stdout/stderr
@@ -115,7 +114,7 @@ class ZheePythonRunner: ObservableObject {
 		DispatchQueue.global(qos: .userInitiated).async { [weak self] in
 			let safePkg = package.replacingOccurrences(of: "\"", with: "")
 			let code = """
-			import urllib.request, zipfile, json, os
+			import urllib.request, zipfile, json, os, tempfile
 			_pkg = "\(safePkg)"
 			_site = os.path.expanduser("~/Documents/site-packages")
 			os.makedirs(_site, exist_ok=True)
@@ -132,7 +131,7 @@ class ZheePythonRunner: ObservableObject {
 			        print("Khong co ban pure-Python cho " + _pkg)
 			    else:
 			        print("Dang tai " + _pkg + "...")
-			        _tmp = "/tmp/_zheepkg.whl"
+			        _tmp = os.path.join(tempfile.gettempdir(), "_zheepkg.whl")
 			        urllib.request.urlretrieve(_whl, _tmp)
 			        with zipfile.ZipFile(_tmp) as _z:
 			            _z.extractall(_site)
