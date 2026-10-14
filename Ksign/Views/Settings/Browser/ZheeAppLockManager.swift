@@ -10,6 +10,7 @@ import Foundation
 import LocalAuthentication
 import Security
 import CryptoKit
+import UIKit
 import SwiftUI
 
 final class ZheeAppLockManager: ObservableObject {
@@ -85,7 +86,11 @@ final class ZheeAppLockManager: ObservableObject {
 	
 	func lock() {
 		guard isEnabled, hasPIN else { return }
-		DispatchQueue.main.async { self.isLocked = true }
+		// Tắt bàn phím ngay khi khóa - tránh bàn phím đè lên màn khóa
+		DispatchQueue.main.async {
+			UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+			self.isLocked = true
+		}
 	}
 	
 	func unlock() {

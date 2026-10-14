@@ -99,6 +99,8 @@ struct ZheeLockScreenView: View {
 			.padding()
 		}
 		.onAppear {
+			// Tắt bàn phím khi màn khóa hiện - tránh bàn phím đè lên màn khóa
+			UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
 			// Tự bật sinh trắc học khi mở màn khóa
 			if lock.useBiometrics && lock.canUseBiometrics {
 				DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
