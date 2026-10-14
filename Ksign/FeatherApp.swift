@@ -84,8 +84,8 @@ struct FeatherApp: App {
 			.onAppear {
 				accentColorManager.updateGlobalTintColor()
 				if logsManager.isCapturing { logsManager.startCapture() }
-				// Splash 1.2s rồi mờ dần
-				DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+				// Splash 2.5s rồi mờ dần
+				DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) {
 					withAnimation(.easeOut(duration: 0.4)) {
 						showSplash = false
 					}

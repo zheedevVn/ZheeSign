@@ -233,9 +233,11 @@ struct ZheeTwitterView: View {
 				if let msg = json["thong_bao"] as? String {
 					let status = json["trang_thai"] as? String
 					if status == "that_bai" {
-						// Kiểm tra hết hạn
-						if msg.lowercased().contains("hết hạn") || msg.lowercased().contains("expired") {
-							errorMessage = "Key đã hết hạn — lên web gia hạn thêm"
+						// Server chưa nhận OAuth token → báo đăng nhập lại
+						if msg.contains("Secret key") || msg.lowercased().contains("không hợp lệ") {
+							errorMessage = "Phiên đăng nhập hết hạn — đăng xuất rồi đăng nhập lại"
+						} else if msg.lowercased().contains("hết hạn") || msg.lowercased().contains("expired") {
+							errorMessage = "Phiên đăng nhập hết hạn — đăng xuất rồi đăng nhập lại"
 						} else {
 							errorMessage = msg
 						}
@@ -299,8 +301,10 @@ struct ZheeTwitterView: View {
 				}
 				
 				if let msg = json["thong_bao"] as? String, json["trang_thai"] as? String == "that_bai" {
-					if msg.lowercased().contains("hết hạn") || msg.lowercased().contains("expired") {
-						errorMessage = "Key đã hết hạn — lên web gia hạn thêm"
+					if msg.contains("Secret key") || msg.lowercased().contains("không hợp lệ") {
+						errorMessage = "Phiên đăng nhập hết hạn — đăng xuất rồi đăng nhập lại"
+					} else if msg.lowercased().contains("hết hạn") || msg.lowercased().contains("expired") {
+						errorMessage = "Phiên đăng nhập hết hạn — đăng xuất rồi đăng nhập lại"
 					} else {
 						errorMessage = msg
 					}
