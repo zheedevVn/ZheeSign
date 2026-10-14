@@ -2,49 +2,80 @@
 //  ZheeSplashView.swift
 //  ZheeSign
 //
-//  Màn hình chào với hiệu ứng logo phát sáng khi mở app.
+//  Màn hình chào: chữ Z hoạt hình tự vẽ nét + phát sáng.
 //  © 2026 Hồ Đức Minh
 //
 
 import SwiftUI
 
+/// Chữ Z vẽ bằng Path để animate nét vẽ
+struct AnimatedZShape: Shape {
+	func path(in rect: CGRect) -> Path {
+		var p = Path()
+		let w = rect.width
+		let h = rect.height
+		// Nét ngang trên
+		p.move(to: CGPoint(x: w * 0.15, y: h * 0.15))
+		p.addLine(to: CGPoint(x: w * 0.85, y: h * 0.15))
+		// Nét chéo
+		p.addLine(to: CGPoint(x: w * 0.15, y: h * 0.85))
+		// Nét ngang dưới
+		p.addLine(to: CGPoint(x: w * 0.85, y: h * 0.85))
+		return p
+	}
+}
+
 struct ZheeSplashView: View {
-	@State private var scale: CGFloat = 0.6
-	@State private var opacity: Double = 0
+	@State private var drawProgress: CGFloat = 0
 	@State private var glow: Double = 0.3
+	@State private var textOpacity: Double = 0
+	@State private var wiggle: Double = 0
 	
 	var body: some View {
 		ZStack {
 			Color(.systemBackground).ignoresSafeArea()
 			
-			VStack(spacing: 24) {
-				if let iconName = Bundle.main.iconFileName,
-				   let icon = UIImage(named: iconName) {
-					Image(uiImage: icon)
-						.resizable()
-						.frame(width: 120, height: 120)
-						.clipShape(RoundedRectangle(cornerRadius: 28))
-						.scaleEffect(scale)
-						.opacity(opacity)
-						.shadow(color: .accentColor.opacity(glow), radius: 30)
-						.shadow(color: .purple.opacity(glow * 0.7), radius: 60)
+			VStack(spacing: 20) {
+				ZStack {
+					// Lớp phát sáng
+					AnimatedZShape()
+						.trim(from: 0, to: drawProgress)
+						.stroke(
+							LinearGradient(colors: [.cyan, .blue, .purple, .pink],
+										   startPoint: .topLeading, endPoint: .bottomTrailing),
+							style: StrokeStyle(lineWidth: 22, lineCap: .round, lineJoin: .round)
+						)
+						.frame(width: 110, height: 110)
+						.shadow(color: .blue.opacity(glow), radius: 25)
+						.shadow(color: .purple.opacity(glow * 0.8), radius: 50)
+						.rotationEffect(.degrees(wiggle))
 				}
 				
 				Text("ZheeSign")
-					.font(.system(size: 28, weight: .bold))
+					.font(.system(size: 30, weight: .bold, design: .rounded))
 					.foregroundStyle(
-						LinearGradient(colors: [.accentColor, .purple], startPoint: .leading, endPoint: .trailing)
+						LinearGradient(colors: [.cyan, .blue, .purple, .pink],
+									   startPoint: .leading, endPoint: .trailing)
 					)
-					.opacity(opacity)
+					.opacity(textOpacity)
 			}
 		}
 		.onAppear {
-			withAnimation(.spring(response: 0.6, dampingFraction: 0.7)) {
-				scale = 1
-				opacity = 1
+			// Vẽ nét chữ Z trong 0.8s
+			withAnimation(.easeInOut(duration: 0.8)) {
+				drawProgress = 1
 			}
-			withAnimation(.easeInOut(duration: 1.2).repeatForever(autoreverses: true)) {
-				glow = 0.8
+			// Tên hiện sau
+			withAnimation(.easeIn(duration: 0.4).delay(0.6)) {
+				textOpacity = 1
+			}
+			// Phát sáng nhấp nháy
+			withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+				glow = 0.9
+			}
+			// Lắc nhẹ cho vui
+			withAnimation(.easeInOut(duration: 0.5).delay(0.8)) {
+				wiggle = 4
 			}
 		}
 	}
