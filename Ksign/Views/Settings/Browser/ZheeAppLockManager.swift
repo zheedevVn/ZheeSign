@@ -16,6 +16,7 @@ final class ZheeAppLockManager: ObservableObject {
 	static let shared = ZheeAppLockManager()
 	
 	@Published var isLocked = false
+	private var wasBackgrounded = false
 	
 	private let defaults = UserDefaults.standard
 	private let pinKey = "zhee.applock.pin"
@@ -88,7 +89,8 @@ final class ZheeAppLockManager: ObservableObject {
 	}
 	
 	func unlock() {
-		// Reset mốc thời gian khi mở khóa thành công - tránh appDidBecomeActive khóa lại ngay gây lặp vô tận
+		// Vừa mở khóa xong thì không tính là "từ background về" - tránh khóa lại ngay
+		wasBackgrounded = false
 		defaults.set(Date().timeIntervalSince1970, forKey: "zhee.applock.lastbg")
 		DispatchQueue.main.async { self.isLocked = false }
 	}
@@ -96,6 +98,9 @@ final class ZheeAppLockManager: ObservableObject {
 	/// Gọi khi app vào foreground — khóa nếu quá thời gian chờ
 	func appDidBecomeActive() {
 		guard isEnabled, hasPIN, !isLocked else { return }
+		// Chỉ xét khóa khi thật sự vừa từ background trở về
+		guard wasBackgrounded else { return }
+		wasBackgrounded = false
 		let lastBG = defaults.double(forKey: "zhee.applock.lastbg")
 		// Lần đầu mở app (chưa có lastbg) -> khóa ngay nếu bật
 		if lastBG == 0 {
@@ -110,6 +115,7 @@ final class ZheeAppLockManager: ObservableObject {
 	
 	func appDidEnterBackground() {
 		defaults.set(Date().timeIntervalSince1970, forKey: "zhee.applock.lastbg")
+		wasBackgrounded = true
 	}
 	
 	// MARK: - Sinh trắc học

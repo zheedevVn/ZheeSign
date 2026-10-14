@@ -22,6 +22,7 @@ struct FeatherApp: App {
 	@ObservedObject var auth = ZheeAuthManager.shared
 	@StateObject var appLock = ZheeAppLockManager.shared
 	@Environment(\.scenePhase) var scenePhase
+	@State private var hasBeenActive = false
 
 	var body: some Scene {
 		WindowGroup {
@@ -51,8 +52,9 @@ struct FeatherApp: App {
 				}
 			}
 			.overlay {
-				// Che nội dung khi ra background - như app ngân hàng
-				if scenePhase == .background {
+				// Che nội dung khi app không còn active - như app ngân hàng
+				// Dùng != .active (bao gồm .inactive) vì iOS chụp snapshot trước khi vào .background
+				if hasBeenActive && scenePhase != .active {
 					ZStack {
 						Color(.systemBackground).ignoresSafeArea()
 						if let iconName = Bundle.main.iconFileName,
@@ -70,6 +72,7 @@ struct FeatherApp: App {
 			.onChange(of: scenePhase) { phase in
 				switch phase {
 				case .active:
+					hasBeenActive = true
 					ZheeAppLockManager.shared.appDidBecomeActive()
 				case .background:
 					ZheeAppLockManager.shared.appDidEnterBackground()
