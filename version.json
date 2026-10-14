@@ -1,7 +1,7 @@
 {
-  "version": "1.7.20",
-  "build": "1.7.20",
-  "notes": "Fix Photos 3302 error, add save success message, block tweet URL as profile",
+  "version": "1.7.21",
+  "build": "1.7.21",
+  "notes": "Add iOS update notification, animated toast for Twitter save",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
