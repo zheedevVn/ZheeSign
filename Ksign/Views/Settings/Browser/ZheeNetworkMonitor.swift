@@ -16,13 +16,16 @@ class ZheeNetworkMonitor: ObservableObject {
 	
 	@Published var isConnected = true
 	@Published var connectionType = "WiFi"
+	@Published var showToast = false
 	
 	private let monitor = NWPathMonitor()
 	private let queue = DispatchQueue(label: "zhee.network.monitor")
+	private var toastWorkItem: DispatchWorkItem?
 	
 	private init() {
 		monitor.pathUpdateHandler = { [weak self] path in
 			DispatchQueue.main.async {
+				let wasConnected = self?.isConnected ?? true
 				self?.isConnected = path.status == .satisfied
 				if path.usesInterfaceType(.wifi) {
 					self?.connectionType = "WiFi"
@@ -33,9 +36,28 @@ class ZheeNetworkMonitor: ObservableObject {
 				} else {
 					self?.connectionType = "Không rõ"
 				}
+				// Chỉ toast khi trạng thái thay đổi thật
+				if wasConnected != self?.isConnected {
+					self?.showToastOnce()
+				}
 			}
 		}
 		monitor.start(queue: queue)
+	}
+	
+	/// Hiện toast 3s rồi ẩn, hủy lịch cũ nếu có (tránh trùng)
+	func showToastOnce() {
+		toastWorkItem?.cancel()
+		withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+			showToast = true
+		}
+		let work = DispatchWorkItem { [weak self] in
+			withAnimation(.easeOut(duration: 0.3)) {
+				self?.showToast = false
+			}
+		}
+		toastWorkItem = work
+		DispatchQueue.main.asyncAfter(deadline: .now() + 3, execute: work)
 	}
 	
 	deinit {
@@ -43,14 +65,13 @@ class ZheeNetworkMonitor: ObservableObject {
 	}
 }
 
-// Banner mất mạng — kiểu pill đen như Facebook, trên đầu, 3s tự ẩn
+// Banner mất mạng — kiểu pill đen như Facebook, trên cùng ở giữa, mọi tab
 struct ZheeOfflineBanner: View {
 	@ObservedObject var monitor = ZheeNetworkMonitor.shared
-	@State private var showToast = false
 	
 	var body: some View {
 		Group {
-			if showToast {
+			if monitor.showToast {
 				HStack(spacing: 10) {
 					Image(systemName: monitor.isConnected ? "wifi" : "wifi.slash")
 						.font(.body)
@@ -69,27 +90,6 @@ struct ZheeOfflineBanner: View {
 				.transition(.move(edge: .top).combined(with: .opacity))
 			}
 		}
-		.onChange(of: monitor.isConnected) { connected in
-			// Hiện 3s rồi tự ẩn
-			withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
-				showToast = true
-			}
-			DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-				withAnimation(.easeOut(duration: 0.3)) {
-					showToast = false
-				}
-			}
-		}
-		.onAppear {
-			// Hiện ngay nếu đang offline khi mở
-			if !monitor.isConnected {
-				showToast = true
-				DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-					withAnimation(.easeOut(duration: 0.3)) {
-						showToast = false
-					}
-				}
-			}
-		}
+		.animation(.spring(response: 0.4, dampingFraction: 0.8), value: monitor.showToast)
 	}
 }

@@ -141,6 +141,12 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
         // Hiện thông báo cả khi app đang mở
         UNUserNotificationCenter.current().delegate = self
         
+        // Kiểm tra bảo mật: chặn debug/Frida
+        if !ZheeSecurity.validateEnvironment() {
+            // Phát hiện tấn công — thoát ngay
+            exit(0)
+        }
+        
         _createPipeline()
         _createSourcesDirectory()
         if !UserDefaults.standard.bool(forKey: "hasInitializedBuiltInSources") {

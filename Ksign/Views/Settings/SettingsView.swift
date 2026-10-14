@@ -121,9 +121,8 @@ extension SettingsView {
 			}
 		}
 		.overlay(alignment: .top) {
-			ZheeOfflineBanner()
-				.padding(.top, 8)
-				.animation(.spring(response: 0.4, dampingFraction: 0.8), value: networkMonitor.isConnected)
+			// Banner mất mạng đã chuyển lên TabbarView (hiện mọi tab)
+			EmptyView()
 		}
 	}
 	

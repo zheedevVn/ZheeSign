@@ -16,9 +16,9 @@ class ZheeAuthManager: ObservableObject {
 	// TODO: Thay bằng client_id thật từ api-zhee.vercel.app/ho-so
 	static let clientId = "zhc_cec13d08004acae37560776b"
 	static let redirectURI = "zheesign://oauth/callback"
-	static let authorizeURL = "https://api-zhee.vercel.app/oauth/authorize"
-	static let tokenURL = "https://api-zhee.vercel.app/oauth/token"
-	static let userinfoURL = "https://api-zhee.vercel.app/oauth/userinfo"
+	static var authorizeURL: String { "\(ZheeSecurity.apiBaseURL)/oauth/authorize" }
+	static var tokenURL: String { "\(ZheeSecurity.apiBaseURL)/oauth/token" }
+	static var userinfoURL: String { "\(ZheeSecurity.apiBaseURL)/oauth/userinfo" }
 	
 	private let tokenKey = "zhee_access_token"
 	private let expiryKey = "zhee_token_expiry"

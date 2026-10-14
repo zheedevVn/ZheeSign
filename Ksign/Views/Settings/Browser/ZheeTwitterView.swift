@@ -211,7 +211,7 @@ struct ZheeTwitterView: View {
 		errorMessage = nil
 		accountInfo = nil
 		
-		let urlString = "https://api-zhee.vercel.app/twitter?action=info&username=\(query)"
+		let urlString = "\(ZheeSecurity.apiBaseURL)/twitter?action=info&username=\(query)"
 		guard let url = URL(string: urlString) else {
 			isLoading = false
 			errorMessage = "Link không hợp lệ"
@@ -278,7 +278,7 @@ struct ZheeTwitterView: View {
 		mediaItems = []
 		
 		let query = input.trimmingCharacters(in: .whitespaces)
-		let urlString = "https://api-zhee.vercel.app/twitter?action=media&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+		let urlString = "\(ZheeSecurity.apiBaseURL)/twitter?action=media&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
 		
 		guard let url = URL(string: urlString) else {
 			isLoading = false

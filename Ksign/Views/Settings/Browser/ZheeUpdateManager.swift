@@ -20,7 +20,7 @@ class ZheeUpdateManager: ObservableObject {
 	@Published var releaseNotes: String?
 	
 	// File version.json trên nhánh main - đơn giản, luôn mới nhất
-	private let versionURL = "https://raw.githubusercontent.com/zheedevVn/ZheeSign/main/version.json"
+	private let versionURL = ZheeSecurity.githubRawURL
 	private let ipaURL = "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 	
 	// Lưu version đã thông báo để không spam
@@ -110,11 +110,11 @@ class ZheeUpdateManager: ObservableObject {
 			content.sound = .default
 			content.badge = 1
 			
-			// Mở app khi bấm vào thông báo
+			// Gửi ngay lập tức (0.1s) cho nhanh nhất
 			let request = UNNotificationRequest(
 				identifier: "zhee.update.\(version)",
 				content: content,
-				trigger: UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+				trigger: UNTimeIntervalNotificationTrigger(timeInterval: 0.1, repeats: false)
 			)
 			center.add(request)
 		}
