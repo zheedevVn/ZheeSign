@@ -40,8 +40,6 @@ struct ZheeTwitterView: View {
 				}
 			} header: {
 				Label("Twitter / X Downloader", systemImage: "x.circle")
-			} footer: {
-				Text("Dùng api-zhee.vercel.app — cần đăng nhập Zhee.")
 			}
 			
 			if isLoading {
@@ -134,17 +132,140 @@ struct ZheeTwitterView: View {
 	}
 	
 	private func fetchAccountInfo() {
-		// TODO: Gọi api-zhee /twitter endpoint
-		errorMessage = "Đang phát triển — cần xác thực API"
+		guard let token = auth.accessToken else {
+			errorMessage = "Bạn chưa đăng nhập"
+			return
+		}
+		isLoading = true
+		errorMessage = nil
+		accountInfo = nil
+		
+		let query = input.trimmingCharacters(in: .whitespaces)
+		var urlString = "https://api-zhee.vercel.app/twitter?action=info&username=\(query)"
+		if query.contains("twitter.com") || query.contains("x.com") {
+			urlString = "https://api-zhee.vercel.app/twitter?action=info&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+		}
+		
+		guard let url = URL(string: urlString) else {
+			isLoading = false
+			errorMessage = "Link không hợp lệ"
+			return
+		}
+		
+		var req = URLRequest(url: url)
+		req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+		
+		URLSession.shared.dataTask(with: req) { data, _, _ in
+			DispatchQueue.main.async {
+				isLoading = false
+				guard let data = data,
+					  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+					errorMessage = "Không đọc được dữ liệu"
+					return
+				}
+				
+				if let msg = json["thong_bao"] as? String, json["trang_thai"] as? String == "that_bai" {
+					errorMessage = msg
+					return
+				}
+				
+				// Parse theo format api-zhee trả về
+				let username = (json["username"] as? String) ?? query
+				let name = (json["name"] as? String) ?? (json["display_name"] as? String) ?? username
+				let avatar = (json["avatar"] as? String) ?? (json["profile_image"] as? String) ?? ""
+				let bio = (json["bio"] as? String) ?? (json["description"] as? String)
+				let followers = (json["followers"] as? Int) ?? 0
+				let following = (json["following"] as? Int) ?? 0
+				let tweets = (json["tweets"] as? Int) ?? (json["statuses_count"] as? Int) ?? 0
+				
+				accountInfo = TwitterAccount(
+					username: username,
+					displayName: name,
+					avatarURL: avatar,
+					bio: bio,
+					followers: followers,
+					following: following,
+					tweets: tweets
+				)
+			}
+		}.resume()
 	}
 	
 	private func fetchMedia() {
-		// TODO: Gọi api-zhee /twitter endpoint
-		errorMessage = "Đang phát triển — cần xác thực API"
+		guard let token = auth.accessToken else {
+			errorMessage = "Bạn chưa đăng nhập"
+			return
+		}
+		isLoading = true
+		errorMessage = nil
+		mediaItems = []
+		
+		let query = input.trimmingCharacters(in: .whitespaces)
+		let urlString = "https://api-zhee.vercel.app/twitter?action=media&url=\(query.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? "")"
+		
+		guard let url = URL(string: urlString) else {
+			isLoading = false
+			errorMessage = "Link không hợp lệ"
+			return
+		}
+		
+		var req = URLRequest(url: url)
+		req.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+		
+		URLSession.shared.dataTask(with: req) { data, _, _ in
+			DispatchQueue.main.async {
+				isLoading = false
+				guard let data = data,
+					  let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+					errorMessage = "Không đọc được dữ liệu"
+					return
+				}
+				
+				if let msg = json["thong_bao"] as? String, json["trang_thai"] as? String == "that_bai" {
+					errorMessage = msg
+					return
+				}
+				
+				// Parse media list
+				if let mediaArray = json["media"] as? [[String: Any]] {
+					mediaItems = mediaArray.compactMap { m in
+						guard let url = m["url"] as? String else { return nil }
+						let type = (m["type"] as? String) ?? "image"
+						let thumb = (m["thumbnail"] as? String) ?? url
+						return TwitterMedia(type: type, url: url, thumbnailURL: thumb)
+					}
+				}
+				
+				if mediaItems.isEmpty {
+					errorMessage = "Không tìm thấy ảnh/video"
+				}
+			}
+		}.resume()
 	}
 	
 	private func downloadMedia(_ item: TwitterMedia) {
-		// TODO: Tải về Photos
+		guard let url = URL(string: item.url) else { return }
+		
+		URLSession.shared.downloadTask(with: url) { tempURL, _, _ in
+			guard let tempURL = tempURL else { return }
+			
+			// Xin quyền và lưu vào Photos
+			PHPhotoLibrary.requestAuthorization { status in
+				guard status == .authorized else { return }
+				
+				PHPhotoLibrary.shared().performChanges {
+					if item.type == "video" {
+						PHAssetChangeRequest.creationRequestForAssetFromVideo(atFileURL: tempURL)
+					} else {
+						PHAssetChangeRequest.creationRequestForAssetFromImage(atFileURL: tempURL)
+					}
+				} completionHandler: { success, _ in
+					DispatchQueue.main.async {
+						errorMessage = success ? nil : "Lưu thất bại"
+					}
+				}
+			}
+		}.resume()
 	}
 }
 
