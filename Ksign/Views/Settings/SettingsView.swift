@@ -131,7 +131,17 @@ extension SettingsView {
 				Label("Trình duyệt web", systemImage: "globe")
 			}
 			NavigationLink(destination: ZheePythonView()) {
-				Label("Python", systemImage: "chevron.left.forwardslash.chevron.right")
+				Label {
+					Text("Python")
+				} icon: {
+					Image("PythonLogo")
+						.resizable()
+						.scaledToFit()
+						.frame(width: 28, height: 28)
+				}
+			}
+			NavigationLink(destination: ZheeTwitterView()) {
+				Label("Twitter / X", systemImage: "x.circle")
 			}
 		}
 	}
