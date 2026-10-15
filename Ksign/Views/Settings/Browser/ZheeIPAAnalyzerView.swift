@@ -232,6 +232,31 @@ struct ZheeIPAAnalyzerView: View {
                     }
                 }
 
+                Section("Sơ đồ cấu trúc") {
+                    Text("Luồng hoạt động")
+                        .font(.subheadline)
+                        .bold()
+                    flowNode(icon: "app.fill", title: report.appName, subtitle: "\(report.bundleID) • v\(report.version) (\(report.build))", color: .blue)
+                    flowArrow()
+                    flowNode(icon: "cpu", title: "Executable: \(report.executable)", subtitle: "\(report.architectures.joined(separator: ", ")) • \(report.isEncrypted ? "Mã hóa FairPlay" : "Không mã hóa")", color: .orange)
+                    flowArrow()
+                    HStack(spacing: 8) {
+                        flowNode(icon: "folder.fill", title: "Frameworks", subtitle: "\(report.frameworks.count) framework", color: .purple)
+                        flowNode(icon: "link", title: "Dylib", subtitle: "\(report.linkedDylibs.count) thư viện", color: .purple)
+                    }
+                    flowArrow()
+                    flowNode(icon: "key.fill", title: "Entitlements", subtitle: "\(report.entitlements.count) quyền • Team: \(report.teamName)", color: .green)
+                    flowArrow()
+                    flowNode(icon: "lock.shield", title: "Quyền riêng tư", subtitle: "\(report.permissions.count) quyền • \(report.backgroundModes.count) background mode", color: .red)
+                    flowArrow()
+                    flowNode(icon: "network", title: "Kết nối ra ngoài", subtitle: "\(report.links.count) link • \(report.urlSchemes.count) URL scheme", color: .teal)
+                    Text("Cây thư mục")
+                        .font(.subheadline)
+                        .bold()
+                        .padding(.top, 8)
+                    fileTreeView(node: report.fileTree)
+                }
+
                 Section("Sửa thông tin app") {
                     HStack {
                         Text("Bundle ID")
@@ -546,6 +571,72 @@ struct ZheeIPAAnalyzerView: View {
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 isAnalyzing = false
+            }
+        }
+    }
+
+    private func flowNode(icon: String, title: String, subtitle: String, color: Color) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .foregroundColor(color)
+                .font(.title3)
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title)
+                    .font(.subheadline)
+                    .bold()
+                    .lineLimit(1)
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+            Spacer()
+        }
+        .padding(10)
+        .background(Color(.secondarySystemGroupedBackground))
+        .cornerRadius(12)
+    }
+
+    private func flowArrow() -> some View {
+        Image(systemName: "chevron.down")
+            .font(.caption)
+            .foregroundColor(.secondary)
+            .frame(maxWidth: .infinity)
+    }
+
+    private func fileTreeView(node: ZheeFileNode) -> some View {
+        Group {
+            if node.isDir {
+                DisclosureGroup {
+                    ForEach(node.children) { child in
+                        fileTreeView(node: child)
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "folder.fill")
+                            .foregroundColor(.blue)
+                        Text(node.name)
+                            .font(.system(.subheadline, design: .monospaced))
+                            .lineLimit(1)
+                        Spacer()
+                        Text(node.sizeText)
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+            } else {
+                HStack {
+                    Image(systemName: "doc")
+                        .foregroundColor(.secondary)
+                    Text(node.name)
+                        .font(.system(.subheadline, design: .monospaced))
+                        .lineLimit(1)
+                    Spacer()
+                    Text(node.sizeText)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
         }
     }

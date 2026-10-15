@@ -64,6 +64,17 @@ struct ZheeImageItem: Hashable, Identifiable {
     let sizeText: String
 }
 
+struct ZheeFileNode: Hashable, Identifiable {
+    var id: String { path }
+    let name: String
+    /// Path relative to the extracted root, e.g. Payload/App.app/Info.plist
+    let path: String
+    let isDir: Bool
+    let size: Int
+    let sizeText: String
+    var children: [ZheeFileNode] = []
+}
+
 struct ZheeIPAReport {
     /// Extracted IPA folder — kept so patches can be applied + repacked.
     /// Caller owns cleanup.
@@ -94,6 +105,8 @@ struct ZheeIPAReport {
     let links: [ZheeLinkItem]
     let secrets: [ZheeSecretItem]
     let images: [ZheeImageItem]
+    /// Directory tree of Payload/ (depth <= 3)
+    let fileTree: ZheeFileNode
     let warnings: [String]
     let scannedStrings: Int
 
@@ -102,6 +115,22 @@ struct ZheeIPAReport {
             let items = links.filter { $0.category == cat }
             return items.isEmpty ? nil : (cat, items)
         }
+    }
+
+    private func asciiTree(node: ZheeFileNode, prefix: String = "", lines: inout [String]) {
+        lines.append(prefix + (node.isDir ? node.name + "/" : node.name + (node.sizeText.isEmpty ? "" : " (\(node.sizeText))")))
+        for child in node.children.prefix(30) {
+            asciiTree(node: child, prefix: prefix + "  ", lines: &lines)
+        }
+        if node.children.count > 30 {
+            lines.append(prefix + "  … +\(node.children.count - 30) mục")
+        }
+    }
+
+    private func asciiTree(node: ZheeFileNode) -> [String] {
+        var lines: [String] = []
+        asciiTree(node: node, lines: &lines)
+        return lines
     }
 
     var summaryText: String {
@@ -140,6 +169,11 @@ struct ZheeIPAReport {
             lines.append("")
             lines.append("--- Linked dylibs ---")
             lines.append(contentsOf: linkedDylibs.map { "- \($0)" })
+        }
+        if true {
+            lines.append("")
+            lines.append("--- File Tree ---")
+            lines.append(contentsOf: asciiTree(node: fileTree))
         }
         if !permissions.isEmpty {
             lines.append("")
@@ -367,6 +401,9 @@ final class ZheeIPAAnalyzer {
             warnings.append("Không có embedded.mobileprovision — app chưa được ký / ký kiểu khác.")
         }
 
+        // MARK: File tree
+        let fileTree = buildFileTree(root: payload, base: workDir, depth: 0)
+
         // MARK: File size
         let fileSize: String
         if let attrs = try? fm.attributesOfItem(atPath: ipaURL.path),
@@ -404,6 +441,7 @@ final class ZheeIPAAnalyzer {
             links: linkMap.values.sorted { $0.url < $1.url },
             secrets: secrets.sorted { $0.kind < $1.kind },
             images: images,
+            fileTree: fileTree,
             warnings: warnings,
             scannedStrings: scannedStrings
         )
@@ -521,5 +559,40 @@ final class ZheeIPAAnalyzer {
     private func readBE32(_ data: Data, _ offset: Int) -> UInt32 {
         guard data.count >= offset + 4 else { return 0 }
         return data.withUnsafeBytes { $0.load(fromByteOffset: offset, as: UInt32.self) }.bigEndian
+    }
+
+    // MARK: - File tree
+
+    private func buildFileTree(root: URL, base: URL, depth: Int) -> ZheeFileNode {
+        let fm = FileManager.default
+        var isDir: ObjCBool = false
+        _ = fm.fileExists(atPath: root.path, isDirectory: &isDir)
+        let size = (try? root.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+        let rel = root.path.hasPrefix(base.path + "/")
+            ? String(root.path.dropFirst(base.path.count + 1))
+            : root.lastPathComponent
+        var node = ZheeFileNode(
+            name: root.lastPathComponent,
+            path: rel,
+            isDir: isDir.boolValue,
+            size: size,
+            sizeText: isDir.boolValue ? "" : ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+        )
+        guard isDir.boolValue, depth < 3 else { return node }
+        var children: [ZheeFileNode] = []
+        if let items = try? fm.contentsOfDirectory(at: root, includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey]) {
+            for item in items.sorted(by: { $0.lastPathComponent < $1.lastPathComponent }) {
+                if item.lastPathComponent == ".DS_Store" { continue }
+                if item.lastPathComponent == "_CodeSignature" {
+                    children.append(ZheeFileNode(name: "_CodeSignature", path: rel + "/_CodeSignature", isDir: true, size: 0, sizeText: "chữ ký"))
+                    continue
+                }
+                children.append(buildFileTree(root: item, base: base, depth: depth + 1))
+                if children.count >= 100 { break }
+            }
+        }
+        children.sort { ($0.isDir ? 0 : 1, $0.name) < ($1.isDir ? 0 : 1, $1.name) }
+        node.children = children
+        return ZheeFileNode(name: node.name, path: node.path, isDir: true, size: size, sizeText: "\(children.count) mục", children: children)
     }
 }
