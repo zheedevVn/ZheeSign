@@ -1,7 +1,7 @@
 {
   "version": "1.7.32",
   "build": "1.7.32",
-  "notes": "Split analyzer into IPA / APK / Hex modules sharing one scanner engine",
+  "notes": "Fix dead file picker: use UIKit document picker instead of SwiftUI fileImporter",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
