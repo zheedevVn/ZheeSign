@@ -55,10 +55,20 @@ struct ZheeKeyValue: Hashable, Identifiable {
     let value: String
 }
 
+struct ZheeImageItem: Hashable, Identifiable {
+    var id: String { relativePath }
+    /// Path relative to the extracted root, e.g. Payload/App.app/icon.png
+    let relativePath: String
+    let fileName: String
+    let size: Int
+    let sizeText: String
+}
+
 struct ZheeIPAReport {
     /// Extracted IPA folder — kept so patches can be applied + repacked.
     /// Caller owns cleanup.
     let workDir: URL?
+    let isTipa: Bool
     let fileName: String
     let fileSize: String
     let appName: String
@@ -83,6 +93,7 @@ struct ZheeIPAReport {
     let provisioningDevices: Int
     let links: [ZheeLinkItem]
     let secrets: [ZheeSecretItem]
+    let images: [ZheeImageItem]
     let warnings: [String]
     let scannedStrings: Int
 
@@ -297,6 +308,28 @@ final class ZheeIPAAnalyzer {
             }
         }
 
+        // Loose images in the .app (not Assets.car — compiled, not editable here)
+        var images: [ZheeImageItem] = []
+        let imageExts: Set<String> = ["png", "jpg", "jpeg", "webp", "gif", "bmp", "tiff", "tif", "heic"]
+        if let enumerator = fm.enumerator(at: appURL, includingPropertiesForKeys: [.fileSizeKey]) {
+            for case let fileURL as URL in enumerator {
+                guard imageExts.contains(fileURL.pathExtension.lowercased()) else { continue }
+                if fileURL.path.contains("/Frameworks/") { continue }
+                let rel = fileURL.path.hasPrefix(workDir.path + "/")
+                    ? String(fileURL.path.dropFirst(workDir.path.count + 1))
+                    : fileURL.lastPathComponent
+                let size = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0
+                images.append(ZheeImageItem(
+                    relativePath: rel,
+                    fileName: fileURL.lastPathComponent,
+                    size: size,
+                    sizeText: ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+                ))
+                if images.count >= 200 { break }
+            }
+        }
+        images.sort { $0.fileName < $1.fileName }
+
         // Dedupe secrets
         var seenSecrets = Set<String>()
         secrets = secrets.filter { item in
@@ -345,6 +378,7 @@ final class ZheeIPAAnalyzer {
 
         return ZheeIPAReport(
             workDir: workDir,
+            isTipa: ipaURL.pathExtension.lowercased() == "tipa",
             fileName: displayName,
             fileSize: fileSize,
             appName: appName,
@@ -369,6 +403,7 @@ final class ZheeIPAAnalyzer {
             provisioningDevices: provisioningDevices,
             links: linkMap.values.sorted { $0.url < $1.url },
             secrets: secrets.sorted { $0.kind < $1.kind },
+            images: images,
             warnings: warnings,
             scannedStrings: scannedStrings
         )

@@ -106,12 +106,41 @@ enum ZheeIPAPatcher {
         return changedFiles
     }
 
-    /// Re-zip the extracted IPA in `workDir` into a new IPA file.
-    /// Drops the stale _CodeSignature so the IPA is cleanly unsigned.
-    static func repack(workDir: URL, outputURL: URL) throws {
+    /// Edit Info.plist: bundle ID / version / build. Empty values are skipped.
+    static func applyPlistEdits(workDir: URL, bundleID: String?, version: String?, build: String?) throws {
         let fm = FileManager.default
         let payload = workDir.appendingPathComponent("Payload")
-        if let appURL = (try? fm.contentsOfDirectory(at: payload, includingPropertiesForKeys: nil))?.first(where: { $0.pathExtension == "app" }) {
+        guard let appURL = (try? fm.contentsOfDirectory(at: payload, includingPropertiesForKeys: nil))?.first(where: { $0.pathExtension == "app" }) else {
+            throw ZheeIPAPatcherError.noApp
+        }
+        let infoURL = appURL.appendingPathComponent("Info.plist")
+        guard let data = try? Data(contentsOf: infoURL),
+              var plist = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any] else {
+            throw ZheeIPAPatcherError.repackFailed("Không đọc được Info.plist.")
+        }
+        if let bundleID, !bundleID.isEmpty { plist["CFBundleIdentifier"] = bundleID }
+        if let version, !version.isEmpty { plist["CFBundleShortVersionString"] = version }
+        if let build, !build.isEmpty { plist["CFBundleVersion"] = build }
+        let out = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)
+        try out.write(to: infoURL)
+    }
+
+    /// Replace loose image files. Key = path relative to workDir.
+    static func applyImagePatches(workDir: URL, images: [String: Data]) throws {
+        for (relPath, data) in images {
+            let dest = workDir.appendingPathComponent(relPath)
+            try data.write(to: dest)
+        }
+    }
+
+    /// Re-zip the extracted IPA in `workDir` into a new IPA file.
+    /// `stripSignature`: drop stale _CodeSignature so the IPA is cleanly
+    /// unsigned (sideload .ipa). For .tipa keep it — TrollStore handles it.
+    static func repack(workDir: URL, outputURL: URL, stripSignature: Bool = true) throws {
+        let fm = FileManager.default
+        let payload = workDir.appendingPathComponent("Payload")
+        if stripSignature,
+           let appURL = (try? fm.contentsOfDirectory(at: payload, includingPropertiesForKeys: nil))?.first(where: { $0.pathExtension == "app" }) {
             try? fm.removeItem(at: appURL.appendingPathComponent("_CodeSignature"))
         }
         try? fm.removeItem(at: outputURL)

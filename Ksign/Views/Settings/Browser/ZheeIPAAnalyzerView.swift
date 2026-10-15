@@ -6,6 +6,7 @@
 //  Copyright © 2026 Ho Duc Minh. All rights reserved.
 //
 
+import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
 import UIKit
@@ -19,6 +20,16 @@ struct ZheeIPAAnalyzerView: View {
     @State private var copiedURL: String?
     @State private var expandedCategories: Set<String> = []
     @State private var patches: [String: String] = [:]
+    @State private var editBundleID = ""
+    @State private var editVersion = ""
+    @State private var editBuild = ""
+    @State private var origBundleID = ""
+    @State private var origVersion = ""
+    @State private var origBuild = ""
+    @State private var imagePatches: [String: Data] = [:]
+    @State private var replacingImage: ZheeImageItem?
+    @State private var photoItem: PhotosPickerItem?
+    @State private var showPhotoPicker = false
     @State private var editingLink: ZheeLinkItem?
     @State private var editValue = ""
     @State private var isExporting = false
@@ -221,6 +232,86 @@ struct ZheeIPAAnalyzerView: View {
                     }
                 }
 
+                Section("Sửa thông tin app") {
+                    HStack {
+                        Text("Bundle ID")
+                        Spacer()
+                        TextField("vn.example.app", text: $editBundleID)
+                            .multilineTextAlignment(.trailing)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled()
+                    }
+                    HStack {
+                        Text("Version")
+                        Spacer()
+                        TextField("1.0", text: $editVersion)
+                            .multilineTextAlignment(.trailing)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled()
+                    }
+                    HStack {
+                        Text("Build")
+                        Spacer()
+                        TextField("1", text: $editBuild)
+                            .multilineTextAlignment(.trailing)
+                            .autocapitalization(.none)
+                            .autocorrectionDisabled()
+                    }
+                    Text("Đổi Bundle ID = cài thành app khác, không ghi đè app gốc.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+
+                if !report.images.isEmpty {
+                    Section("Ảnh (\(report.images.count))") {
+                        Text("Chỉ ảnh rời trong .app — ảnh trong Assets.car chưa sửa được.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        ForEach(report.images) { image in
+                            HStack(spacing: 10) {
+                                if let workDir = report.workDir,
+                                   image.size < 2_000_000,
+                                   let uiImage = UIImage(contentsOfFile: workDir.appendingPathComponent(image.relativePath).path) {
+                                    Image(uiImage: uiImage)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 40, height: 40)
+                                        .clipped()
+                                        .cornerRadius(8)
+                                } else {
+                                    Image(systemName: "photo")
+                                        .font(.title3)
+                                        .foregroundColor(.secondary)
+                                        .frame(width: 40, height: 40)
+                                }
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(image.fileName)
+                                        .font(.system(.subheadline, design: .monospaced))
+                                        .lineLimit(1)
+                                    Text(image.sizeText + (imagePatches[image.relativePath] != nil ? " • Đã thay ✓" : ""))
+                                        .font(.caption)
+                                        .foregroundColor(imagePatches[image.relativePath] != nil ? .green : .secondary)
+                                }
+                                Spacer()
+                                if imagePatches[image.relativePath] != nil {
+                                    Button {
+                                        imagePatches.removeValue(forKey: image.relativePath)
+                                    } label: {
+                                        Image(systemName: "arrow.uturn.backward")
+                                            .font(.caption)
+                                    }
+                                }
+                                Button("Thay") {
+                                    replacingImage = image
+                                    showPhotoPicker = true
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.mini)
+                            }
+                        }
+                    }
+                }
+
                 if !patches.isEmpty {
                     Section("Giá trị đã sửa (\(patches.count))") {
                         ForEach(Array(patches.keys).sorted(), id: \.self) { oldValue in
@@ -245,17 +336,19 @@ struct ZheeIPAAnalyzerView: View {
                     }
                 }
 
-                Section("Xuất IPA") {
-                    Text("IPA xuất ra chưa được ký — mở bằng ZheeSign để ký & cài đặt.")
+                Section(report.isTipa ? "Xuất TIPA" : "Xuất IPA") {
+                    Text(report.isTipa
+                        ? "TIPA giữ nguyên chữ ký gốc — cài qua TrollStore."
+                        : "IPA xuất ra chưa được ký — mở bằng ZheeSign để ký & cài đặt.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Button {
                         exportPatchedIPA()
                     } label: {
-                        Label("Xuất IPA đã chỉnh sửa", systemImage: "square.and.arrow.up")
+                        Label(report.isTipa ? "Xuất TIPA đã chỉnh sửa" : "Xuất IPA đã chỉnh sửa", systemImage: "square.and.arrow.up")
                     }
                     .buttonStyle(.borderedProminent)
-                    .disabled(patches.isEmpty || isExporting || report.workDir == nil)
+                    .disabled(!hasEdits || isExporting || report.workDir == nil)
                     if isExporting {
                         HStack {
                             ProgressView()
@@ -266,7 +359,7 @@ struct ZheeIPAAnalyzerView: View {
                     }
                     if let exportedURL {
                         ShareLink(item: exportedURL) {
-                            Label("Chia sẻ IPA đã sửa", systemImage: "square.and.arrow.up")
+                            Label(report.isTipa ? "Chia sẻ TIPA đã sửa" : "Chia sẻ IPA đã sửa", systemImage: "square.and.arrow.up")
                         }
                     }
                     if let exportMessage {
@@ -353,6 +446,17 @@ struct ZheeIPAAnalyzerView: View {
                 }
             }
         }
+        .photosPicker(isPresented: $showPhotoPicker, selection: $photoItem, matching: .images)
+        .onChange(of: photoItem) { newItem in
+            guard let newItem, let target = replacingImage else { return }
+            Task {
+                if let data = try? await newItem.loadTransferable(type: Data.self) {
+                    imagePatches[target.relativePath] = data
+                }
+                photoItem = nil
+                replacingImage = nil
+            }
+        }
         .onDisappear {
             if let dir = report?.workDir {
                 try? FileManager.default.removeItem(at: dir)
@@ -413,6 +517,13 @@ struct ZheeIPAAnalyzerView: View {
         report = nil
         copiedURL = nil
         patches = [:]
+        imagePatches = [:]
+        editBundleID = ""
+        editVersion = ""
+        editBuild = ""
+        origBundleID = ""
+        origVersion = ""
+        origBuild = ""
         exportMessage = nil
         exportedURL = nil
         progressText = "Đang chuẩn bị…"
@@ -424,6 +535,13 @@ struct ZheeIPAAnalyzerView: View {
             switch result {
             case .success(let result):
                 report = result
+                origBundleID = result.bundleID == "—" ? "" : result.bundleID
+                origVersion = result.version == "—" ? "" : result.version
+                origBuild = result.build == "—" ? "" : result.build
+                editBundleID = origBundleID
+                editVersion = origVersion
+                editBuild = origBuild
+                imagePatches = [:]
                 isAnalyzing = false
             case .failure(let error):
                 errorMessage = error.localizedDescription
@@ -432,21 +550,45 @@ struct ZheeIPAAnalyzerView: View {
         }
     }
 
+    private var hasEdits: Bool {
+        if !patches.isEmpty || !imagePatches.isEmpty { return true }
+        return editBundleID != origBundleID || editVersion != origVersion || editBuild != origBuild
+    }
+
     private func exportPatchedIPA() {
-        guard let workDir = report?.workDir, !patches.isEmpty else { return }
+        guard let report, let workDir = report.workDir, hasEdits else { return }
         isExporting = true
         exportMessage = nil
         exportedURL = nil
-        let baseName = (report?.fileName ?? "app.ipa").replacingOccurrences(of: ".ipa", with: "")
-        let outURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(baseName)-patched.ipa")
+        let ext = report.isTipa ? "tipa" : "ipa"
+        let baseName = report.fileName.replacingOccurrences(of: ".\(ext)", with: "")
+        let outURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(baseName)-patched.\(ext)")
         let currentPatches = patches
+        let currentImages = imagePatches
+        let plistEdits = (bundleID: editBundleID != origBundleID ? editBundleID : nil,
+                          version: editVersion != origVersion ? editVersion : nil,
+                          build: editBuild != origBuild ? editBuild : nil)
+        let keepSignature = report.isTipa
         DispatchQueue.global(qos: .userInitiated).async {
             do {
-                let changed = try ZheeIPAPatcher.applyPatches(workDir: workDir, replacements: currentPatches)
-                try ZheeIPAPatcher.repack(workDir: workDir, outputURL: outURL)
+                var changed = 0
+                if !currentPatches.isEmpty {
+                    changed += try ZheeIPAPatcher.applyPatches(workDir: workDir, replacements: currentPatches)
+                }
+                if plistEdits.bundleID != nil || plistEdits.version != nil || plistEdits.build != nil {
+                    try ZheeIPAPatcher.applyPlistEdits(workDir: workDir, bundleID: plistEdits.bundleID, version: plistEdits.version, build: plistEdits.build)
+                    changed += 1
+                }
+                if !currentImages.isEmpty {
+                    try ZheeIPAPatcher.applyImagePatches(workDir: workDir, images: currentImages)
+                    changed += currentImages.count
+                }
+                try ZheeIPAPatcher.repack(workDir: workDir, outputURL: outURL, stripSignature: !keepSignature)
                 DispatchQueue.main.async {
                     exportedURL = outURL
-                    exportMessage = "Đã xuất IPA — sửa \(changed) file. IPA chưa được ký, mở bằng ZheeSign để ký & cài."
+                    exportMessage = keepSignature
+                        ? "Đã xuất TIPA — sửa \(changed) mục. Giữ nguyên chữ ký gốc, cài qua TrollStore."
+                        : "Đã xuất IPA — sửa \(changed) mục. IPA chưa được ký, mở bằng ZheeSign để ký & cài."
                     isExporting = false
                 }
             } catch {
