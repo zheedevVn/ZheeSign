@@ -684,9 +684,9 @@ struct ZheeIPAAnalyzerView: View {
             .frame(maxWidth: .infinity)
     }
 
-    private func fileTreeView(node: ZheeFileNode) -> some View {
-        Group {
-            if node.isDir {
+    private func fileTreeView(node: ZheeFileNode) -> AnyView {
+        if node.isDir {
+            return AnyView(
                 DisclosureGroup {
                     ForEach(node.children) { child in
                         fileTreeView(node: child)
@@ -704,20 +704,21 @@ struct ZheeIPAAnalyzerView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-            } else {
-                HStack {
-                    Image(systemName: "doc")
-                        .foregroundColor(.secondary)
-                    Text(node.name)
-                        .font(.system(.subheadline, design: .monospaced))
-                        .lineLimit(1)
-                    Spacer()
-                    Text(node.sizeText)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
+            )
         }
+        return AnyView(
+            HStack {
+                Image(systemName: "doc")
+                    .foregroundColor(.secondary)
+                Text(node.name)
+                    .font(.system(.subheadline, design: .monospaced))
+                    .lineLimit(1)
+                Spacer()
+                Text(node.sizeText)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        )
     }
 
     private var hasEdits: Bool {
