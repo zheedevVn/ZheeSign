@@ -188,6 +188,10 @@ extension SettingsView {
 						.font(.caption)
 				}
 			}
+			// Phân tích IPA — dùng được offline
+			NavigationLink(destination: ZheeIPAAnalyzerView()) {
+				Label("Phân tích IPA", systemImage: "doc.text.magnifyingglass")
+			}
 		}
 	}
 	
