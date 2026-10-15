@@ -322,37 +322,57 @@ final class ZheeIPAAnalyzer {
         guard let exeData = try? Data(contentsOf: exeURL) else { throw ZheeIPAAnalyzerError.noExecutable }
         let macho = parseMachO(exeData)
 
-        // MARK: Strings scan — binary + text files
+        // MARK: Strings scan — every Mach-O + text file in the .app
+        // Endpoints often hide in dylibs / framework binaries, not the main executable.
         onProgress("Đang quét link & secret…")
         var warnings: [String] = []
         var linkMap: [String: ZheeLinkItem] = [:]
         var secrets: [ZheeSecretItem] = []
         var scannedStrings = 0
+        var binaryEntitlements: [ZheeKeyValue] = []
 
-        let strings = ZheeBinaryScanner.extractStrings(from: exeData)
-        scannedStrings += strings.count
-        ZheeBinaryScanner.scanStrings(strings, source: executable, linkMap: &linkMap, secrets: &secrets)
-
-        // Text-ish files inside the .app (skip huge binaries)
         let textExts: Set<String> = ["plist", "json", "xml", "js", "html", "htm", "css", "txt", "strings", "md", "conf", "config", "yaml", "yml", "ini"]
         if let enumerator = fm.enumerator(at: appURL, includingPropertiesForKeys: [.fileSizeKey]) {
             for case let fileURL as URL in enumerator {
-                guard textExts.contains(fileURL.pathExtension.lowercased()) else { continue }
-                guard let size = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize, size < 5_000_000 else { continue }
+                guard let size = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize, size < 50_000_000 else { continue }
                 guard let data = try? Data(contentsOf: fileURL) else { continue }
-                let text = String(data: data, encoding: .utf8) ?? ""
-                if text.isEmpty { continue }
-                let found = ZheeBinaryScanner.findURLs(in: text)
-                for url in found {
-                    let cat = ZheeBinaryScanner.categorize(url)
-                    if linkMap[url] == nil {
-                        linkMap[url] = ZheeLinkItem(url: url, category: cat, source: fileURL.lastPathComponent)
+                if ZheeBinaryScanner.isMachO(data) {
+                    let strings = ZheeBinaryScanner.extractStrings(from: data)
+                    scannedStrings += strings.count
+                    ZheeBinaryScanner.scanStrings(strings, source: fileURL.lastPathComponent, linkMap: &linkMap, secrets: &secrets)
+                    for dict in ZheeBinaryScanner.extractEntitlementDicts(from: data) {
+                        for (key, value) in dict {
+                            // Binary blobs carry ~70 com.apple.* = true boilerplate keys — keep only notable ones
+                            let notable: Set<String> = [
+                                "application-identifier", "get-task-allow", "task_for_pid-allow",
+                                "run-unsigned-code", "platform-application",
+                                "com.apple.security.get-task-allow", "com.apple.system-task-ports",
+                                "com.apple.private.security.no-sandbox", "keychain-access-groups",
+                                "aps-environment", "com.apple.developer.team-identifier",
+                                "com.apple.developer.ubiquity-kvstore-identifier",
+                                "com.apple.security.application-groups",
+                                "com.apple.developer.associated-domains"
+                            ]
+                            let keep = notable.contains(key) || key.contains("exception")
+                                || value is String || value is [Any]
+                            guard keep else { continue }
+                            var valueText = String(describing: value)
+                            if valueText.count > 300 { valueText = String(valueText.prefix(300)) + "…" }
+                            binaryEntitlements.append(ZheeKeyValue(key: key, value: valueText))
+                        }
                     }
+                } else if textExts.contains(fileURL.pathExtension.lowercased()), size < 5_000_000 {
+                    let text = String(data: data, encoding: .utf8) ?? ""
+                    if text.isEmpty { continue }
+                    ZheeBinaryScanner.scanText(text, source: fileURL.lastPathComponent, linkMap: &linkMap, secrets: &secrets)
                 }
-                let fileSecrets = ZheeBinaryScanner.findSecrets(in: text, source: fileURL.lastPathComponent)
-                secrets.append(contentsOf: fileSecrets)
             }
         }
+        // Merge binary-embedded entitlements (tipa has no mobileprovision)
+        for item in binaryEntitlements where !entitlements.contains(where: { $0.key == item.key }) {
+            entitlements.append(item)
+        }
+        entitlements.sort { $0.key < $1.key }
 
         // Loose images in the .app (not Assets.car — compiled, not editable here)
         var images: [ZheeImageItem] = []
@@ -396,7 +416,7 @@ final class ZheeIPAAnalyzer {
         if macho.isEncrypted {
             warnings.append("Binary đang bị mã hóa FairPlay — quét string có thể thiếu link.")
         }
-        let binaryText = strings.joined(separator: "\n").lowercased()
+        let binaryText = ZheeBinaryScanner.extractStrings(from: exeData).joined(separator: "\n").lowercased()
         if binaryText.contains("frida") || binaryText.contains("gadget") {
             warnings.append("Binary chứa dấu vết Frida gadget.")
         }
@@ -408,6 +428,14 @@ final class ZheeIPAAnalyzer {
         }
         if linkMap.keys.contains(where: { $0.contains("localhost") || $0.contains("127.0.0.1") }) {
             warnings.append("Có endpoint localhost — có thể còn sót code debug.")
+        }
+        let hasHTTPEndpoint = linkMap.values.contains { item in
+            let lower = item.url.lowercased()
+            return (lower.hasPrefix("http://") || lower.hasPrefix("https://"))
+                && item.category != .telegram && item.category != .discord && item.category != .social
+        }
+        if !hasHTTPEndpoint {
+            warnings.append("Không tìm thấy endpoint HTTP nào (API/server) — app có thể hoạt động hoàn toàn local/offline.")
         }
         if (try? Data(contentsOf: appURL.appendingPathComponent("embedded.mobileprovision"))) == nil {
             warnings.append("Không có embedded.mobileprovision — app chưa được ký / ký kiểu khác.")

@@ -62,6 +62,8 @@ enum ZheeBinaryScanner {
             var url = String(text[r])
             while let last = url.last, ".,;:!?)]}".contains(last) { url.removeLast() }
             guard url.count >= 8, url.count < 2048 else { continue }
+            // Apple DTD links (e.g. PropertyList-1.0.dtd) are plist boilerplate, not endpoints
+            if url.contains("/DTDs/") { continue }
             found.append(url)
         }
         return found
@@ -88,6 +90,54 @@ enum ZheeBinaryScanner {
             return .api
         }
         return .other
+    }
+
+    // MARK: - Social handles (telegram:@user -> https://t.me/user)
+
+    static func findSocialHandles(in text: String) -> [String] {
+        let pattern = #"telegram:@([A-Za-z0-9_]{3,})"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else { return [] }
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        var found: [String] = []
+        for match in regex.matches(in: text, options: [], range: range) {
+            guard match.numberOfRanges > 1, let r = Range(match.range(at: 1), in: text) else { continue }
+            found.append("https://t.me/\(text[r])")
+        }
+        return found
+    }
+
+    // MARK: - Mach-O detection
+
+    static func isMachO(_ data: Data) -> Bool {
+        guard data.count >= 4 else { return false }
+        let magic = data.withUnsafeBytes { $0.load(as: UInt32.self) }
+        // MH_MAGIC_64 / MH_MAGIC / FAT_MAGIC / FAT_CIGAM (LE + BE)
+        return magic == 0xfeedfacf || magic == 0xfeedface || magic == 0xcafebabe || magic == 0xbebafeca
+    }
+
+    // MARK: - Entitlements embedded in a binary (plist blob)
+
+    static func extractEntitlementDicts(from data: Data) -> [[String: Any]] {
+        var results: [[String: Any]] = []
+        var searchFrom = data.startIndex
+        let plistStart = "<plist".data(using: .utf8)!
+        let plistEnd = "</plist>".data(using: .utf8)!
+        let entitlementKeys = ["application-identifier", "get-task-allow", "task_for_pid-allow", "run-unsigned-code", "platform-application", "com.apple.security.get-task-allow"]
+        while let startRange = data.range(of: plistStart, options: [], in: searchFrom..<data.endIndex),
+              let endRange = data.range(of: plistEnd, options: [], in: startRange.upperBound..<data.endIndex) {
+            let blob = data.subdata(in: startRange.lowerBound..<endRange.upperBound)
+            if let dict = (try? PropertyListSerialization.propertyList(from: blob, format: nil)) as? [String: Any] {
+                let hits = dict.keys.filter { key in
+                    entitlementKeys.contains(key) || key.hasPrefix("com.apple")
+                }
+                if hits.count >= 2 {
+                    results.append(dict)
+                }
+            }
+            searchFrom = endRange.upperBound
+            if results.count >= 3 { break }
+        }
+        return results
     }
 
     // MARK: - Secrets (values are masked, never stored)
@@ -151,6 +201,11 @@ enum ZheeBinaryScanner {
         for url in findURLs(in: text) {
             if linkMap[url] == nil {
                 linkMap[url] = ZheeLinkItem(url: url, category: categorize(url), source: source)
+            }
+        }
+        for handle in findSocialHandles(in: text) {
+            if linkMap[handle] == nil {
+                linkMap[handle] = ZheeLinkItem(url: handle, category: .telegram, source: source)
             }
         }
         secrets.append(contentsOf: findSecrets(in: text, source: source))
