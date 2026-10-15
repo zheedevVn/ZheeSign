@@ -14,7 +14,7 @@ enum ZheeTamperProtection {
 	
 	// MARK: - Giá trị gốc (đổi khi bump version)
 	private static let expectedBundleID = "vn.zheedev.zheesign"
-	private static let expectedVersion = "1.7.30"
+	private static let expectedVersion = "1.7.31"
 	private static let expectedBuild = "1"
 	
 	private static let banKey = "zhee.tamper.ban"
@@ -106,74 +106,9 @@ enum ZheeTamperProtection {
 			crashNow()
 		}
 		
-		// 3. Check file Info.plist còn nguyên
-		if !isInfoPlistIntact() {
-			ban()
-			crashNow()
-		}
-		
-		// 4. Check không có dylib lạ inject
-		if hasInjectedDylib() {
-			ban()
-			crashNow()
-		}
-		
-		// NOTE: Không check _CodeSignature — IPA build không ký (CODE_SIGNING_ALLOWED=NO)
-		// nên check này luôn fail với bản cài không re-sign, gây ban oan.
-	}
-	
-	/// Info.plist có bị sửa không
-	private static func isInfoPlistIntact() -> Bool {
-		guard let plistPath = Bundle.main.path(forResource: "Info", ofType: "plist"),
-		      let data = try? Data(contentsOf: URL(fileURLWithPath: plistPath)),
-		      let plist = try? PropertyListSerialization.propertyList(from: data, options: [], format: nil) as? [String: Any] else {
-			return false
-		}
-		// Bundle ID trong plist phải khớp
-		let plistBundleID = plist["CFBundleIdentifier"] as? String ?? ""
-		if plistBundleID != expectedBundleID {
-			return false
-		}
-		// Version trong plist phải khớp
-		let plistVersion = plist["CFBundleShortVersionString"] as? String ?? ""
-		if plistVersion != expectedVersion {
-			return false
-		}
-		return true
-	}
-	
-	/// Có dylib lạ inject không (troll / hook)
-	private static func hasInjectedDylib() -> Bool {
-		let count = _dyld_image_count()
-		let allowedPrefixes = [
-			"/System/Library/",
-			"/usr/lib/",
-			"/usr/lib/system/",
-			Bundle.main.bundlePath
-		]
-		for i in 0..<count {
-			if let name = _dyld_get_image_name(i) {
-				let libPath = String(cString: name)
-				// Bỏ qua thư viện hệ thống và app
-				var isAllowed = false
-				for prefix in allowedPrefixes {
-					if libPath.hasPrefix(prefix) {
-						isAllowed = true
-						break
-					}
-				}
-				// Thư viện ngoài hệ thống + ngoài app = inject
-				if !isAllowed {
-					// Cho phép một số framework hợp lệ
-					if libPath.contains("SwiftUI") || libPath.contains("Foundation") ||
-					   libPath.contains("UIKit") || libPath.contains("Core") {
-						continue
-					}
-					return true
-				}
-			}
-		}
-		return false
+		// NOTE: Đã bỏ check Info.plist file + dylib — 2 check này dễ nhận nhầm
+		// (đường dẫn /var vs /private/var, file plist đọc lỗi) gây ban oan.
+		// Chỉ giữ check bundle ID + version từ hệ thống, đủ chặn đổi bundle/ver.
 	}
 	
 	// MARK: - Crash
