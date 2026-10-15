@@ -18,6 +18,12 @@ struct ZheeIPAAnalyzerView: View {
     @State private var errorMessage: String?
     @State private var copiedURL: String?
     @State private var expandedCategories: Set<String> = []
+    @State private var patches: [String: String] = [:]
+    @State private var editingLink: ZheeLinkItem?
+    @State private var editValue = ""
+    @State private var isExporting = false
+    @State private var exportMessage: String?
+    @State private var exportedURL: URL?
 
     var body: some View {
         List {
@@ -215,6 +221,61 @@ struct ZheeIPAAnalyzerView: View {
                     }
                 }
 
+                if !patches.isEmpty {
+                    Section("Giá trị đã sửa (\(patches.count))") {
+                        ForEach(Array(patches.keys).sorted(), id: \.self) { oldValue in
+                            HStack(alignment: .top) {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(oldValue)
+                                        .font(.system(.caption, design: .monospaced))
+                                        .foregroundColor(.secondary)
+                                    Text("→ \(patches[oldValue] ?? "")")
+                                        .font(.system(.caption, design: .monospaced))
+                                }
+                                Spacer()
+                                Button {
+                                    patches.removeValue(forKey: oldValue)
+                                } label: {
+                                    Image(systemName: "trash")
+                                        .font(.caption)
+                                        .foregroundColor(.red)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                Section("Xuất IPA") {
+                    Text("IPA xuất ra chưa được ký — mở bằng ZheeSign để ký & cài đặt.")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Button {
+                        exportPatchedIPA()
+                    } label: {
+                        Label("Xuất IPA đã chỉnh sửa", systemImage: "square.and.arrow.up")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(patches.isEmpty || isExporting || report.workDir == nil)
+                    if isExporting {
+                        HStack {
+                            ProgressView()
+                            Text("Đang áp patch & đóng gói…")
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    if let exportedURL {
+                        ShareLink(item: exportedURL) {
+                            Label("Chia sẻ IPA đã sửa", systemImage: "square.and.arrow.up")
+                        }
+                    }
+                    if let exportMessage {
+                        Text(exportMessage)
+                            .font(.subheadline)
+                            .foregroundColor(exportMessage.hasPrefix("Lỗi") ? .red : .green)
+                    }
+                }
+
                 Section {
                     ShareLink(item: report.summaryText) {
                         Label("Chia sẻ báo cáo (.txt)", systemImage: "square.and.arrow.up")
@@ -247,6 +308,56 @@ struct ZheeIPAAnalyzerView: View {
             }
             .ignoresSafeArea()
         }
+        .sheet(item: $editingLink) { item in
+            NavigationView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Giá trị gốc")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(item.url)
+                        .font(.system(.subheadline, design: .monospaced))
+                        .textSelection(.enabled)
+                    Text("Giá trị mới")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    TextField("Nhập giá trị mới…", text: $editValue)
+                        .textFieldStyle(.roundedBorder)
+                        .autocapitalization(.none)
+                        .autocorrectionDisabled()
+                    Text("Độ dài: \(editValue.utf8.count) / \(item.url.utf8.count) byte")
+                        .font(.caption)
+                        .foregroundColor(editValue.utf8.count > item.url.utf8.count ? .red : .secondary)
+                    if editValue.utf8.count > item.url.utf8.count {
+                        Text("Dài hơn gốc — sẽ lấn byte kế tiếp, dễ crash. Dùng giá trị ngắn hơn hoặc link rút gọn.")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                    Spacer()
+                }
+                .padding()
+                .navigationTitle("Sửa giá trị")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Hủy") { editingLink = nil }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button("Lưu") {
+                            if !editValue.isEmpty, editValue != item.url {
+                                patches[item.url] = editValue
+                            }
+                            editingLink = nil
+                        }
+                        .disabled(editValue.isEmpty || editValue.utf8.count > item.url.utf8.count)
+                    }
+                }
+            }
+        }
+        .onDisappear {
+            if let dir = report?.workDir {
+                try? FileManager.default.removeItem(at: dir)
+            }
+        }
     }
 
     private func infoRow(_ label: String, _ value: String) -> some View {
@@ -273,6 +384,15 @@ struct ZheeIPAAnalyzerView: View {
             }
             Spacer()
             Button {
+                editingLink = item
+                editValue = item.url
+            } label: {
+                Image(systemName: "pencil")
+                    .font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.mini)
+            Button {
                 UIPasteboard.general.string = item.url
                 copiedURL = "Đã copy: \(item.url.prefix(40))…"
             } label: {
@@ -285,10 +405,16 @@ struct ZheeIPAAnalyzerView: View {
     }
 
     private func analyze(url: URL) {
+        if let oldDir = report?.workDir {
+            try? FileManager.default.removeItem(at: oldDir)
+        }
         isAnalyzing = true
         errorMessage = nil
         report = nil
         copiedURL = nil
+        patches = [:]
+        exportMessage = nil
+        exportedURL = nil
         progressText = "Đang chuẩn bị…"
         // Picker đã copy file về local (asCopy), dùng trực tiếp được
         ZheeIPAAnalyzer().analyze(ipaURL: url, displayName: url.lastPathComponent, onProgress: { step in
@@ -302,6 +428,32 @@ struct ZheeIPAAnalyzerView: View {
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 isAnalyzing = false
+            }
+        }
+    }
+
+    private func exportPatchedIPA() {
+        guard let workDir = report?.workDir, !patches.isEmpty else { return }
+        isExporting = true
+        exportMessage = nil
+        exportedURL = nil
+        let baseName = (report?.fileName ?? "app.ipa").replacingOccurrences(of: ".ipa", with: "")
+        let outURL = FileManager.default.temporaryDirectory.appendingPathComponent("\(baseName)-patched.ipa")
+        let currentPatches = patches
+        DispatchQueue.global(qos: .userInitiated).async {
+            do {
+                let changed = try ZheeIPAPatcher.applyPatches(workDir: workDir, replacements: currentPatches)
+                try ZheeIPAPatcher.repack(workDir: workDir, outputURL: outURL)
+                DispatchQueue.main.async {
+                    exportedURL = outURL
+                    exportMessage = "Đã xuất IPA — sửa \(changed) file. IPA chưa được ký, mở bằng ZheeSign để ký & cài."
+                    isExporting = false
+                }
+            } catch {
+                DispatchQueue.main.async {
+                    exportMessage = "Lỗi: \(error.localizedDescription)"
+                    isExporting = false
+                }
             }
         }
     }

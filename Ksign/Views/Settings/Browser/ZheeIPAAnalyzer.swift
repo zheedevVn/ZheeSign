@@ -56,6 +56,9 @@ struct ZheeKeyValue: Hashable, Identifiable {
 }
 
 struct ZheeIPAReport {
+    /// Extracted IPA folder — kept so patches can be applied + repacked.
+    /// Caller owns cleanup.
+    let workDir: URL?
     let fileName: String
     let fileSize: String
     let appName: String
@@ -172,7 +175,6 @@ final class ZheeIPAAnalyzer {
     private func run(ipaURL: URL, displayName: String, onProgress: @escaping (String) -> Void) throws -> ZheeIPAReport {
         let fm = FileManager.default
         let workDir = fm.temporaryDirectory.appendingPathComponent("ZheeAnalyze_\(UUID().uuidString)", isDirectory: true)
-        defer { try? fm.removeItem(at: workDir) }
 
         onProgress("Đang giải nén IPA…")
         try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
@@ -342,6 +344,7 @@ final class ZheeIPAAnalyzer {
         }
 
         return ZheeIPAReport(
+            workDir: workDir,
             fileName: displayName,
             fileSize: fileSize,
             appName: appName,
