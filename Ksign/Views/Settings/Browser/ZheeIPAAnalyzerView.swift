@@ -181,6 +181,21 @@ struct ZheeIPAAnalyzerView: View {
                     }
                 }
 
+                if !report.indicators.isEmpty {
+                    Section("Dấu vết") {
+                        ForEach(report.indicators) { indicator in
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(indicator.title)
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                Text(indicator.detail)
+                                    .font(.system(.caption, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+                    }
+                }
+
                 if !report.secrets.isEmpty {
                     Section("Secret / Key (\(report.secrets.count))") {
                         Text("Giá trị đã bị che — chỉ hiện tên key + vài ký tự đầu.")

@@ -192,6 +192,11 @@ extension SettingsView {
 			NavigationLink(destination: ZheeAnalyzerHubView()) {
 				Label("Phân tích file", systemImage: "doc.text.magnifyingglass")
 			}
+			// ZheeChat — chat phi tập trung: Mesh gần dùng được offline,
+			// Nostr cần mạng
+			NavigationLink(destination: ZheeChatView()) {
+				Label("ZheeChat", systemImage: "message.fill")
+			}
 		}
 	}
 	

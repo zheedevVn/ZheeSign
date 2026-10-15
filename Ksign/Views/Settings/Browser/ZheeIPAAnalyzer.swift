@@ -76,6 +76,12 @@ struct ZheeImageItem: Hashable, Identifiable {
     let sizeText: String
 }
 
+struct ZheeIndicator: Hashable, Identifiable {
+    var id: String { title }
+    let title: String
+    let detail: String
+}
+
 struct ZheeFileNode: Hashable, Identifiable {
     var id: String { path }
     let name: String
@@ -117,6 +123,8 @@ struct ZheeIPAReport {
     let links: [ZheeLinkItem]
     let secrets: [ZheeSecretItem]
     let images: [ZheeImageItem]
+    /// Crypto / license-system traces found in binary strings
+    let indicators: [ZheeIndicator]
     /// Directory tree of Payload/ (depth <= 3)
     let fileTree: ZheeFileNode
     let warnings: [String]
@@ -330,6 +338,7 @@ final class ZheeIPAAnalyzer {
         var secrets: [ZheeSecretItem] = []
         var scannedStrings = 0
         var binaryEntitlements: [ZheeKeyValue] = []
+        var indicatorMap: [String: ZheeIndicator] = [:]
 
         let textExts: Set<String> = ["plist", "json", "xml", "js", "html", "htm", "css", "txt", "strings", "md", "conf", "config", "yaml", "yml", "ini"]
         if let enumerator = fm.enumerator(at: appURL, includingPropertiesForKeys: [.fileSizeKey]) {
@@ -340,6 +349,14 @@ final class ZheeIPAAnalyzer {
                     let strings = ZheeBinaryScanner.extractStrings(from: data)
                     scannedStrings += strings.count
                     ZheeBinaryScanner.scanStrings(strings, source: fileURL.lastPathComponent, linkMap: &linkMap, secrets: &secrets)
+                    for indicator in ZheeBinaryScanner.findBehaviorIndicators(in: strings) {
+                        if let existing = indicatorMap[indicator.title] {
+                            let merged = Set(existing.detail.components(separatedBy: ", ") + indicator.detail.components(separatedBy: ", ")).sorted().joined(separator: ", ")
+                            indicatorMap[indicator.title] = ZheeIndicator(title: indicator.title, detail: merged)
+                        } else {
+                            indicatorMap[indicator.title] = indicator
+                        }
+                    }
                     for dict in ZheeBinaryScanner.extractEntitlementDicts(from: data) {
                         for (key, value) in dict {
                             // Binary blobs carry ~70 com.apple.* = true boilerplate keys — keep only notable ones
@@ -435,7 +452,11 @@ final class ZheeIPAAnalyzer {
                 && item.category != .telegram && item.category != .discord && item.category != .social
         }
         if !hasHTTPEndpoint {
-            warnings.append("Không tìm thấy endpoint HTTP nào (API/server) — app có thể hoạt động hoàn toàn local/offline.")
+            if indicatorMap.keys.contains(where: { $0.contains("Mã hóa") }) {
+                warnings.append("Endpoint bị mã hóa (AES/DES/...) — phân tích tĩnh không đọc được URL. Muốn thấy endpoint thật phải chạy app + bắt network (mitmproxy/Charles).")
+            } else {
+                warnings.append("Không tìm thấy endpoint HTTP nào (API/server) — app có thể hoạt động hoàn toàn local/offline.")
+            }
         }
         if (try? Data(contentsOf: appURL.appendingPathComponent("embedded.mobileprovision"))) == nil {
             warnings.append("Không có embedded.mobileprovision — app chưa được ký / ký kiểu khác.")
@@ -481,6 +502,7 @@ final class ZheeIPAAnalyzer {
             links: linkMap.values.sorted { $0.url < $1.url },
             secrets: secrets.sorted { $0.kind < $1.kind },
             images: images,
+            indicators: Array(indicatorMap.values).sorted { $0.title < $1.title },
             fileTree: fileTree,
             warnings: warnings,
             scannedStrings: scannedStrings

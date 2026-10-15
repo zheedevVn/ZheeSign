@@ -140,6 +140,33 @@ enum ZheeBinaryScanner {
         return results
     }
 
+    // MARK: - Behavior indicators (crypto / license system)
+
+    /// Detects crypto + license-system traces in binary strings.
+    /// When an app encrypts its endpoint (AES/DES...), static analysis
+    /// cannot recover the URL — but these traces prove it exists.
+    static func findBehaviorIndicators(in strings: [String]) -> [ZheeIndicator] {
+        let blob = strings.joined(separator: "\n")
+        var out: [ZheeIndicator] = []
+        let groups: [(title: String, keywords: [String])] = [
+            ("Mã hóa (endpoint có thể bị mã hóa)", [
+                "AES256", "AES128", "DESEncrypted", "DESEncrypt", "CASTEncrypted",
+                "decryptFromBase64", "encryptToBase64", "sealRequest", "openResponse:respKey"
+            ]),
+            ("Hệ thống License / Key", [
+                "apiclient_", "APIClientOverlay", "showLoginForm", "keyTextField",
+                "VKKeychainUDID", "showLoginError", "onLoginSubmit"
+            ]),
+        ]
+        for group in groups {
+            let hits = group.keywords.filter { blob.contains($0) }
+            if !hits.isEmpty {
+                out.append(ZheeIndicator(title: group.title, detail: hits.joined(separator: ", ")))
+            }
+        }
+        return out
+    }
+
     // MARK: - Secrets (values are masked, never stored)
 
     static func findSecrets(in text: String, source: String) -> [ZheeSecretItem] {
