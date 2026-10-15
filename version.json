@@ -1,7 +1,7 @@
 {
-  "version": "1.7.29",
-  "build": "1.7.29",
-  "notes": "Add tamper protection, ban + crash, 1.7.29 (part 2/2)",
+  "version": "1.7.30",
+  "build": "1.7.30",
+  "notes": "Fix self-ban, version-gated unban, 1.7.30 (part 2/2)",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
