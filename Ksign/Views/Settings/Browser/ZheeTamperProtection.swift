@@ -14,10 +14,11 @@ enum ZheeTamperProtection {
 	
 	// MARK: - Giá trị gốc (đổi khi bump version)
 	private static let expectedBundleID = "vn.zheedev.zheesign"
-	private static let expectedVersion = "1.7.29"
+	private static let expectedVersion = "1.7.30"
 	private static let expectedBuild = "1"
 	
 	private static let banKey = "zhee.tamper.ban"
+	private static let banVersionKey = "zhee.tamper.banVersion"
 	
 	// MARK: - Ban
 	
@@ -26,22 +27,47 @@ enum ZheeTamperProtection {
 		UserDefaults.standard.bool(forKey: banKey)
 	}
 	
-	/// Ban vĩnh viễn — lưu vào Keychain (xóa app cài lại vẫn ban)
+	/// Ban vĩnh viễn — lưu kèm version để bản mới gỡ được
 	private static func ban() {
 		UserDefaults.standard.set(true, forKey: banKey)
+		UserDefaults.standard.set(expectedVersion, forKey: banVersionKey)
 		UserDefaults.standard.synchronize()
-		// Lưu thêm vào Keychain để xóa app vẫn ban
+		// Lưu thêm vào Keychain để xóa app vẫn ban (cùng version)
 		let query: [String: Any] = [
 			kSecClass as String: kSecClassGenericPassword,
 			kSecAttrAccount as String: "zhee.ban",
-			kSecValueData as String: "1".data(using: .utf8)!
+			kSecValueData as String: expectedVersion.data(using: .utf8)!
 		]
 		SecItemDelete(query as CFDictionary)
 		SecItemAdd(query as CFDictionary, nil)
 	}
 	
+	/// Gỡ ban — khi bản mới khác version bị ban
+	private static func clearBan() {
+		UserDefaults.standard.removeObject(forKey: banKey)
+		UserDefaults.standard.removeObject(forKey: banVersionKey)
+		let query: [String: Any] = [
+			kSecClass as String: kSecClassGenericPassword,
+			kSecAttrAccount as String: "zhee.ban"
+		]
+		SecItemDelete(query as CFDictionary)
+	}
+	
 	/// Check Keychain có bị ban không
 	private static var isKeychainBanned: Bool {
+		keychainBanData() != nil
+	}
+	
+	/// Version đã bị ban
+	private static var bannedVersion: String? {
+		if let data = keychainBanData(),
+		   let str = String(data: data, encoding: .utf8) {
+			return str
+		}
+		return UserDefaults.standard.string(forKey: banVersionKey)
+	}
+	
+	private static func keychainBanData() -> Data? {
 		let query: [String: Any] = [
 			kSecClass as String: kSecClassGenericPassword,
 			kSecAttrAccount as String: "zhee.ban",
@@ -49,16 +75,21 @@ enum ZheeTamperProtection {
 		]
 		var result: AnyObject?
 		let status = SecItemCopyMatching(query as CFDictionary, &result)
-		return status == errSecSuccess
+		guard status == errSecSuccess else { return nil }
+		return result as? Data
 	}
 	
 	// MARK: - Kiểm tra
 	
 	/// Chạy ngay khi app khởi động — sai là crash luôn
 	static func verifyOrCrash() {
-		// Đã bị ban trước đó → crash ngay
+		// Bản mới khác version bị ban → gỡ ban (phục hồi)
 		if isBanned || isKeychainBanned {
-			crashNow()
+			if bannedVersion != expectedVersion {
+				clearBan()
+			} else {
+				crashNow()
+			}
 		}
 		
 		// 1. Check bundle ID
@@ -75,30 +106,20 @@ enum ZheeTamperProtection {
 			crashNow()
 		}
 		
-		// 3. Check build number không bị sửa
-		let build = info?["CFBundleVersion"] as? String ?? ""
-		if build != expectedBuild && !build.isEmpty {
-			// Build có thể đổi khi re-sign, chỉ check version thôi
-			// (không ban vì build)
-		}
-		
-		// 4. Check file Info.plist còn nguyên
+		// 3. Check file Info.plist còn nguyên
 		if !isInfoPlistIntact() {
 			ban()
 			crashNow()
 		}
 		
-		// 5. Check không có dylib lạ inject
+		// 4. Check không có dylib lạ inject
 		if hasInjectedDylib() {
 			ban()
 			crashNow()
 		}
 		
-		// 6. Check chữ ký code
-		if !ZheeSecurity.isCodeSignatureValid {
-			ban()
-			crashNow()
-		}
+		// NOTE: Không check _CodeSignature — IPA build không ký (CODE_SIGNING_ALLOWED=NO)
+		// nên check này luôn fail với bản cài không re-sign, gây ban oan.
 	}
 	
 	/// Info.plist có bị sửa không
