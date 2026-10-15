@@ -1,7 +1,7 @@
 {
-  "version": "1.7.33",
-  "build": "1.7.33",
-  "notes": "Bump to 1.7.33",
+  "version": "1.7.34",
+  "build": "1.7.34",
+  "notes": "Fix build: type-erase recursive fileTreeView with AnyView",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
