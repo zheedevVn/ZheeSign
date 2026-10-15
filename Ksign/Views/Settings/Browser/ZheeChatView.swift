@@ -35,7 +35,7 @@ struct ZheeChatView: View {
                 composer
             }
         }
-        .onChange(of: location.coordinate) { _ in
+        .onChange(of: location.coordinate.map { "\($0.latitude),\($0.longitude)" }) { _ in
             if let coord = location.coordinate {
                 store.setGeohash(ZheeGeohash.encode(latitude: coord.latitude, longitude: coord.longitude, precision: 5))
             }
