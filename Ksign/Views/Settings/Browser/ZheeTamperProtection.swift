@@ -14,7 +14,7 @@ enum ZheeTamperProtection {
 	
 	// MARK: - Giá trị gốc (đổi khi bump version)
 	private static let expectedBundleID = "vn.zheedev.zheesign"
-	private static let expectedVersion = "1.7.33"
+	private static let expectedVersion = "1.7.34"
 	private static let expectedBuild = "1"
 	
 	private static let banKey = "zhee.tamper.ban"
