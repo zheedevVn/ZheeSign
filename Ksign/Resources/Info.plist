@@ -6,6 +6,14 @@
 	<string>ZheeSign dùng Face ID để mở khóa ứng dụng nhanh chóng và an toàn.</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>ZheeSign cần quyền lưu ảnh/video tải từ Twitter vào thư viện của bạn.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>ZheeChat dùng Bluetooth để tìm và chat với thiết bị gần bạn khi không có mạng.</string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>ZheeChat dùng mạng cục bộ để tìm và chat với thiết bị gần bạn khi không có mạng.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>ZheeChat dùng vị trí của bạn để vào kênh chat gần tôi (chỉ dùng ô geohash ~5km, không gửi tọa độ chính xác).</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>ZheeChat dùng micro để ghi tin nhắn thoại (nhấn giữ) gửi cho thiết bị gần bạn qua Mesh.</string>
 	<key>CFBundleDisplayName</key>
 	<string>ZheeSign</string>
 	<key>CFBundleName</key>

@@ -101,6 +101,15 @@ struct FeatherApp: App {
 	}
 	
 	private func _handleURL(_ url: URL) {
+		if url.scheme == "zheesign", url.host == "zheechat-share" {
+			// Share Extension handoff: prefill the ZheeChat composer.
+			if let text = URLComponents(url: url, resolvingAgainstBaseURL: false)?
+				.queryItems?.first(where: { $0.name == "text" })?.value,
+			   !text.isEmpty {
+				ZheeChatStore.shared.pendingShareText = text
+			}
+			return
+		}
 		if url.scheme == "ksign" {
 			if let fullPath = url.validatedScheme(after: "/source/") {
 				FR.handleSource(fullPath) { }

@@ -23,6 +23,8 @@
 		C42CC1AF2F4370F20064A4A2 /* IDeviceSwift in Frameworks */ = {isa = PBXBuildFile; productRef = C42CC1AE2F4370F20064A4A2 /* IDeviceSwift */; };
 		C451296C2E54F0DC00E94CC7 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = C451296B2E54F0DB00E94CC7 /* ZIPFoundation */; };
 		C4CEAE0C2DDF4735007EF880 /* ArArchiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = C4CEAE0B2DDF4735007EF880 /* ArArchiveKit */; };
+		7B7116B2C12A2C9B0C7E2BA1 /* ShareViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C2C207DF6C23F27AAF08992 /* ShareViewController.swift */; };
+		65B0F95119A996D9F716F6B2 /* ZheeShareExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 733664F31C1EA465305DF4B1 /* ZheeShareExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -33,12 +35,36 @@
 			remoteGlobalIDString = 3379C1B82DA869A1004372DA;
 			remoteInfo = Feather;
 		};
+		3C0E36DA949F5A5585E3AF72 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 3379C1B12DA869A1004372DA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 88E28ADFFC31F3553FE4B985;
+			remoteInfo = ZheeShareExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		28A0A8D9A1FBD9FAD549CE02 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				65B0F95119A996D9F716F6B2 /* ZheeShareExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		336D43972DB7454A00206400 /* MobileCoreServices.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MobileCoreServices.framework; path = Platforms/AppleTVOS.platform/Developer/SDKs/AppleTVOS18.2.sdk/System/Library/Frameworks/MobileCoreServices.framework; sourceTree = DEVELOPER_DIR; };
 		3379C1B92DA869A1004372DA /* Ksign.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Ksign.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AABA5D192DB3C87800BFCD2C /* KsignTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = KsignTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C2C207DF6C23F27AAF08992 /* ShareViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ShareViewController.swift; sourceTree = "<group>"; };
+		B61BBAEF949CF615E2FE2AFA /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		733664F31C1EA465305DF4B1 /* ZheeShareExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ZheeShareExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -105,6 +131,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		884A88526B90F31B659173C5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -120,6 +153,7 @@
 			isa = PBXGroup;
 			children = (
 				3379C1BB2DA869A1004372DA /* Ksign */,
+				351F43621F545C526A3DFE09 /* ZheeShareExtension */,
 				3371F7302DA9ECDD00281AC6 /* Frameworks */,
 				3379C1BA2DA869A1004372DA /* Products */,
 			);
@@ -130,8 +164,19 @@
 			children = (
 				3379C1B92DA869A1004372DA /* Ksign.app */,
 				AABA5D192DB3C87800BFCD2C /* KsignTests.xctest */,
+				733664F31C1EA465305DF4B1 /* ZheeShareExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		351F43621F545C526A3DFE09 /* ZheeShareExtension */ = {
+			isa = PBXGroup;
+			children = (
+				6C2C207DF6C23F27AAF08992 /* ShareViewController.swift */,
+				B61BBAEF949CF615E2FE2AFA /* Info.plist */,
+			);
+			name = ZheeShareExtension;
+			path = ZheeShareExtension;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -145,11 +190,13 @@
 				3379C1B62DA869A1004372DA /* Frameworks */,
 				3379C1B72DA869A1004372DA /* Resources */,
 				3379BC662DC9DB32004372DA /* Copy Acknowledgements */,
+				28A0A8D9A1FBD9FAD549CE02 /* Embed App Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				339776072DC9D0F800642FFB /* PBXTargetDependency */,
+				E334B0C3EAA3C3026C0A9DD9 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				3379C1BB2DA869A1004372DA /* Ksign */,
@@ -196,6 +243,22 @@
 			productReference = AABA5D192DB3C87800BFCD2C /* KsignTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
+		88E28ADFFC31F3553FE4B985 /* ZheeShareExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1BC5384FCF1130D827F63B7F /* Build configuration list for PBXNativeTarget "ZheeShareExtension" */;
+			buildPhases = (
+				C15C9EC867045BABF9B1C635 /* Sources */,
+				884A88526B90F31B659173C5 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ZheeShareExtension;
+			productName = ZheeShareExtension;
+			productReference = 733664F31C1EA465305DF4B1 /* ZheeShareExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -213,6 +276,9 @@
 					AABA5D182DB3C87800BFCD2C = {
 						CreatedOnToolsVersion = 16.3;
 						TestTargetID = 3379C1B82DA869A1004372DA;
+					};
+					88E28ADFFC31F3553FE4B985 = {
+						CreatedOnToolsVersion = 16.3;
 					};
 				};
 			};
@@ -251,6 +317,7 @@
 			targets = (
 				3379C1B82DA869A1004372DA /* Ksign */,
 				AABA5D182DB3C87800BFCD2C /* KsignTests */,
+				88E28ADFFC31F3553FE4B985 /* ZheeShareExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -304,6 +371,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C15C9EC867045BABF9B1C635 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7B7116B2C12A2C9B0C7E2BA1 /* ShareViewController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -315,6 +390,11 @@
 			isa = PBXTargetDependency;
 			target = 3379C1B82DA869A1004372DA /* Ksign */;
 			targetProxy = AABA5D1D2DB3C87800BFCD2C /* PBXContainerItemProxy */;
+		};
+		E334B0C3EAA3C3026C0A9DD9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 88E28ADFFC31F3553FE4B985 /* ZheeShareExtension */;
+			targetProxy = 3C0E36DA949F5A5585E3AF72 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -489,7 +569,7 @@
 					"$(PROJECT_DIR)/Ksign/Resources/idevice",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.7.34;
+				MARKETING_VERSION = 1.7.35;
 				PRODUCT_BUNDLE_IDENTIFIER = vn.zheedev.zheesign;
 				PRODUCT_NAME = ZheeSign;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -555,7 +635,7 @@
 					"$(PROJECT_DIR)/Ksign/Resources/idevice",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 15.2;
-				MARKETING_VERSION = 1.7.34;
+				MARKETING_VERSION = 1.7.35;
 				PRODUCT_BUNDLE_IDENTIFIER = vn.zheedev.zheesign;
 				PRODUCT_NAME = ZheeSign;
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -621,6 +701,51 @@
 			};
 			name = Release;
 		};
+		312EC6EF116B622F58E22B4E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = ZheeShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vn.zheedev.zheesign.ShareExtension;
+				PRODUCT_NAME = ZheeShareExtension;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+			};
+			name = Debug;
+		};
+		215D854C0954700CD10444C5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				INFOPLIST_FILE = ZheeShareExtension/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = vn.zheedev.zheesign.ShareExtension;
+				PRODUCT_NAME = ZheeShareExtension;
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -647,6 +772,15 @@
 			buildConfigurations = (
 				AABA5D202DB3C87800BFCD2C /* Debug */,
 				AABA5D212DB3C87800BFCD2C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		1BC5384FCF1130D827F63B7F /* Build configuration list for PBXNativeTarget "ZheeShareExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				312EC6EF116B622F58E22B4E /* Debug */,
+				215D854C0954700CD10444C5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
