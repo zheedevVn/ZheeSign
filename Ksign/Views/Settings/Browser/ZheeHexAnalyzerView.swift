@@ -49,20 +49,23 @@ struct ZheeHexAnalyzerView: View {
                     HStack {
                         Image(systemName: "doc.badge.plus")
                             .font(.title3)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Chọn file bất kỳ")
-                                .font(.headline)
-                            Text("Xem hex, bóc chuỗi, quét link & secret — không cần chạy phân tích IPA/APK")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        Text("Chọn file bất kỳ")
+                            .font(.headline)
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .disabled(isAnalyzing)
+
+                Text("Xem hex, bóc chuỗi, quét link & secret — không cần chạy phân tích IPA/APK")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
                 if let errorMessage {
                     HStack(alignment: .top, spacing: 8) {
@@ -215,20 +218,14 @@ struct ZheeHexAnalyzerView: View {
         }
         .navigationTitle("Hex & Chuỗi")
         .navigationBarTitleDisplayMode(.inline)
-        .fileImporter(
-            isPresented: $showPicker,
-            allowedContentTypes: [.data],
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
-                if let url = urls.first, url.startAccessingSecurityScopedResource() {
+        .sheet(isPresented: $showPicker) {
+            ZheeDocumentPicker(contentTypes: [.data]) { url in
+                showPicker = false
+                if let url {
                     loadFile(url: url)
-                    url.stopAccessingSecurityScopedResource()
                 }
-            case .failure(let error):
-                errorMessage = "Lỗi chọn file: \(error.localizedDescription)"
             }
+            .ignoresSafeArea()
         }
     }
 

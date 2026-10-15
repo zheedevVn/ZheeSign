@@ -28,20 +28,23 @@ struct ZheeIPAAnalyzerView: View {
                     HStack {
                         Image(systemName: "doc.badge.plus")
                             .font(.title3)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Chọn file IPA")
-                                .font(.headline)
-                            Text("Phân tích link, secret, provisioning, Mach-O…")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        Text("Chọn file IPA")
+                            .font(.headline)
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .disabled(isAnalyzing)
+
+                Text("Phân tích link, secret, provisioning, Mach-O…")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
                 if isAnalyzing {
                     HStack {
@@ -235,20 +238,14 @@ struct ZheeIPAAnalyzerView: View {
         }
         .navigationTitle("Phân tích IPA")
         .navigationBarTitleDisplayMode(.inline)
-        .fileImporter(
-            isPresented: $showPicker,
-            allowedContentTypes: [UTType.ipa, UTType.tipa],
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
-                if let url = urls.first, url.startAccessingSecurityScopedResource() {
+        .sheet(isPresented: $showPicker) {
+            ZheeDocumentPicker(contentTypes: [UTType.ipa, UTType.tipa]) { url in
+                showPicker = false
+                if let url {
                     analyze(url: url)
-                    url.stopAccessingSecurityScopedResource()
                 }
-            case .failure(let error):
-                errorMessage = "Lỗi chọn file: \(error.localizedDescription)"
             }
+            .ignoresSafeArea()
         }
     }
 
@@ -293,19 +290,11 @@ struct ZheeIPAAnalyzerView: View {
         report = nil
         copiedURL = nil
         progressText = "Đang chuẩn bị…"
-        // Copy vào temp ngay khi còn giữ quyền truy cập file
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("ZheeAnalyzeInput_\(UUID().uuidString).ipa")
-        do {
-            try FileManager.default.copyItem(at: url, to: tempURL)
-        } catch {
-            errorMessage = "Không đọc được file: \(error.localizedDescription)"
-            isAnalyzing = false
-            return
-        }
-        ZheeIPAAnalyzer().analyze(ipaURL: tempURL, displayName: url.lastPathComponent, onProgress: { step in
+        // Picker đã copy file về local (asCopy), dùng trực tiếp được
+        ZheeIPAAnalyzer().analyze(ipaURL: url, displayName: url.lastPathComponent, onProgress: { step in
             DispatchQueue.main.async { progressText = step }
         }) { result in
-            try? FileManager.default.removeItem(at: tempURL)
+            try? FileManager.default.removeItem(at: url)
             switch result {
             case .success(let result):
                 report = result

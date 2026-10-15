@@ -27,20 +27,23 @@ struct ZheeAPKAnalyzerView: View {
                     HStack {
                         Image(systemName: "doc.badge.plus")
                             .font(.title3)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Chọn file APK")
-                                .font(.headline)
-                            Text("Bóc tách gói Android ngay trên iPhone — không cần Android / PC")
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                        }
+                        Text("Chọn file APK")
+                            .font(.headline)
                         Spacer()
                         Image(systemName: "chevron.right")
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
+                    .frame(maxWidth: .infinity)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
                 .disabled(isAnalyzing)
+
+                Text("Bóc tách gói Android ngay trên iPhone — không cần Android / PC")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
 
                 if isAnalyzing {
                     HStack {
@@ -233,20 +236,14 @@ struct ZheeAPKAnalyzerView: View {
         }
         .navigationTitle("Phân tích APK")
         .navigationBarTitleDisplayMode(.inline)
-        .fileImporter(
-            isPresented: $showPicker,
-            allowedContentTypes: [UTType(filenameExtension: "apk") ?? .data],
-            allowsMultipleSelection: false
-        ) { result in
-            switch result {
-            case .success(let urls):
-                if let url = urls.first, url.startAccessingSecurityScopedResource() {
+        .sheet(isPresented: $showPicker) {
+            ZheeDocumentPicker(contentTypes: [UTType(filenameExtension: "apk") ?? .data]) { url in
+                showPicker = false
+                if let url {
                     analyze(url: url)
-                    url.stopAccessingSecurityScopedResource()
                 }
-            case .failure(let error):
-                errorMessage = "Lỗi chọn file: \(error.localizedDescription)"
             }
+            .ignoresSafeArea()
         }
     }
 
@@ -291,18 +288,11 @@ struct ZheeAPKAnalyzerView: View {
         report = nil
         copiedNote = nil
         progressText = "Đang chuẩn bị…"
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("ZheeAnalyzeInput_\(UUID().uuidString).apk")
-        do {
-            try FileManager.default.copyItem(at: url, to: tempURL)
-        } catch {
-            errorMessage = "Không đọc được file: \(error.localizedDescription)"
-            isAnalyzing = false
-            return
-        }
-        ZheeAPKAnalyzer().analyze(apkURL: tempURL, displayName: url.lastPathComponent, onProgress: { step in
+        // Picker đã copy file về local (asCopy), dùng trực tiếp được
+        ZheeAPKAnalyzer().analyze(apkURL: url, displayName: url.lastPathComponent, onProgress: { step in
             DispatchQueue.main.async { progressText = step }
         }) { result in
-            try? FileManager.default.removeItem(at: tempURL)
+            try? FileManager.default.removeItem(at: url)
             switch result {
             case .success(let result):
                 report = result
