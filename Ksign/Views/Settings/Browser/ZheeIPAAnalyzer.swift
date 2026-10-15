@@ -10,7 +10,6 @@
 //  No decompilation, no runtime instrumentation — those need desktop tools.
 
 import Foundation
-import Zip
 
 // MARK: - Models
 
@@ -144,7 +143,7 @@ enum ZheeIPAAnalyzerError: LocalizedError {
     case noPayload
     case noApp
     case noExecutable
-    case unzipFailed
+    case unzipFailed(String)
 
     var errorDescription: String? {
         switch self {
@@ -152,7 +151,7 @@ enum ZheeIPAAnalyzerError: LocalizedError {
         case .noPayload: return "IPA không có thư mục Payload."
         case .noApp: return "Không tìm thấy .app trong Payload."
         case .noExecutable: return "Không tìm thấy file thực thi."
-        case .unzipFailed: return "Giải nén IPA thất bại."
+        case .unzipFailed(let detail): return "Giải nén IPA thất bại. \(detail)"
         }
     }
 }
@@ -178,9 +177,9 @@ final class ZheeIPAAnalyzer {
         onProgress("Đang giải nén IPA…")
         try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
         do {
-            try Zip.unzipFile(ipaURL, destination: workDir, overwrite: true, password: nil, progress: nil)
+            try ZheeUnzip.extract(ipaURL, to: workDir)
         } catch {
-            throw ZheeIPAAnalyzerError.unzipFailed
+            throw ZheeIPAAnalyzerError.unzipFailed(error.localizedDescription)
         }
 
         let payload = workDir.appendingPathComponent("Payload")

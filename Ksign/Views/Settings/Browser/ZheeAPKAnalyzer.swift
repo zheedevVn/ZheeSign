@@ -10,7 +10,6 @@
 //  plus the shared link/secret scan.
 
 import Foundation
-import Zip
 
 // MARK: - Models
 
@@ -104,13 +103,13 @@ struct ZheeAPKReport {
 enum ZheeAPKAnalyzerError: LocalizedError {
     case notAPK
     case noManifest
-    case unzipFailed
+    case unzipFailed(String)
 
     var errorDescription: String? {
         switch self {
         case .notAPK: return "File không phải APK."
         case .noManifest: return "Không tìm thấy AndroidManifest.xml."
-        case .unzipFailed: return "Giải nén APK thất bại."
+        case .unzipFailed(let detail): return "Giải nén APK thất bại. \(detail)"
         }
     }
 }
@@ -138,9 +137,9 @@ final class ZheeAPKAnalyzer {
         onProgress("Đang giải nén APK…")
         try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
         do {
-            try Zip.unzipFile(apkURL, destination: workDir, overwrite: true, password: nil, progress: nil)
+            try ZheeUnzip.extract(apkURL, to: workDir)
         } catch {
-            throw ZheeAPKAnalyzerError.unzipFailed
+            throw ZheeAPKAnalyzerError.unzipFailed(error.localizedDescription)
         }
 
         // Entry list
