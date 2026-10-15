@@ -93,14 +93,53 @@ struct ZheeIPAAnalyzerView: View {
                                 Text(warning)
                                     .font(.subheadline)
                             }
+                            .listRowBackground(Color.orange.opacity(0.07))
                         }
                     }
                 }
 
+                Section {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack(spacing: 12) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.white.opacity(0.22))
+                                Image(systemName: report.isTipa ? "t.square.fill" : "app.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                            }
+                            .frame(width: 52, height: 52)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(report.appName)
+                                    .font(.title3)
+                                    .bold()
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                Text(report.bundleID)
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.85))
+                                    .lineLimit(1)
+                            }
+                            Spacer()
+                        }
+                        HStack(spacing: 16) {
+                            heroStat("Version", "v\(report.version)")
+                            heroStat("Build", report.build)
+                            heroStat("Dung lượng", report.fileSize)
+                            heroStat("Chuỗi quét", "\(report.scannedStrings)")
+                        }
+                    }
+                    .padding(.vertical, 4)
+                    .listRowBackground(
+                        LinearGradient(
+                            colors: [.blue, .purple, .pink],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                }
+
                 Section("Thông tin app") {
-                    infoRow("Tên app", report.appName)
-                    infoRow("Bundle ID", report.bundleID)
-                    infoRow("Version", "\(report.version) (build \(report.build))")
                     infoRow("iOS tối thiểu", report.minIOS)
                     infoRow("File thực thi", report.executable)
                     infoRow("Kiến trúc", report.architectures.joined(separator: ", "))
@@ -110,8 +149,6 @@ struct ZheeIPAAnalyzerView: View {
                     if report.provisioningDevices > 0 {
                         infoRow("Thiết bị provisioning", "\(report.provisioningDevices)")
                     }
-                    infoRow("Kích thước file", report.fileSize)
-                    infoRow("Số chuỗi đã quét", "\(report.scannedStrings)")
                 }
 
                 if !report.links.isEmpty {
@@ -122,7 +159,18 @@ struct ZheeIPAAnalyzerView: View {
                                     linkRow(item)
                                 }
                             } label: {
-                                Label("\(category.rawValue) (\(items.count))", systemImage: category.icon)
+                                Label {
+                                    Text("\(category.rawValue) (\(items.count))")
+                                } icon: {
+                                    ZStack {
+                                        RoundedRectangle(cornerRadius: 7)
+                                            .fill(categoryColor(category).opacity(0.15))
+                                        Image(systemName: category.icon)
+                                            .font(.caption)
+                                            .foregroundColor(categoryColor(category))
+                                    }
+                                    .frame(width: 28, height: 28)
+                                }
                             }
                         }
                     }
@@ -371,6 +419,7 @@ struct ZheeIPAAnalyzerView: View {
                         exportPatchedIPA()
                     } label: {
                         Label(report.isTipa ? "Xuất TIPA đã chỉnh sửa" : "Xuất IPA đã chỉnh sửa", systemImage: "square.and.arrow.up")
+                            .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(!hasEdits || isExporting || report.workDir == nil)
@@ -576,11 +625,15 @@ struct ZheeIPAAnalyzerView: View {
     }
 
     private func flowNode(icon: String, title: String, subtitle: String, color: Color) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: icon)
-                .foregroundColor(color)
-                .font(.title3)
-                .frame(width: 28)
+        HStack(spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(color.opacity(0.15))
+                Image(systemName: icon)
+                    .foregroundColor(color)
+                    .font(.subheadline)
+            }
+            .frame(width: 38, height: 38)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                     .font(.subheadline)
@@ -593,9 +646,35 @@ struct ZheeIPAAnalyzerView: View {
             }
             Spacer()
         }
-        .padding(10)
-        .background(Color(.secondarySystemGroupedBackground))
-        .cornerRadius(12)
+        .padding(12)
+        .background(Color(.systemBackground))
+        .cornerRadius(14)
+        .shadow(color: Color.black.opacity(0.06), radius: 6, x: 0, y: 2)
+    }
+
+    private func categoryColor(_ category: ZheeLinkCategory) -> Color {
+        switch category {
+        case .telegram: return .blue
+        case .discord: return .indigo
+        case .api: return .orange
+        case .firebase: return .yellow
+        case .webhook: return .purple
+        case .social: return .pink
+        case .other: return .gray
+        }
+    }
+
+    private func heroStat(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            Text(label)
+                .font(.caption2)
+                .foregroundColor(.white.opacity(0.7))
+            Text(value)
+                .font(.subheadline)
+                .bold()
+                .foregroundColor(.white)
+                .lineLimit(1)
+        }
     }
 
     private func flowArrow() -> some View {

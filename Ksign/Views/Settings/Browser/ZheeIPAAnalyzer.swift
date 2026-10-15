@@ -22,6 +22,18 @@ enum ZheeLinkCategory: String, CaseIterable {
     case social = "Mạng xã hội"
     case other = "Khác"
 
+    var colorName: String {
+        switch self {
+        case .telegram: return "blue"
+        case .discord: return "indigo"
+        case .api: return "orange"
+        case .firebase: return "yellow"
+        case .webhook: return "purple"
+        case .social: return "pink"
+        case .other: return "gray"
+        }
+    }
+
     var icon: String {
         switch self {
         case .telegram: return "paperplane.fill"
