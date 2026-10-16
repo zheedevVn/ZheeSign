@@ -13,7 +13,10 @@ import UIKit
 struct ZheeAPKAnalyzerView: View {
     @State private var showPicker = false
     @State private var isAnalyzing = false
+    @State private var analysisRunID = UUID()
     @State private var progressText = ""
+    @State private var progressStep = 0
+    @State private var progressLog: [(Date, String)] = []
     @State private var report: ZheeAPKReport?
     @State private var errorMessage: String?
     @State private var copiedNote: String?
@@ -46,12 +49,12 @@ struct ZheeAPKAnalyzerView: View {
                     .foregroundColor(.secondary)
 
                 if isAnalyzing {
-                    HStack {
-                        ProgressView()
-                        Text(progressText.isEmpty ? "Đang phân tích…" : progressText)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
+                    ZheeAnalyzeProgressView(step: progressStep, text: progressText, stages: [
+                        "Giải nén APK",
+                        "Đọc AndroidManifest.xml",
+                        "Phân tích DEX",
+                        "Quét link & secret",
+                    ])
                 }
 
                 if let errorMessage {
@@ -63,6 +66,10 @@ struct ZheeAPKAnalyzerView: View {
                             .foregroundColor(.red)
                     }
                 }
+            }
+
+            if !progressLog.isEmpty {
+                ZheeProgressLogView(log: progressLog)
             }
 
             if let report {
@@ -114,7 +121,7 @@ struct ZheeAPKAnalyzerView: View {
 
                 if !report.secrets.isEmpty {
                     Section("Secret / Key (\(report.secrets.count))") {
-                        Text("Giá trị đã bị che — chỉ hiện tên key + vài ký tự đầu.")
+                        Text("Hiển thị đầy đủ giá trị — đừng gửi cho ai.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         ForEach(report.secrets) { secret in
@@ -122,7 +129,7 @@ struct ZheeAPKAnalyzerView: View {
                                 Text(secret.kind)
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
-                                Text(secret.masked)
+                                Text(secret.value)
                                     .font(.system(.caption, design: .monospaced))
                                     .foregroundColor(.secondary)
                                 Text("Nguồn: \(secret.source)")
@@ -236,6 +243,8 @@ struct ZheeAPKAnalyzerView: View {
         }
         .navigationTitle("Phân tích APK")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { restoreSessionIfNeeded() }
+        .onReceive(ZheeAPKAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
         .sheet(isPresented: $showPicker) {
             ZheeDocumentPicker(contentTypes: [UTType(filenameExtension: "apk") ?? .data]) { url in
                 showPicker = false
@@ -245,6 +254,14 @@ struct ZheeAPKAnalyzerView: View {
             }
             .ignoresSafeArea()
         }
+    }
+
+    /// Restores the last finished analysis from the session (e.g. after
+    /// going back and returning). The APK report is self-contained.
+    private func restoreSessionIfNeeded() {
+        guard report == nil else { return }
+        guard let saved = ZheeAPKAnalyzerSession.shared.report else { return }
+        report = saved
     }
 
     private func infoRow(_ label: String, _ value: String) -> some View {
@@ -283,24 +300,65 @@ struct ZheeAPKAnalyzerView: View {
     }
 
     private func analyze(url: URL) {
+        // Stable copy: see ZheeIPAAnalyzerView — the picker copy (asCopy)
+        // may be purged after dismissal, before the late size read.
+        let displayName = url.lastPathComponent
+        var url = url
+        let stableURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ZheePick_\(UUID().uuidString)_\(displayName)")
+        if (try? FileManager.default.copyItem(at: url, to: stableURL)) != nil {
+            url = stableURL
+        }
+        // Drop the previous session; runID drops stale completions.
+        let myRun = UUID()
+        analysisRunID = myRun
+        let session = ZheeAPKAnalyzerSession.shared
+        session.runID = myRun
+        session.report = nil
+        session.bump()
         isAnalyzing = true
         errorMessage = nil
         report = nil
         copiedNote = nil
         progressText = "Đang chuẩn bị…"
+        progressStep = 0
+        progressLog = [(Date(), "Bắt đầu phân tích \(displayName)")]
+        let startedAt = Date()
         // Picker đã copy file về local (asCopy), dùng trực tiếp được
-        ZheeAPKAnalyzer().analyze(apkURL: url, displayName: url.lastPathComponent, onProgress: { step in
-            DispatchQueue.main.async { progressText = step }
+        ZheeAPKAnalyzer().analyze(apkURL: url, displayName: displayName, onProgress: { step in
+            DispatchQueue.main.async {
+                progressText = step
+                progressStep = Self.stageIndex(for: step)
+                progressLog.append((Date(), step))
+            }
         }) { result in
             try? FileManager.default.removeItem(at: url)
+            guard analysisRunID == myRun,
+                  ZheeAPKAnalyzerSession.shared.runID == myRun else { return }
             switch result {
             case .success(let result):
                 report = result
+                progressLog.append((Date(), String(format: "Hoàn tất trong %.1fs", Date().timeIntervalSince(startedAt))))
                 isAnalyzing = false
+                // Keep the finished analysis in the session so going
+                // back does not lose it.
+                let session = ZheeAPKAnalyzerSession.shared
+                session.report = result
+                session.bump()
             case .failure(let error):
                 errorMessage = error.localizedDescription
+                progressLog.append((Date(), "Lỗi: \(error.localizedDescription)"))
                 isAnalyzing = false
             }
         }
+    }
+}
+
+extension ZheeAPKAnalyzerView {
+    fileprivate static func stageIndex(for text: String) -> Int {
+        if text.contains("quét") { return 3 }
+        if text.contains("DEX") { return 2 }
+        if text.contains("AndroidManifest") { return 1 }
+        return 0
     }
 }

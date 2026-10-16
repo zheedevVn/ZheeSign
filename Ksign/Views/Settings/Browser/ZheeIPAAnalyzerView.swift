@@ -13,8 +13,12 @@ import UIKit
 
 struct ZheeIPAAnalyzerView: View {
     @State private var showPicker = false
+    @State private var previewNode: ZheeFileNode?
     @State private var isAnalyzing = false
+    @State private var analysisRunID = UUID()
     @State private var progressText = ""
+    @State private var progressStep = 0
+    @State private var progressLog: [(Date, String)] = []
     @State private var report: ZheeIPAReport?
     @State private var errorMessage: String?
     @State private var copiedURL: String?
@@ -64,12 +68,13 @@ struct ZheeIPAAnalyzerView: View {
                     .foregroundColor(.secondary)
 
                 if isAnalyzing {
-                    HStack {
-                        ProgressView()
-                        Text(progressText.isEmpty ? "Đang phân tích…" : progressText)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                    }
+                    ZheeAnalyzeProgressView(step: progressStep, text: progressText, stages: [
+                        "Giải nén IPA",
+                        "Đọc Info.plist",
+                        "Đọc provisioning",
+                        "Phân tích Mach-O",
+                        "Quét link & secret",
+                    ])
                 }
 
                 if let errorMessage {
@@ -81,6 +86,10 @@ struct ZheeIPAAnalyzerView: View {
                             .foregroundColor(.red)
                     }
                 }
+            }
+
+            if !progressLog.isEmpty {
+                ZheeProgressLogView(log: progressLog)
             }
 
             if let report {
@@ -198,7 +207,7 @@ struct ZheeIPAAnalyzerView: View {
 
                 if !report.secrets.isEmpty {
                     Section("Secret / Key (\(report.secrets.count))") {
-                        Text("Giá trị đã bị che — chỉ hiện tên key + vài ký tự đầu.")
+                        Text("Hiển thị đầy đủ giá trị — đừng gửi cho ai.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         ForEach(report.secrets) { secret in
@@ -206,7 +215,7 @@ struct ZheeIPAAnalyzerView: View {
                                 Text(secret.kind)
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
-                                Text(secret.masked)
+                                Text(secret.value)
                                     .font(.system(.caption, design: .monospaced))
                                     .foregroundColor(.secondary)
                                 Text("Nguồn: \(secret.source)")
@@ -321,27 +330,24 @@ struct ZheeIPAAnalyzerView: View {
                 }
 
                 Section("Sửa thông tin app") {
-                    HStack {
-                        Text("Bundle ID")
-                        Spacer()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Bundle ID").font(.caption).foregroundColor(.secondary)
                         TextField("vn.example.app", text: $editBundleID)
-                            .multilineTextAlignment(.trailing)
+                            .textFieldStyle(.roundedBorder)
                             .autocapitalization(.none)
                             .autocorrectionDisabled()
                     }
-                    HStack {
-                        Text("Version")
-                        Spacer()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Version").font(.caption).foregroundColor(.secondary)
                         TextField("1.0", text: $editVersion)
-                            .multilineTextAlignment(.trailing)
+                            .textFieldStyle(.roundedBorder)
                             .autocapitalization(.none)
                             .autocorrectionDisabled()
                     }
-                    HStack {
-                        Text("Build")
-                        Spacer()
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Build").font(.caption).foregroundColor(.secondary)
                         TextField("1", text: $editBuild)
-                            .multilineTextAlignment(.trailing)
+                            .textFieldStyle(.roundedBorder)
                             .autocapitalization(.none)
                             .autocorrectionDisabled()
                     }
@@ -355,6 +361,11 @@ struct ZheeIPAAnalyzerView: View {
                         Text("Chỉ ảnh rời trong .app — ảnh trong Assets.car chưa sửa được.")
                             .font(.caption)
                             .foregroundColor(.secondary)
+                        if report.usesCatalogIcon {
+                            Text("Icon màn hình chính nằm trong Assets.car — khi xuất, app tự chuyển sang dùng ảnh rời đã Thay để đổi icon.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
                         ForEach(report.images) { image in
                             HStack(spacing: 10) {
                                 if let workDir = report.workDir,
@@ -439,12 +450,7 @@ struct ZheeIPAAnalyzerView: View {
                     .buttonStyle(.borderedProminent)
                     .disabled(!hasEdits || isExporting || report.workDir == nil)
                     if isExporting {
-                        HStack {
-                            ProgressView()
-                            Text("Đang áp patch & đóng gói…")
-                                .font(.subheadline)
-                                .foregroundColor(.secondary)
-                        }
+                        ZheeSlimProgressBar(text: "Đang áp patch & đóng gói…")
                     }
                     if let exportedURL {
                         ShareLink(item: exportedURL) {
@@ -481,6 +487,43 @@ struct ZheeIPAAnalyzerView: View {
         }
         .navigationTitle("Phân tích IPA")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { restoreSessionIfNeeded() }
+        .onReceive(ZheeIPAAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
+        .onChange(of: patches) { _ in
+            let session = ZheeIPAAnalyzerSession.shared
+            session.patches = patches
+            session.bump()
+        }
+        .onChange(of: imagePatches) { _ in
+            let session = ZheeIPAAnalyzerSession.shared
+            session.imagePatches = imagePatches
+            session.bump()
+        }
+        .onChange(of: editBundleID) { _ in
+            let session = ZheeIPAAnalyzerSession.shared
+            session.editBundleID = editBundleID
+            session.bump()
+        }
+        .onChange(of: editVersion) { _ in
+            let session = ZheeIPAAnalyzerSession.shared
+            session.editVersion = editVersion
+            session.bump()
+        }
+        .onChange(of: editBuild) { _ in
+            let session = ZheeIPAAnalyzerSession.shared
+            session.editBuild = editBuild
+            session.bump()
+        }
+        .onChange(of: exportMessage) { _ in
+            let session = ZheeIPAAnalyzerSession.shared
+            session.exportMessage = exportMessage
+            session.bump()
+        }
+        .onChange(of: exportedURL) { _ in
+            let session = ZheeIPAAnalyzerSession.shared
+            session.exportedURL = exportedURL
+            session.bump()
+        }
         .sheet(isPresented: $showPicker) {
             ZheeDocumentPicker(contentTypes: [UTType.ipa, UTType.tipa]) { url in
                 showPicker = false
@@ -489,6 +532,14 @@ struct ZheeIPAAnalyzerView: View {
                 }
             }
             .ignoresSafeArea()
+        }
+        .sheet(item: $previewNode) { node in
+            if let workDir = report?.workDir {
+                ZheeFilePreviewView(
+                    fileURL: workDir.appendingPathComponent(node.path),
+                    fileName: node.name
+                )
+            }
         }
         .sheet(item: $editingLink) { item in
             NavigationView {
@@ -546,11 +597,6 @@ struct ZheeIPAAnalyzerView: View {
                 replacingImage = nil
             }
         }
-        .onDisappear {
-            if let dir = report?.workDir {
-                try? FileManager.default.removeItem(at: dir)
-            }
-        }
     }
 
     private func infoRow(_ label: String, _ value: String) -> some View {
@@ -598,9 +644,35 @@ struct ZheeIPAAnalyzerView: View {
     }
 
     private func analyze(url: URL) {
+        // The picker copy (asCopy) lives in tmp and the system may purge
+        // it after dismissal — the multi-second scan outlives it, so a
+        // late file-size read saw a deleted file ("—"). Copy to a stable
+        // temp path we own before analyzing.
+        let displayName = url.lastPathComponent
+        var url = url
+        let stableURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ZheePick_\(UUID().uuidString)_\(displayName)")
+        if (try? FileManager.default.copyItem(at: url, to: stableURL)) != nil {
+            url = stableURL
+        }
         if let oldDir = report?.workDir {
             try? FileManager.default.removeItem(at: oldDir)
         }
+        // Drop the previous session (incl. its workDir) so a stale
+        // completion can never resurrect it; runID drops stale results.
+        let myRun = UUID()
+        analysisRunID = myRun
+        let session = ZheeIPAAnalyzerSession.shared
+        session.runID = myRun
+        if let oldDir = session.report?.workDir {
+            try? FileManager.default.removeItem(at: oldDir)
+        }
+        session.report = nil
+        session.patches = [:]
+        session.imagePatches = [:]
+        session.exportMessage = nil
+        session.exportedURL = nil
+        session.bump()
         isAnalyzing = true
         errorMessage = nil
         report = nil
@@ -616,13 +688,24 @@ struct ZheeIPAAnalyzerView: View {
         exportMessage = nil
         exportedURL = nil
         progressText = "Đang chuẩn bị…"
+        progressStep = 0
+        progressLog = [(Date(), "Bắt đầu phân tích \(displayName)")]
+        let startedAt = Date()
         // Picker đã copy file về local (asCopy), dùng trực tiếp được
-        ZheeIPAAnalyzer().analyze(ipaURL: url, displayName: url.lastPathComponent, onProgress: { step in
-            DispatchQueue.main.async { progressText = step }
+        ZheeIPAAnalyzer().analyze(ipaURL: url, displayName: displayName, onProgress: { step in
+            DispatchQueue.main.async {
+                progressText = step
+                progressStep = Self.stageIndex(for: step)
+                progressLog.append((Date(), step))
+            }
         }) { result in
             try? FileManager.default.removeItem(at: url)
+            // Stale run (a newer analysis started): drop the result.
+            guard analysisRunID == myRun,
+                  ZheeIPAAnalyzerSession.shared.runID == myRun else { return }
             switch result {
             case .success(let result):
+                progressLog.append((Date(), String(format: "Hoàn tất trong %.1fs", Date().timeIntervalSince(startedAt))))
                 report = result
                 origBundleID = result.bundleID == "—" ? "" : result.bundleID
                 origVersion = result.version == "—" ? "" : result.version
@@ -632,10 +715,53 @@ struct ZheeIPAAnalyzerView: View {
                 editBuild = origBuild
                 imagePatches = [:]
                 isAnalyzing = false
+                // Keep the finished analysis in the session so going
+                // back does not lose it.
+                let session = ZheeIPAAnalyzerSession.shared
+                session.patches = patches
+                session.imagePatches = imagePatches
+                session.editBundleID = editBundleID
+                session.editVersion = editVersion
+                session.editBuild = editBuild
+                session.origBundleID = origBundleID
+                session.origVersion = origVersion
+                session.origBuild = origBuild
+                session.exportMessage = exportMessage
+                session.exportedURL = exportedURL
+                session.report = result
+                session.bump()
             case .failure(let error):
                 errorMessage = error.localizedDescription
+                progressLog.append((Date(), "Lỗi: \(error.localizedDescription)"))
                 isAnalyzing = false
             }
+        }
+    }
+
+    /// Restores the last finished analysis from the session (e.g. after
+    /// going back and returning). Drops it if the extracted folder is gone.
+    private func restoreSessionIfNeeded() {
+        guard report == nil else { return }
+        let session = ZheeIPAAnalyzerSession.shared
+        guard let saved = session.report else { return }
+        if let dir = saved.workDir, !FileManager.default.fileExists(atPath: dir.path) {
+            session.report = nil
+            session.patches = [:]
+            session.imagePatches = [:]
+            return
+        }
+        report = saved
+        patches = session.patches
+        imagePatches = session.imagePatches
+        editBundleID = session.editBundleID
+        editVersion = session.editVersion
+        editBuild = session.editBuild
+        origBundleID = session.origBundleID
+        origVersion = session.origVersion
+        origBuild = session.origBuild
+        exportMessage = session.exportMessage
+        if let url = session.exportedURL, FileManager.default.fileExists(atPath: url.path) {
+            exportedURL = url
         }
     }
 
@@ -722,23 +848,44 @@ struct ZheeIPAAnalyzerView: View {
             )
         }
         return AnyView(
-            HStack {
-                Image(systemName: "doc")
-                    .foregroundColor(.secondary)
-                Text(node.name)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .lineLimit(1)
-                Spacer()
-                Text(node.sizeText)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+            Button {
+                previewNode = node
+            } label: {
+                HStack {
+                    Image(systemName: "doc")
+                        .foregroundColor(.secondary)
+                    Text(node.name)
+                        .font(.system(.subheadline, design: .monospaced))
+                        .lineLimit(1)
+                    Spacer()
+                    Text(node.sizeText)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
+            .buttonStyle(.plain)
         )
     }
 
     private var hasEdits: Bool {
         if !patches.isEmpty || !imagePatches.isEmpty { return true }
         return editBundleID != origBundleID || editVersion != origVersion || editBuild != origBuild
+    }
+
+    /// "AppIcon76x76@2x~ipad.png" -> "AppIcon76x76"; nil for non-AppIcon files.
+    private static func iconBaseName(for relativePath: String) -> String? {
+        let fileName = URL(fileURLWithPath: relativePath).lastPathComponent
+        guard fileName.lowercased().hasPrefix("appicon") else { return nil }
+        var name = (fileName as NSString).deletingPathExtension
+        var stripped = true
+        while stripped {
+            stripped = false
+            for suffix in ["~ipad", "~iphone", "@3x", "@2x"] where name.hasSuffix(suffix) {
+                name = String(name.dropLast(suffix.count))
+                stripped = true
+            }
+        }
+        return name.isEmpty ? nil : name
     }
 
     private func exportPatchedIPA() {
@@ -769,6 +916,12 @@ struct ZheeIPAAnalyzerView: View {
                     try ZheeIPAPatcher.applyImagePatches(workDir: workDir, images: currentImages)
                     changed += currentImages.count
                 }
+                // Catalog-icon apps: point the plist at the replaced loose
+                // AppIcon files so SpringBoard shows the new icon.
+                let replacedIconNames = currentImages.keys.compactMap { Self.iconBaseName(for: $0) }
+                if try ZheeIPAPatcher.applyIconFallback(workDir: workDir, replacedIconBaseNames: replacedIconNames) {
+                    changed += 1
+                }
                 try ZheeIPAPatcher.repack(workDir: workDir, outputURL: outURL, stripSignature: !keepSignature)
                 DispatchQueue.main.async {
                     exportedURL = outURL
@@ -781,6 +934,165 @@ struct ZheeIPAAnalyzerView: View {
                 DispatchQueue.main.async {
                     exportMessage = "Lỗi: \(error.localizedDescription)"
                     isExporting = false
+                }
+            }
+        }
+    }
+}
+
+/// Maps an analyzer progress message to the stage timeline index.
+extension ZheeIPAAnalyzerView {
+    fileprivate static func stageIndex(for text: String) -> Int {
+        if text.contains("quét") { return 4 }
+        if text.contains("Mach-O") { return 3 }
+        if text.contains("provisioning") { return 2 }
+        if text.contains("Info.plist") { return 1 }
+        return 0
+    }
+}
+
+/// Pretty analyze progress: pulsing status + gradient bar with shine +
+/// stage timeline (done = green check, current = pulsing dot).
+/// Shared by the IPA / APK / Hex analyzers.
+struct ZheeAnalyzeProgressView: View {
+    let step: Int
+    let text: String
+    let stages: [String]
+    @State private var pulse = false
+    @State private var shineX: CGFloat = -60
+
+    private var fraction: CGFloat { CGFloat(min(step + 1, stages.count)) / CGFloat(max(stages.count, 1)) }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 8) {
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 10, height: 10)
+                    .scaleEffect(pulse ? 1.4 : 1)
+                    .opacity(pulse ? 0.5 : 1)
+                    .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulse)
+                Text(text.isEmpty ? "Đang phân tích…" : text)
+                    .font(.subheadline.bold())
+                    .lineLimit(1)
+                Spacer()
+                Text("\(Int(fraction * 100))%")
+                    .font(.subheadline.bold())
+                    .foregroundColor(.blue)
+            }
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.gray.opacity(0.2))
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(
+                            LinearGradient(colors: [.blue, .purple, .pink], startPoint: .leading, endPoint: .trailing)
+                        )
+                        Capsule()
+                            .fill(Color.white.opacity(0.5))
+                            .frame(width: 50)
+                            .offset(x: shineX)
+                    }
+                    .frame(width: geo.size.width * fraction)
+                    .clipShape(Capsule())
+                }
+            }
+            .frame(height: 8)
+            ForEach(Array(stages.enumerated()), id: \.offset) { i, label in
+                HStack(spacing: 10) {
+                    stageDot(i)
+                    Text(label)
+                        .font(.subheadline)
+                        .fontWeight(i == step ? .semibold : .regular)
+                        .foregroundColor(i > step ? .secondary : .primary)
+                }
+            }
+        }
+        .padding(12)
+        .background(RoundedRectangle(cornerRadius: 14).fill(Color.gray.opacity(0.08)))
+        .onAppear {
+            pulse = true
+            withAnimation(.linear(duration: 1.4).repeatForever(autoreverses: false)) {
+                shineX = 500
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func stageDot(_ i: Int) -> some View {
+        if i < step {
+            ZStack {
+                Circle().fill(Color.green)
+                ZheeOutlineIcon(.check, size: 11, color: .white)
+            }
+            .frame(width: 24, height: 24)
+        } else if i == step {
+            ZStack {
+                Circle().stroke(Color.blue, lineWidth: 2)
+                Circle()
+                    .fill(Color.blue)
+                    .frame(width: 10, height: 10)
+                    .scaleEffect(pulse ? 1.3 : 1)
+                    .opacity(pulse ? 0.6 : 1)
+            }
+            .frame(width: 24, height: 24)
+        } else {
+            Circle()
+                .stroke(Color.gray.opacity(0.4), lineWidth: 2)
+                .frame(width: 24, height: 24)
+        }
+    }
+}
+
+/// Slim indeterminate progress bar for patch & repack.
+private struct ZheeSlimProgressBar: View {
+    let text: String
+    @State private var slideX: CGFloat = -80
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(text)
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            GeometryReader { geo in
+                ZStack(alignment: .leading) {
+                    Capsule().fill(Color.gray.opacity(0.2))
+                    Capsule()
+                        .fill(LinearGradient(colors: [.blue, .purple, .pink], startPoint: .leading, endPoint: .trailing))
+                        .frame(width: geo.size.width * 0.4)
+                        .offset(x: slideX)
+                }
+                .clipShape(Capsule())
+            }
+            .frame(height: 6)
+        }
+        .onAppear {
+            withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: true)) {
+                slideX = 320
+            }
+        }
+    }
+}
+
+/// "Nhật ký tiến trình" section: every step with an HH:mm:ss timestamp.
+/// Shared by the IPA / APK / Hex analyzers.
+struct ZheeProgressLogView: View {
+    let log: [(Date, String)]
+
+    private static let formatter: DateFormatter = {
+        let f = DateFormatter()
+        f.dateFormat = "HH:mm:ss"
+        return f
+    }()
+
+    var body: some View {
+        Section("Nhật ký tiến trình") {
+            ForEach(log.indices, id: \.self) { i in
+                HStack(alignment: .top, spacing: 8) {
+                    Text(Self.formatter.string(from: log[i].0))
+                        .font(.caption.monospacedDigit())
+                        .foregroundColor(.secondary)
+                    Text(log[i].1)
+                        .font(.caption)
                 }
             }
         }

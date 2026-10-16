@@ -84,7 +84,7 @@ struct ZheeAPKReport {
         if !secrets.isEmpty {
             lines.append("")
             lines.append("--- Secrets (\(secrets.count)) ---")
-            lines.append(contentsOf: secrets.map { "[\($0.kind)] \($0.masked)" })
+            lines.append(contentsOf: secrets.map { "[\($0.kind)] \($0.value)" })
         }
         if !permissions.isEmpty {
             lines.append("")
@@ -129,10 +129,34 @@ final class ZheeAPKAnalyzer {
         }
     }
 
+    /// Total size of all files under a directory (fallback file size).
+    private static func totalSize(of dir: URL) -> Int64 {
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(at: dir, includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey]) else { return 0 }
+        var total: Int64 = 0
+        for case let url as URL in enumerator {
+            if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true { continue }
+            total += Int64((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
+        }
+        return total
+    }
+
     private func run(apkURL: URL, displayName: String, onProgress: @escaping (String) -> Void) throws -> ZheeAPKReport {
         let fm = FileManager.default
         let workDir = fm.temporaryDirectory.appendingPathComponent("ZheeAnalyzeAPK_\(UUID().uuidString)", isDirectory: true)
         defer { try? fm.removeItem(at: workDir) }
+
+        // File size: read FIRST (same late-read pitfall as the IPA analyzer).
+        let sourceFileSize: Int64? = {
+            if let size = (try? apkURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize {
+                return Int64(size)
+            }
+            if let attrs = try? fm.attributesOfItem(atPath: apkURL.path),
+               let size = attrs[.size] as? Int64 {
+                return size
+            }
+            return nil
+        }()
 
         onProgress("Đang giải nén APK…")
         try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
@@ -213,7 +237,7 @@ final class ZheeAPKAnalyzer {
         }
         var seenSecrets = Set<String>()
         secrets = secrets.filter { item in
-            let k = item.kind + "|" + item.masked
+            let k = item.kind + "|" + item.value
             guard !seenSecrets.contains(k) else { return false }
             seenSecrets.insert(k)
             return true
@@ -244,12 +268,12 @@ final class ZheeAPKAnalyzer {
             warnings.append("Có endpoint localhost — có thể còn sót code debug.")
         }
 
+        // File size (captured up front; fallback = extracted size)
         let fileSize: String
-        if let attrs = try? fm.attributesOfItem(atPath: apkURL.path),
-           let size = attrs[.size] as? Int64 {
+        if let size = sourceFileSize {
             fileSize = ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
         } else {
-            fileSize = "—"
+            fileSize = "~" + ByteCountFormatter.string(fromByteCount: Self.totalSize(of: workDir), countStyle: .file)
         }
 
         return ZheeAPKReport(
