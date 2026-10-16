@@ -243,6 +243,7 @@ struct ZheeAPKAnalyzerView: View {
         }
         .navigationTitle("Phân tích APK")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .onAppear { restoreSessionIfNeeded() }
         .onReceive(ZheeAPKAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
         .sheet(isPresented: $showPicker) {
@@ -259,8 +260,16 @@ struct ZheeAPKAnalyzerView: View {
     /// Restores the last finished analysis from the session (e.g. after
     /// going back and returning). The APK report is self-contained.
     private func restoreSessionIfNeeded() {
+        let session = ZheeAPKAnalyzerSession.shared
+        // Adopt in-flight (or last) progress first: see IPA view.
+        if progressLog.isEmpty {
+            isAnalyzing = session.isAnalyzing
+            progressText = session.progressText
+            progressStep = session.progressStep
+            progressLog = session.progressLog
+        }
         guard report == nil else { return }
-        guard let saved = ZheeAPKAnalyzerSession.shared.report else { return }
+        guard let saved = session.report else { return }
         report = saved
     }
 
@@ -315,6 +324,10 @@ struct ZheeAPKAnalyzerView: View {
         let session = ZheeAPKAnalyzerSession.shared
         session.runID = myRun
         session.report = nil
+        session.isAnalyzing = true
+        session.progressText = "Đang chuẩn bị…"
+        session.progressStep = 0
+        session.progressLog = [(Date(), "Bắt đầu phân tích \(displayName)")]
         session.bump()
         isAnalyzing = true
         errorMessage = nil
@@ -330,6 +343,11 @@ struct ZheeAPKAnalyzerView: View {
                 progressText = step
                 progressStep = Self.stageIndex(for: step)
                 progressLog.append((Date(), step))
+                let session = ZheeAPKAnalyzerSession.shared
+                session.progressText = step
+                session.progressStep = Self.stageIndex(for: step)
+                session.progressLog = progressLog
+                session.bump()
             }
         }) { result in
             try? FileManager.default.removeItem(at: url)
@@ -344,11 +362,21 @@ struct ZheeAPKAnalyzerView: View {
                 // back does not lose it.
                 let session = ZheeAPKAnalyzerSession.shared
                 session.report = result
+                session.isAnalyzing = false
+                session.progressText = progressText
+                session.progressStep = progressStep
+                session.progressLog = progressLog
                 session.bump()
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 progressLog.append((Date(), "Lỗi: \(error.localizedDescription)"))
                 isAnalyzing = false
+                let session = ZheeAPKAnalyzerSession.shared
+                session.isAnalyzing = false
+                session.progressText = progressText
+                session.progressStep = progressStep
+                session.progressLog = progressLog
+                session.bump()
             }
         }
     }

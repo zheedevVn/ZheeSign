@@ -32,6 +32,13 @@ final class ZheeIPAAnalyzerSession: ObservableObject {
     var origBuild = ""
     var exportMessage: String?
     var exportedURL: URL?
+    // In-flight progress: kept here (not in the view) so going back
+    // mid-scan and returning still shows the live progress instead
+    // of a dead empty screen.
+    var isAnalyzing = false
+    var progressText = ""
+    var progressStep = 0
+    var progressLog: [(Date, String)] = []
     func bump() { revision += 1 }
 }
 
@@ -40,6 +47,10 @@ final class ZheeAPKAnalyzerSession: ObservableObject {
     @Published var revision = 0
     var runID = UUID()
     var report: ZheeAPKReport?
+    var isAnalyzing = false
+    var progressText = ""
+    var progressStep = 0
+    var progressLog: [(Date, String)] = []
     func bump() { revision += 1 }
 }
 
@@ -53,5 +64,9 @@ final class ZheeHexAnalyzerSession: ObservableObject {
     var strings: [String] = []
     var links: [ZheeLinkItem] = []
     var secrets: [ZheeSecretItem] = []
+    var isAnalyzing = false
+    var progressText = ""
+    var progressStep = 0
+    var progressLog: [(Date, String)] = []
     func bump() { revision += 1 }
 }

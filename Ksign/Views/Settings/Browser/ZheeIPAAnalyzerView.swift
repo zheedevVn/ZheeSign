@@ -487,6 +487,7 @@ struct ZheeIPAAnalyzerView: View {
         }
         .navigationTitle("Phân tích IPA")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .onAppear { restoreSessionIfNeeded() }
         .onReceive(ZheeIPAAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
         .onChange(of: patches) { _ in
@@ -672,6 +673,10 @@ struct ZheeIPAAnalyzerView: View {
         session.imagePatches = [:]
         session.exportMessage = nil
         session.exportedURL = nil
+        session.isAnalyzing = true
+        session.progressText = "Đang chuẩn bị…"
+        session.progressStep = 0
+        session.progressLog = [(Date(), "Bắt đầu phân tích \(displayName)")]
         session.bump()
         isAnalyzing = true
         errorMessage = nil
@@ -697,6 +702,11 @@ struct ZheeIPAAnalyzerView: View {
                 progressText = step
                 progressStep = Self.stageIndex(for: step)
                 progressLog.append((Date(), step))
+                let session = ZheeIPAAnalyzerSession.shared
+                session.progressText = step
+                session.progressStep = Self.stageIndex(for: step)
+                session.progressLog = progressLog
+                session.bump()
             }
         }) { result in
             try? FileManager.default.removeItem(at: url)
@@ -729,11 +739,21 @@ struct ZheeIPAAnalyzerView: View {
                 session.exportMessage = exportMessage
                 session.exportedURL = exportedURL
                 session.report = result
+                session.isAnalyzing = false
+                session.progressText = progressText
+                session.progressStep = progressStep
+                session.progressLog = progressLog
                 session.bump()
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 progressLog.append((Date(), "Lỗi: \(error.localizedDescription)"))
                 isAnalyzing = false
+                let session = ZheeIPAAnalyzerSession.shared
+                session.isAnalyzing = false
+                session.progressText = progressText
+                session.progressStep = progressStep
+                session.progressLog = progressLog
+                session.bump()
             }
         }
     }
@@ -741,13 +761,26 @@ struct ZheeIPAAnalyzerView: View {
     /// Restores the last finished analysis from the session (e.g. after
     /// going back and returning). Drops it if the extracted folder is gone.
     private func restoreSessionIfNeeded() {
-        guard report == nil else { return }
         let session = ZheeIPAAnalyzerSession.shared
+        // Adopt in-flight (or last) progress first: going back mid-scan
+        // and returning must show the live progress, not a dead empty
+        // screen with an enabled picker that would kill the running scan.
+        if progressLog.isEmpty {
+            isAnalyzing = session.isAnalyzing
+            progressText = session.progressText
+            progressStep = session.progressStep
+            progressLog = session.progressLog
+        }
+        guard report == nil else { return }
         guard let saved = session.report else { return }
         if let dir = saved.workDir, !FileManager.default.fileExists(atPath: dir.path) {
             session.report = nil
             session.patches = [:]
             session.imagePatches = [:]
+            session.isAnalyzing = false
+            session.progressText = ""
+            session.progressStep = 0
+            session.progressLog = []
             return
         }
         report = saved
