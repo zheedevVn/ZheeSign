@@ -39,8 +39,8 @@ struct ZheeChatView: View {
     }
 
     var body: some View {
+        // Khong con chip picker: chuyen kenh o danh sach Doan chat.
         VStack(spacing: 0) {
-            channelPicker
             if channel == .dm {
                 dmBody
             } else if channel == .geo && store.currentGeohash == nil {
@@ -52,12 +52,8 @@ struct ZheeChatView: View {
                 composer
             }
         }
-        // Luon neo len tren + doi kenh khong animation: animation ngam
-        // khi doi nhanh kenh lam noi dung nhay giua man hinh / chip
-        // bien mat giua chung (hieu ung loi tren iOS 26).
+        // Luon neo len tren.
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .animation(nil, value: channel)
-        .onChange(of: channel) { _ in markCurrentRead() }
         .onChange(of: selectedPeer) { _ in markCurrentRead() }
         .onChange(of: location.coordinate.map { "\($0.latitude),\($0.longitude)" }) { _ in
             if let coord = location.coordinate {
@@ -122,49 +118,6 @@ struct ZheeChatView: View {
         } message: {
             Text("Xóa vĩnh viễn định danh (npub/nsec), tên hiển thị và toàn bộ lịch sử chat. Không khôi phục được nếu chưa sao lưu nsec.")
         }
-    }
-
-    /// Channel chips (scrollable, never truncated) instead of a segmented
-    /// picker — 4 channels never fit the segmented width ("Nostr công…").
-    /// SF Symbols (Apple outline) per channel — giong icon Cài đặt của Apple.
-    private func channelIcon(for channel: ZheeChatChannel) -> String {
-        switch channel {
-        case .mesh: return "wifi"
-        case .nostr: return "globe"
-        case .dm: return "lock"
-        case .geo: return "mappin"
-        }
-    }
-
-    private var channelPicker: some View {
-        // 4 chip vua het man hinh, khong can cuon -> khong bi cat mep.
-        // Khong dung ScrollView + khong triple-tap o day nua: 2 thu do
-        // lam nut bam bi delay (ScrollView doi phan biet cuon/bam,
-        // triple-tap doi du 3 cai moi that bai).
-        HStack(spacing: 6) {
-            ForEach(ZheeChatChannel.allCases) { item in
-                let selected = channel == item
-                Button { channel = item } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: channelIcon(for: item)).font(.system(size: 15)).foregroundColor(selected ? .white : .primary)
-                        Text(item.pickerTitle)
-                            .font(.subheadline)
-                            .fontWeight(selected ? .semibold : .regular)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 8)
-                    .background(Capsule().fill(selected ? Color.blue : Color.gray.opacity(0.15)))
-                    .foregroundColor(selected ? .white : .primary)
-                }
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        // .plain: tat animation nhan / mo cua Button mac dinh khi bam chip
-        // (nguon goc chip nhap nhay / bien mat giua chung).
-        .buttonStyle(.plain)
     }
 
     private var dmBody: some View {

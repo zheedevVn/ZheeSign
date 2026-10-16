@@ -18,15 +18,6 @@ enum ZheeChatChannel: String, CaseIterable, Identifiable {
         }
     }
 
-    /// Ten ngan cho chip picker — 4 chip vua het man hinh, khong can cuon.
-    var pickerTitle: String {
-        switch self {
-        case .mesh: return "Mesh"
-        case .nostr: return "Nostr"
-        case .dm: return "DM"
-        case .geo: return "Gần tôi"
-        }
-    }
 }
 
 /// One chat message in a ZheeChat channel.
@@ -82,7 +73,7 @@ struct ZheeActivity: Identifiable {
 
 /// One row of the recent-conversations list (Đoạn chat tab).
 struct ZheeConversation: Identifiable {
-    let id: String // "mesh" / "nostr" / "geo" / "dm:<peerHex>"
+    let id: String // "mesh" / "nostr" / "geo" / "dm"
     let kind: ZheeChatChannel
     let peer: String?
     let title: String
@@ -117,25 +108,12 @@ final class ZheeChatStore: ObservableObject {
     private var knownMeshNames = Set<String>()
 
     /// Recent conversations, most recent first (Đoạn chat tab).
+    /// Luon du 4 kenh: Mesh / Nostr / DM / Gan toi — danh sach nay la
+    /// noi chuyen kenh duy nhat (khong con chip picker trong chat view).
     var conversations: [ZheeConversation] {
         var out: [ZheeConversation] = []
-        for channel in [ZheeChatChannel.mesh, .nostr] {
+        for channel in ZheeChatChannel.allCases {
             if let c = conversation(for: channel) { out.append(c) }
-        }
-        if currentGeohash != nil, let c = conversation(for: .geo) { out.append(c) }
-        for conv in dmConversations {
-            let peer = conv.peer
-            let last = conv.lastMessage
-            out.append(ZheeConversation(
-                id: "dm:\(peer)", kind: .dm, peer: peer,
-                title: displayName(for: peer),
-                avatarURL: profiles[peer]?.picture,
-                avatarName: displayName(for: peer),
-                preview: preview(for: last, in: .dm),
-                date: last.date,
-                unread: unreadCount(for: "dm:\(peer)"),
-                isOnline: false
-            ))
         }
         return out.sorted { $0.date > $1.date }
     }
@@ -160,6 +138,29 @@ final class ZheeChatStore: ObservableObject {
 
     private func conversation(for channel: ZheeChatChannel) -> ZheeConversation? {
         let last = messages(in: channel).last
+        // DM gom chung 1 dong: bam vao mo danh sach DM (nhan tin moi +
+        // tung doan), khong phai 1 thread rieng.
+        if channel == .dm {
+            let unread = dmConversations.reduce(0) { $0 + unreadCount(for: "dm:\($1.peer)") }
+            let previewText: String
+            if let last {
+                let body = last.hasVoice ? "🎤 Tin nhắn thoại" : last.text
+                if last.isMine {
+                    previewText = "Bạn: \(body)"
+                } else {
+                    previewText = "\(displayName(for: last.peerID ?? "")): \(body)"
+                }
+            } else {
+                previewText = "Chưa có DM nào"
+            }
+            return ZheeConversation(
+                id: "dm", kind: .dm, peer: nil,
+                title: "DM riêng", avatarURL: nil, avatarName: "DM riêng",
+                preview: previewText,
+                date: last?.date ?? .distantPast,
+                unread: unread, isOnline: false
+            )
+        }
         let title: String
         let isOnline: Bool
         switch channel {
