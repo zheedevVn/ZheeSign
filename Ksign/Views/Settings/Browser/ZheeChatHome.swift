@@ -213,7 +213,7 @@ private struct ZheeChatListView: View {
         .navigationDestination(isPresented: $showDM) {
             ZheeChatView(channel: .dm, peer: openDM)
         }
-        .onChange(of: showDM) { if !showDM { openDM = nil } }
+        .onChange(of: showDM) { _ in if !showDM { openDM = nil } }
     }
 }
 
