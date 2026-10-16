@@ -1,7 +1,7 @@
 {
   "version": "1.7.35",
   "build": "1.7.35",
-  "notes": "fix: add CFBundleIdentifier to Share Extension Info.plist (1.7.35)",
+  "notes": "fix: compact ZheeChat status line, iMessage-style voice bubble, outline icons only (1.7.35)",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
