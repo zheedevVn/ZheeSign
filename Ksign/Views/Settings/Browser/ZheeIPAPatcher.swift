@@ -133,6 +133,43 @@ enum ZheeIPAPatcher {
         }
     }
 
+    /// Make SpringBoard use replaced loose AppIcon files instead of the
+    /// compiled Assets.car catalog: strip CFBundleIconName (catalog lookup)
+    /// and point CFBundleIconFiles at the replaced loose files.
+    /// Returns true when the plist actually changed. No-op when the plist
+    /// has no CFBundleIcons or no icon was replaced.
+    static func applyIconFallback(workDir: URL, replacedIconBaseNames: [String]) throws -> Bool {
+        guard !replacedIconBaseNames.isEmpty else { return false }
+        let fm = FileManager.default
+        let payload = workDir.appendingPathComponent("Payload")
+        guard let appURL = (try? fm.contentsOfDirectory(at: payload, includingPropertiesForKeys: nil))?.first(where: { $0.pathExtension == "app" }) else {
+            throw ZheeIPAPatcherError.noApp
+        }
+        let infoURL = appURL.appendingPathComponent("Info.plist")
+        guard let data = try? Data(contentsOf: infoURL),
+              var plist = (try? PropertyListSerialization.propertyList(from: data, format: nil)) as? [String: Any] else {
+            throw ZheeIPAPatcherError.repackFailed("Không đọc được Info.plist.")
+        }
+        var changed = false
+        for key in ["CFBundleIcons", "CFBundleIcons~ipad"] {
+            guard var icons = plist[key] as? [String: Any],
+                  var primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+                  let iconName = primary["CFBundleIconName"] as? String, !iconName.isEmpty else { continue }
+            primary.removeValue(forKey: "CFBundleIconName")
+            var files = primary["CFBundleIconFiles"] as? [String] ?? []
+            for name in replacedIconBaseNames where !files.contains(name) { files.append(name) }
+            primary["CFBundleIconFiles"] = files
+            icons["CFBundlePrimaryIcon"] = primary
+            plist[key] = icons
+            changed = true
+        }
+        if changed {
+            let out = try PropertyListSerialization.data(fromPropertyList: plist, format: .binary, options: 0)
+            try out.write(to: infoURL)
+        }
+        return changed
+    }
+
     /// Re-zip the extracted IPA in `workDir` into a new IPA file.
     /// `stripSignature`: drop stale _CodeSignature so the IPA is cleanly
     /// unsigned (sideload .ipa). For .tipa keep it — TrollStore handles it.
