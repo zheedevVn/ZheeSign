@@ -1100,7 +1100,7 @@ struct ZheeAnalyzeProgressView: View {
         if i < step {
             ZStack {
                 Circle().fill(Color.green)
-                ZheeOutlineIcon(.check, size: 11, color: .white)
+                Image(systemName: "checkmark").font(.system(size: 11, weight: .bold)).foregroundColor(.white)
             }
             .frame(width: 24, height: 24)
         } else if i == step {

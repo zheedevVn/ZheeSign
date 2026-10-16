@@ -112,12 +112,13 @@ struct ZheeChatView: View {
 
     /// Channel chips (scrollable, never truncated) instead of a segmented
     /// picker — 4 channels never fit the segmented width ("Nostr công…").
-    private func channelIcon(for channel: ZheeChatChannel) -> ZheeOutlineIconKind {
+    /// SF Symbols (Apple outline) per channel — giong icon Cài đặt của Apple.
+    private func channelIcon(for channel: ZheeChatChannel) -> String {
         switch channel {
-        case .mesh: return .antenna
-        case .nostr: return .globe
-        case .dm: return .lock
-        case .geo: return .pin
+        case .mesh: return "wifi"
+        case .nostr: return "globe"
+        case .dm: return "lock"
+        case .geo: return "mappin"
         }
     }
 
@@ -128,7 +129,7 @@ struct ZheeChatView: View {
                     let selected = channel == item
                     Button { channel = item } label: {
                         HStack(spacing: 6) {
-                            ZheeOutlineIcon(channelIcon(for: item), size: 15, color: selected ? .white : .primary)
+                            Image(systemName: channelIcon(for: item)).font(.system(size: 15)).foregroundColor(selected ? .white : .primary)
                             Text(item.title)
                                 .font(.subheadline)
                                 .fontWeight(selected ? .semibold : .regular)
@@ -184,7 +185,7 @@ struct ZheeChatView: View {
                         selectedPeer = conv.peer
                     } label: {
                         HStack {
-                            ZheeOutlineIcon(.lock, size: 12, color: .green)
+                            Image(systemName: "lock").font(.system(size: 12)).foregroundColor(.green)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("npub1" + String(conv.peer.prefix(8)))
                                     .font(.subheadline.bold())
@@ -216,7 +217,7 @@ struct ZheeChatView: View {
         VStack(spacing: 14) {
             ZStack {
                 Circle().fill(Color.blue.opacity(0.12))
-                ZheeOutlineIcon(.pin, size: 40, color: .blue)
+                Image(systemName: "mappin").font(.system(size: 40)).foregroundColor(.blue)
             }
             .frame(width: 88, height: 88)
             Text("Kênh gần tôi")
@@ -300,7 +301,7 @@ struct ZheeChatView: View {
         VStack(spacing: 10) {
             ZStack {
                 Circle().fill(Color.gray.opacity(0.12))
-                ZheeOutlineIcon(channel == .mesh ? .antenna : .globe, size: 40, color: .secondary)
+                Image(systemName: channel == .mesh ? "wifi" : "globe").font(.system(size: 40)).foregroundColor(.secondary)
             }
             .frame(width: 88, height: 88)
             Text(channel == .mesh
@@ -359,14 +360,14 @@ struct ZheeChatView: View {
                         .onSubmit { send() }
                     if channel == .mesh {
                         Button { recorder.start() } label: {
-                            ZheeOutlineIcon(.mic, size: 18)
+                            Image(systemName: "mic").font(.system(size: 18))
                                 .padding(10)
                                 .background(Circle().fill(Color.gray.opacity(0.25)))
                                 .foregroundColor(.primary)
                         }
                     }
                     Button(action: send) {
-                        ZheeOutlineIcon(.send, size: 18, color: .white)
+                        Image(systemName: "paperplane.fill").font(.system(size: 18)).foregroundColor(.white)
                             .padding(10)
                             .background(Circle().fill(canSend ? Color.blue : Color.gray.opacity(0.4)))
                             .foregroundColor(.white)
@@ -385,13 +386,13 @@ struct ZheeChatView: View {
     private var recordingBar: some View {
         HStack(spacing: 12) {
             Button { recorder.cancel() } label: {
-                ZheeOutlineIcon(.trash, size: 20, color: ZheeVoiceStyle.teal)
+                Image(systemName: "trash").font(.system(size: 20)).foregroundColor(ZheeVoiceStyle.teal)
             }
             HStack(spacing: 8) {
                 Button {
                     if recorder.isPaused { recorder.resume() } else { recorder.pause() }
                 } label: {
-                    ZheeOutlineIcon(recorder.isPaused ? .play : .pause, size: 12, color: ZheeVoiceStyle.teal)
+                    Image(systemName: recorder.isPaused ? "play.fill" : "pause.fill").font(.system(size: 12)).foregroundColor(ZheeVoiceStyle.teal)
                         .frame(width: 30, height: 30)
                         .background(Circle().fill(Color.white))
                 }
@@ -410,7 +411,7 @@ struct ZheeChatView: View {
             .padding(.vertical, 8)
             .background(Capsule().fill(ZheeVoiceStyle.teal))
             Button { recorder.finish() } label: {
-                ZheeOutlineIcon(.send, size: 20, color: ZheeVoiceStyle.teal)
+                Image(systemName: "paperplane.fill").font(.system(size: 20)).foregroundColor(ZheeVoiceStyle.teal)
             }
         }
     }
@@ -456,9 +457,9 @@ private struct ZheeDMThreadView: View {
         VStack(spacing: 0) {
             HStack {
                 Button(action: onBack) {
-                    ZheeOutlineIcon(.chevronLeft, size: 16)
+                    Image(systemName: "chevron.left").font(.system(size: 16))
                 }
-                ZheeOutlineIcon(.lock, size: 12, color: .green)
+                Image(systemName: "lock").font(.system(size: 12)).foregroundColor(.green)
                 Text("npub1" + String(peer.prefix(8)))
                     .font(.subheadline.bold())
                     .lineLimit(1)
@@ -494,7 +495,7 @@ private struct ZheeDMThreadView: View {
                     .submitLabel(.send)
                     .onSubmit { send() }
                 Button(action: send) {
-                    ZheeOutlineIcon(.send, size: 18, color: .white)
+                    Image(systemName: "paperplane.fill").font(.system(size: 18)).foregroundColor(.white)
                         .padding(10)
                         .background(Circle().fill(canSend ? Color.blue : Color.gray.opacity(0.4)))
                         .foregroundColor(.white)
@@ -646,7 +647,7 @@ private struct ZheeVoiceBubble: View {
             Button {
                 if let audio { player.play(audio) }
             } label: {
-                ZheeOutlineIcon(player.isPlaying ? .pause : .play, size: 12, color: .white)
+                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill").font(.system(size: 12)).foregroundColor(.white)
                     .frame(width: 30, height: 30)
                     .background(Circle().fill(ZheeVoiceStyle.darkTeal))
             }
@@ -799,7 +800,7 @@ struct ZheeChatIdentityView: View {
                 }
                 Section("Mã hóa đầu cuối (mã PIN)") {
                     HStack {
-                        ZheeOutlineIcon(.lock, size: 14, color: ZheeChatStore.shared.pinEnabled ? .green : .secondary)
+                        Image(systemName: "lock").font(.system(size: 14)).foregroundColor(ZheeChatStore.shared.pinEnabled ? .green : .secondary)
                         Text(ZheeChatStore.shared.pinEnabled
                              ? "Đang bật — tin nhắn lưu mã hóa, cần mã PIN để khôi phục trên máy mới"
                              : "Chưa bật — tin nhắn lưu dạng thường")
@@ -1080,7 +1081,7 @@ private struct ZheePINLockView: View {
             VStack(spacing: 16) {
                 ZStack {
                     Circle().fill(Color.gray.opacity(0.12))
-                    ZheeOutlineIcon(.lock, size: 40, color: .secondary)
+                    Image(systemName: "lock").font(.system(size: 40)).foregroundColor(.secondary)
                 }
                 .frame(width: 88, height: 88)
                 Text("Tin nhắn được mã hóa đầu cuối")
