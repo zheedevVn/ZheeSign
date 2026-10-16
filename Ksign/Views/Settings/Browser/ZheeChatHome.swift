@@ -497,7 +497,7 @@ private struct ZheeChatMenuView: View {
                 Text("Xóa vĩnh viễn định danh (npub/nsec) và toàn bộ lịch sử chat.")
             }
             Section {
-                Text("ZheeChat trong ZheeSign 1.7.36")
+                Text("ZheeChat trong ZheeSign 1.7.37")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
