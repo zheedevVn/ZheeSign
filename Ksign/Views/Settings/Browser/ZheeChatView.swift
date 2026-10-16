@@ -18,8 +18,24 @@ struct ZheeChatView: View {
     @State private var showWipeConfirm = false
     @StateObject private var recorder = ZheeVoiceRecorder()
 
+    /// Opens straight into a channel (from the recent-chats list), or
+    /// straight into a DM thread when `peer` is set.
+    init(channel: ZheeChatChannel = .mesh, peer: String? = nil) {
+        _channel = State(initialValue: channel)
+        _selectedPeer = State(initialValue: peer)
+    }
+
     private var messages: [ZheeChatMessage] {
         store.messages(in: channel)
+    }
+
+    /// Marks the conversation currently on screen as read.
+    private func markCurrentRead() {
+        if channel == .dm {
+            if let peer = selectedPeer { store.markRead("dm:\(peer)") }
+        } else {
+            store.markRead(channel.rawValue)
+        }
     }
 
     var body: some View {
@@ -36,6 +52,8 @@ struct ZheeChatView: View {
                 composer
             }
         }
+        .onChange(of: channel) { _ in markCurrentRead() }
+        .onChange(of: selectedPeer) { _ in markCurrentRead() }
         .onChange(of: location.coordinate.map { "\($0.latitude),\($0.longitude)" }) { _ in
             if let coord = location.coordinate {
                 store.setGeohash(ZheeGeohash.encode(latitude: coord.latitude, longitude: coord.longitude, precision: 5))
@@ -48,6 +66,7 @@ struct ZheeChatView: View {
             }
         }
         .onAppear {
+            markCurrentRead()
             if let text = store.pendingShareText {
                 draft = text
                 store.pendingShareText = nil
@@ -65,7 +84,7 @@ struct ZheeChatView: View {
                 Button {
                     showIdentity = true
                 } label: {
-                    Image(systemName: "person.crop.circle")
+                    ZheeChatRowAvatar(urlString: store.profiles[identity.publicKeyHex]?.picture, name: identity.displayName, size: 30)
                 }
             }
         }
@@ -91,14 +110,38 @@ struct ZheeChatView: View {
         }
     }
 
-    private var channelPicker: some View {
-        Picker("Kênh", selection: $channel) {
-            ForEach(ZheeChatChannel.allCases) { item in
-                Text(item.title).tag(item)
-            }
+    /// Channel chips (scrollable, never truncated) instead of a segmented
+    /// picker — 4 channels never fit the segmented width ("Nostr công…").
+    private func channelIcon(for channel: ZheeChatChannel) -> ZheeOutlineIconKind {
+        switch channel {
+        case .mesh: return .antenna
+        case .nostr: return .globe
+        case .dm: return .lock
+        case .geo: return .pin
         }
-        .pickerStyle(.segmented)
-        .padding(.horizontal)
+    }
+
+    private var channelPicker: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(ZheeChatChannel.allCases) { item in
+                    let selected = channel == item
+                    Button { channel = item } label: {
+                        HStack(spacing: 6) {
+                            ZheeOutlineIcon(channelIcon(for: item), size: 15, color: selected ? .white : .primary)
+                            Text(item.title)
+                                .font(.subheadline)
+                                .fontWeight(selected ? .semibold : .regular)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(selected ? Color.blue : Color.gray.opacity(0.15)))
+                        .foregroundColor(selected ? .white : .primary)
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
         .padding(.vertical, 8)
         .onTapGesture(count: 3) {
             // Panic gesture: triple-tap the channel picker.
@@ -141,9 +184,7 @@ struct ZheeChatView: View {
                         selectedPeer = conv.peer
                     } label: {
                         HStack {
-                            Image(systemName: "lock")
-                                .font(.caption)
-                                .foregroundColor(.green)
+                            ZheeOutlineIcon(.lock, size: 12, color: .green)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("npub1" + String(conv.peer.prefix(8)))
                                     .font(.subheadline.bold())
@@ -173,9 +214,13 @@ struct ZheeChatView: View {
 
     private var geoEmptyState: some View {
         VStack(spacing: 14) {
-            Image(systemName: "location")
-                .font(.largeTitle)
-                .foregroundColor(.secondary)
+            ZStack {
+                Circle().fill(Color.blue.opacity(0.12))
+                ZheeOutlineIcon(.pin, size: 40, color: .blue)
+            }
+            .frame(width: 88, height: 88)
+            Text("Kênh gần tôi")
+                .font(.headline)
             Text("Kênh gần tôi cần vị trí của bạn.\nChỉ dùng ô geohash ~5km, không gửi tọa độ chính xác.")
                 .font(.subheadline)
                 .foregroundColor(.secondary)
@@ -253,9 +298,11 @@ struct ZheeChatView: View {
 
     private var emptyState: some View {
         VStack(spacing: 10) {
-            Image(systemName: channel == .mesh ? "antenna.radiowaves.left.and.right" : "globe")
-                .font(.largeTitle)
-                .foregroundColor(.secondary)
+            ZStack {
+                Circle().fill(Color.gray.opacity(0.12))
+                ZheeOutlineIcon(channel == .mesh ? .antenna : .globe, size: 40, color: .secondary)
+            }
+            .frame(width: 88, height: 88)
             Text(channel == .mesh
                  ? "Chưa có tin nhắn nào.\nMở ZheeChat trên 2 máy gần nhau để chat offline."
                  : "Chưa có tin nhắn nào.\nKênh công khai — ai dùng ZheeChat cũng thấy.")
@@ -312,16 +359,14 @@ struct ZheeChatView: View {
                         .onSubmit { send() }
                     if channel == .mesh {
                         Button { recorder.start() } label: {
-                            Image(systemName: "mic")
-                                .font(.body)
+                            ZheeOutlineIcon(.mic, size: 18)
                                 .padding(10)
                                 .background(Circle().fill(Color.gray.opacity(0.25)))
                                 .foregroundColor(.primary)
                         }
                     }
                     Button(action: send) {
-                        Image(systemName: "paperplane")
-                            .font(.body)
+                        ZheeOutlineIcon(.send, size: 18, color: .white)
                             .padding(10)
                             .background(Circle().fill(canSend ? Color.blue : Color.gray.opacity(0.4)))
                             .foregroundColor(.white)
@@ -340,17 +385,13 @@ struct ZheeChatView: View {
     private var recordingBar: some View {
         HStack(spacing: 12) {
             Button { recorder.cancel() } label: {
-                Image(systemName: "trash.fill")
-                    .font(.title3)
-                    .foregroundColor(ZheeVoiceStyle.teal)
+                ZheeOutlineIcon(.trash, size: 20, color: ZheeVoiceStyle.teal)
             }
             HStack(spacing: 8) {
                 Button {
                     if recorder.isPaused { recorder.resume() } else { recorder.pause() }
                 } label: {
-                    Image(systemName: recorder.isPaused ? "play.fill" : "pause.fill")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(ZheeVoiceStyle.teal)
+                    ZheeOutlineIcon(recorder.isPaused ? .play : .pause, size: 12, color: ZheeVoiceStyle.teal)
                         .frame(width: 30, height: 30)
                         .background(Circle().fill(Color.white))
                 }
@@ -369,9 +410,7 @@ struct ZheeChatView: View {
             .padding(.vertical, 8)
             .background(Capsule().fill(ZheeVoiceStyle.teal))
             Button { recorder.finish() } label: {
-                Image(systemName: "paperplane.fill")
-                    .font(.title3)
-                    .foregroundColor(ZheeVoiceStyle.teal)
+                ZheeOutlineIcon(.send, size: 20, color: ZheeVoiceStyle.teal)
             }
         }
     }
@@ -417,11 +456,9 @@ private struct ZheeDMThreadView: View {
         VStack(spacing: 0) {
             HStack {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left")
+                    ZheeOutlineIcon(.chevronLeft, size: 16)
                 }
-                Image(systemName: "lock")
-                    .font(.caption)
-                    .foregroundColor(.green)
+                ZheeOutlineIcon(.lock, size: 12, color: .green)
                 Text("npub1" + String(peer.prefix(8)))
                     .font(.subheadline.bold())
                     .lineLimit(1)
@@ -457,8 +494,7 @@ private struct ZheeDMThreadView: View {
                     .submitLabel(.send)
                     .onSubmit { send() }
                 Button(action: send) {
-                    Image(systemName: "paperplane")
-                        .font(.body)
+                    ZheeOutlineIcon(.send, size: 18, color: .white)
                         .padding(10)
                         .background(Circle().fill(canSend ? Color.blue : Color.gray.opacity(0.4)))
                         .foregroundColor(.white)
@@ -509,7 +545,7 @@ private struct ZheeDMThreadView: View {
 }
 
 /// New DM: enter the recipient's npub (or 64-char hex pubkey).
-private struct ZheeNewDMView: View {
+struct ZheeNewDMView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var input = ""
     @State private var error = ""
@@ -610,9 +646,7 @@ private struct ZheeVoiceBubble: View {
             Button {
                 if let audio { player.play(audio) }
             } label: {
-                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(.white)
+                ZheeOutlineIcon(player.isPlaying ? .pause : .play, size: 12, color: .white)
                     .frame(width: 30, height: 30)
                     .background(Circle().fill(ZheeVoiceStyle.darkTeal))
             }
@@ -681,7 +715,7 @@ private final class ZheeLocationProvider: NSObject, ObservableObject, CLLocation
 }
 
 /// Identity sheet: display name, npub/nsec backup, relay list, import/rotate.
-private struct ZheeChatIdentityView: View {
+struct ZheeChatIdentityView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var identity = ZheeNostrIdentity.shared
     @State private var relaysText = ""
@@ -765,8 +799,7 @@ private struct ZheeChatIdentityView: View {
                 }
                 Section("Mã hóa đầu cuối (mã PIN)") {
                     HStack {
-                        Image(systemName: "lock")
-                            .foregroundColor(ZheeChatStore.shared.pinEnabled ? .green : .secondary)
+                        ZheeOutlineIcon(.lock, size: 14, color: ZheeChatStore.shared.pinEnabled ? .green : .secondary)
                         Text(ZheeChatStore.shared.pinEnabled
                              ? "Đang bật — tin nhắn lưu mã hóa, cần mã PIN để khôi phục trên máy mới"
                              : "Chưa bật — tin nhắn lưu dạng thường")
@@ -1045,9 +1078,11 @@ private struct ZheePINLockView: View {
         ZStack {
             Color(.systemBackground).ignoresSafeArea()
             VStack(spacing: 16) {
-                Image(systemName: "lock")
-                    .font(.largeTitle)
-                    .foregroundColor(.secondary)
+                ZStack {
+                    Circle().fill(Color.gray.opacity(0.12))
+                    ZheeOutlineIcon(.lock, size: 40, color: .secondary)
+                }
+                .frame(width: 88, height: 88)
                 Text("Tin nhắn được mã hóa đầu cuối")
                     .font(.headline)
                 Text("Nhập mã PIN để mở khóa và khôi phục tin nhắn.")

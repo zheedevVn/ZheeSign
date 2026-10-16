@@ -194,8 +194,8 @@ extension SettingsView {
 			}
 			// ZheeChat — chat phi tập trung: Mesh gần dùng được offline,
 			// Nostr cần mạng
-			NavigationLink(destination: ZheeChatView()) {
-				Label("ZheeChat", systemImage: "message.fill")
+			NavigationLink(destination: ZheeChatRootView()) {
+				Label { Text("ZheeChat") } icon: { ZheeOutlineIcon(.chat, size: 18) }
 			}
 		}
 	}

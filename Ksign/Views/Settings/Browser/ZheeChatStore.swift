@@ -62,6 +62,28 @@ struct ZheeChatMessage: Identifiable, Codable {
     }
 }
 
+/// One activity feed entry (Thông báo tab): peer joined, DM arrived, relay connected.
+struct ZheeActivity: Identifiable {
+    let id = UUID()
+    let icon: ZheeOutlineIconKind
+    let text: String
+    let date: Date
+}
+
+/// One row of the recent-conversations list (Đoạn chat tab).
+struct ZheeConversation: Identifiable {
+    let id: String // "mesh" / "nostr" / "geo" / "dm:<peerHex>"
+    let kind: ZheeChatChannel
+    let peer: String?
+    let title: String
+    let avatarURL: String?
+    let avatarName: String
+    let preview: String
+    let date: Date
+    let unread: Int
+    let isOnline: Bool
+}
+
 /// Owns the two ZheeChat channels (local mesh + global Nostr), merges
 /// inbound traffic, dedupes by id, and persists recent messages to disk.
 final class ZheeChatStore: ObservableObject {
@@ -76,6 +98,88 @@ final class ZheeChatStore: ObservableObject {
     /// Text handed over by the Share Extension (via zheesign://zheechat-share),
     /// consumed by ZheeChatView into the composer draft.
     @Published var pendingShareText: String?
+
+    // MARK: - Recent conversations (Messenger-style list) + activity
+
+    @Published private(set) var activities: [ZheeActivity] = []
+    @Published private(set) var lastRead: [String: Double] = [:]
+    private var cancellables = Set<AnyCancellable>()
+    private var knownMeshNames = Set<String>()
+
+    /// Recent conversations, most recent first (Đoạn chat tab).
+    var conversations: [ZheeConversation] {
+        var out: [ZheeConversation] = []
+        for channel in [ZheeChatChannel.mesh, .nostr] {
+            if let c = conversation(for: channel) { out.append(c) }
+        }
+        if currentGeohash != nil, let c = conversation(for: .geo) { out.append(c) }
+        for conv in dmConversations {
+            let peer = conv.peer
+            let last = conv.lastMessage
+            out.append(ZheeConversation(
+                id: "dm:\(peer)", kind: .dm, peer: peer,
+                title: displayName(for: peer),
+                avatarURL: profiles[peer]?.picture,
+                avatarName: displayName(for: peer),
+                preview: preview(for: last, in: .dm),
+                date: last.date,
+                unread: unreadCount(for: "dm:\(peer)"),
+                isOnline: false
+            ))
+        }
+        return out.sorted { $0.date > $1.date }
+    }
+
+    var totalUnread: Int { conversations.reduce(0) { $0 + $1.unread } }
+
+    /// Marks a conversation read (clears its unread dot).
+    func markRead(_ id: String) {
+        lastRead[id] = Date().timeIntervalSince1970
+        UserDefaults.standard.set(lastRead, forKey: "zheechat.lastRead")
+    }
+
+    func unreadCount(for id: String) -> Int {
+        let since = lastRead[id] ?? 0
+        return messages.filter { conversationID(for: $0) == id && !$0.isMine && $0.timestamp > since }.count
+    }
+
+    private func conversationID(for m: ZheeChatMessage) -> String {
+        if m.channel == ZheeChatChannel.dm.rawValue { return "dm:\(m.peerID ?? "")" }
+        return m.channel
+    }
+
+    private func conversation(for channel: ZheeChatChannel) -> ZheeConversation? {
+        let last = messages(in: channel).last
+        let title: String
+        let isOnline: Bool
+        switch channel {
+        case .mesh: title = "Mesh gần"; isOnline = meshPeerCount > 0
+        case .nostr: title = "Nostr công khai"; isOnline = nostrConnected
+        case .geo: title = "Gần tôi" + (currentGeohash.map { " · \($0)" } ?? ""); isOnline = currentGeohash != nil
+        case .dm: return nil
+        }
+        return ZheeConversation(
+            id: channel.rawValue, kind: channel, peer: nil,
+            title: title, avatarURL: nil, avatarName: title,
+            preview: preview(for: last, in: channel),
+            date: last?.date ?? .distantPast,
+            unread: unreadCount(for: channel.rawValue),
+            isOnline: isOnline
+        )
+    }
+
+    private func preview(for m: ZheeChatMessage?, in channel: ZheeChatChannel) -> String {
+        guard let m else { return "Chưa có tin nhắn" }
+        let body = m.hasVoice ? "🎤 Tin nhắn thoại" : m.text
+        if m.isMine { return "Bạn: \(body)" }
+        if channel == .dm { return body }
+        return "\(m.senderName): \(body)"
+    }
+
+    private func addActivity(icon: ZheeOutlineIconKind, text: String) {
+        activities.insert(ZheeActivity(icon: icon, text: text, date: Date()), at: 0)
+        if activities.count > 50 { activities.removeLast(activities.count - 50) }
+    }
 
     // MARK: - E2EE PIN lock (Messenger-style secure storage)
 
@@ -159,6 +263,7 @@ final class ZheeChatStore: ObservableObject {
         nostr.onDM = { [weak self] event, plaintext in
             guard let self else { return }
             nostr.requestProfile(pubkey: event.pubkey)
+            addActivity(icon: .chat, text: "Tin nhắn riêng mới từ \(displayName(for: event.pubkey))")
             append(
                 id: event.id, channel: .dm, senderID: event.pubkey,
                 senderName: displayName(for: event.pubkey),
@@ -181,6 +286,26 @@ final class ZheeChatStore: ObservableObject {
         nostr.$profiles
             .receive(on: DispatchQueue.main)
             .assign(to: &$profiles)
+        lastRead = UserDefaults.standard.dictionary(forKey: "zheechat.lastRead") as? [String: Double] ?? [:]
+        mesh.$connectedPeerNames
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] names in
+                guard let self else { return }
+                let joined = names.filter { !knownMeshNames.contains($0) }
+                knownMeshNames = Set(names)
+                for name in joined {
+                    addActivity(icon: .antenna, text: "\(name) đã vào gần bạn")
+                }
+            }
+            .store(in: &cancellables)
+        nostr.$connectedRelayURLs
+            .map { !$0.isEmpty }
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] connected in
+                if connected { self?.addActivity(icon: .globe, text: "Đã kết nối relay Nostr") }
+            }
+            .store(in: &cancellables)
     }
 
     func start() {
