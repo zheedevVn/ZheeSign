@@ -1,3 +1,4 @@
+import AVFoundation
 import CoreLocation
 import SwiftUI
 import UIKit
@@ -54,6 +55,11 @@ struct ZheeChatView: View {
         }
         .navigationTitle("ZheeChat")
         .navigationBarTitleDisplayMode(.inline)
+        .overlay {
+            if store.isLocked {
+                ZheePINLockView()
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
@@ -295,45 +301,86 @@ struct ZheeChatView: View {
     }
 
     private var composer: some View {
-        VStack(spacing: 4) {
-            if recorder.isRecording {
-                HStack(spacing: 6) {
-                    Circle().fill(Color.red).frame(width: 8, height: 8)
-                    Text("Đang ghi \(String(format: "%.0f", recorder.elapsed))s — thả để gửi")
-                        .font(.caption)
-                        .foregroundColor(.red)
-                    Spacer()
+        Group {
+            if recorder.isRecording || recorder.isPaused {
+                recordingBar
+            } else {
+                HStack(spacing: 8) {
+                    TextField("Nhắn tin…", text: $draft)
+                        .textFieldStyle(.roundedBorder)
+                        .submitLabel(.send)
+                        .onSubmit { send() }
+                    if channel == .mesh {
+                        Button { recorder.start() } label: {
+                            Image(systemName: "mic")
+                                .font(.body)
+                                .padding(10)
+                                .background(Circle().fill(Color.gray.opacity(0.25)))
+                                .foregroundColor(.primary)
+                        }
+                    }
+                    Button(action: send) {
+                        Image(systemName: "paperplane")
+                            .font(.body)
+                            .padding(10)
+                            .background(Circle().fill(canSend ? Color.blue : Color.gray.opacity(0.4)))
+                            .foregroundColor(.white)
+                    }
+                    .disabled(!canSend)
                 }
-                .padding(.horizontal)
-            }
-            HStack(spacing: 8) {
-                TextField("Nhắn tin…", text: $draft)
-                    .textFieldStyle(.roundedBorder)
-                    .submitLabel(.send)
-                    .onSubmit { send() }
-                if channel == .mesh {
-                    Image(systemName: "mic")
-                        .font(.body)
-                        .padding(10)
-                        .background(Circle().fill(recorder.isRecording ? Color.red : Color.gray.opacity(0.25)))
-                        .foregroundColor(recorder.isRecording ? .white : .primary)
-                        .onLongPressGesture(minimumDuration: 0.2, pressing: { pressing in
-                            if pressing { recorder.start() } else { recorder.stop() }
-                        }, perform: {})
-                }
-                Button(action: send) {
-                    Image(systemName: "paperplane")
-                        .font(.body)
-                        .padding(10)
-                        .background(Circle().fill(canSend ? Color.blue : Color.gray.opacity(0.4)))
-                        .foregroundColor(.white)
-                }
-                .disabled(!canSend)
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
         .background(Color(.systemBackground))
+    }
+
+    /// Messenger-style recording bar: trash (cancel) | pill with
+    /// pause/resume + live waveform + timer | send arrow.
+    private var recordingBar: some View {
+        HStack(spacing: 12) {
+            Button { recorder.cancel() } label: {
+                Image(systemName: "trash.fill")
+                    .font(.title3)
+                    .foregroundColor(ZheeVoiceStyle.teal)
+            }
+            HStack(spacing: 8) {
+                Button {
+                    if recorder.isPaused { recorder.resume() } else { recorder.pause() }
+                } label: {
+                    Image(systemName: recorder.isPaused ? "play.fill" : "pause.fill")
+                        .font(.system(size: 12, weight: .bold))
+                        .foregroundColor(ZheeVoiceStyle.teal)
+                        .frame(width: 30, height: 30)
+                        .background(Circle().fill(Color.white))
+                }
+                HStack(spacing: 2.5) {
+                    ForEach(0..<24, id: \.self) { i in
+                        RoundedRectangle(cornerRadius: 1.25)
+                            .fill(Color.white.opacity(0.95))
+                            .frame(width: 2.5, height: recordingBarHeight(i))
+                    }
+                }
+                Text(ZheeVoiceStyle.mmss(recorder.elapsed))
+                    .font(.subheadline.bold())
+                    .foregroundColor(.white)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 8)
+            .background(Capsule().fill(ZheeVoiceStyle.teal))
+            Button { recorder.finish() } label: {
+                Image(systemName: "paperplane.fill")
+                    .font(.title3)
+                    .foregroundColor(ZheeVoiceStyle.teal)
+            }
+        }
+    }
+
+    private func recordingBarHeight(_ i: Int) -> CGFloat {
+        let tail = Array(recorder.levels.suffix(24))
+        let pad = max(0, 24 - tail.count)
+        if i < pad { return 5 }
+        return 4 + tail[i - pad] * 18
     }
 
     private var canSend: Bool {
@@ -543,14 +590,15 @@ private struct ZheeAvatarView: View {
     }
 }
 
-/// Single-bubble voice (PTT) message: play button + waveform, iMessage-style.
+/// Messenger-style voice bubble: dark play circle + waveform + duration.
 private struct ZheeVoiceBubble: View {
     @StateObject private var player = ZheeVoicePlayer()
+    @State private var duration: TimeInterval?
     let audio: Data?
     let isMine: Bool
     let seed: String
 
-    private var barColor: Color { isMine ? Color.white.opacity(0.9) : Color.blue.opacity(0.75) }
+    private var barColor: Color { isMine ? Color.white.opacity(0.95) : ZheeVoiceStyle.teal }
 
     private func barHeight(_ i: Int) -> CGFloat {
         let base = seed.utf8.reduce(0) { $0 &+ Int($1) }
@@ -562,11 +610,11 @@ private struct ZheeVoiceBubble: View {
             Button {
                 if let audio { player.play(audio) }
             } label: {
-                Image(systemName: player.isPlaying ? "pause" : "play")
+                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
                     .font(.system(size: 12, weight: .bold))
-                    .foregroundColor(isMine ? .white : .blue)
+                    .foregroundColor(.white)
                     .frame(width: 30, height: 30)
-                    .overlay(Circle().stroke(isMine ? Color.white : Color.blue, lineWidth: 1.5))
+                    .background(Circle().fill(ZheeVoiceStyle.darkTeal))
             }
             .disabled(audio == nil)
             HStack(spacing: 2.5) {
@@ -576,13 +624,34 @@ private struct ZheeVoiceBubble: View {
                         .frame(width: 2.5, height: barHeight(i))
                 }
             }
+            if let duration {
+                Text(ZheeVoiceStyle.mmss(duration))
+                    .font(.caption)
+                    .foregroundColor(isMine ? .white : .secondary)
+            }
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 18)
-                .fill(isMine ? Color.blue : Color(.secondarySystemBackground))
+                .fill(isMine ? ZheeVoiceStyle.teal : Color(.secondarySystemBackground))
         )
+        .onAppear {
+            if duration == nil, let audio {
+                duration = (try? AVAudioPlayer(data: audio))?.duration
+            }
+        }
+    }
+}
+
+/// Shared Messenger-style voice colors + duration format.
+private enum ZheeVoiceStyle {
+    static let teal = Color(red: 0.31, green: 0.64, blue: 0.56)
+    static let darkTeal = Color(red: 0.13, green: 0.32, blue: 0.29)
+
+    static func mmss(_ t: TimeInterval) -> String {
+        let s = max(0, Int(t.rounded()))
+        return String(format: "%d:%02d", s / 60, s % 60)
     }
 }
 
@@ -622,6 +691,12 @@ private struct ZheeChatIdentityView: View {
     @State private var showClearConfirm = false
     @State private var showWipeConfirm = false
     @State private var initialDisplayName = ""
+    @State private var pinMode: ZheePINMode?
+    @State private var showImporter = false
+    @State private var importData: Data?
+    @State private var showResetConfirm = false
+    @State private var showExporter = false
+    @State private var backupURL: URL?
 
     var body: some View {
         NavigationView {
@@ -688,6 +763,36 @@ private struct ZheeChatIdentityView: View {
                         notice = "Đã lưu relay"
                     }
                 }
+                Section("Mã hóa đầu cuối (mã PIN)") {
+                    HStack {
+                        Image(systemName: "lock")
+                            .foregroundColor(ZheeChatStore.shared.pinEnabled ? .green : .secondary)
+                        Text(ZheeChatStore.shared.pinEnabled
+                             ? "Đang bật — tin nhắn lưu mã hóa, cần mã PIN để khôi phục trên máy mới"
+                             : "Chưa bật — tin nhắn lưu dạng thường")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    if ZheeChatStore.shared.pinEnabled {
+                        Button("Đổi mã PIN") { pinMode = .change }
+                        Button("Tắt mã PIN") { pinMode = .remove }
+                        Button("Sao lưu tin nhắn mã hóa") {
+                            if let blob = ZheeChatStore.shared.exportBackup() {
+                                let url = FileManager.default.temporaryDirectory
+                                    .appendingPathComponent("ZheeChat-Backup.zheechat")
+                                try? blob.write(to: url)
+                                backupURL = url
+                                showExporter = true
+                            } else {
+                                notice = "Chưa sao lưu được — thử lại"
+                            }
+                        }
+                        Button("Khôi phục tin nhắn (máy mới)") { showImporter = true }
+                    } else {
+                        Button("Đặt mã PIN") { pinMode = .setup }
+                        Button("Khôi phục tin nhắn (máy mới)") { showImporter = true }
+                    }
+                }
                 Section {
                     Button("Đổi định danh mới", role: .destructive) {
                         showRotateConfirm = true
@@ -752,6 +857,253 @@ private struct ZheeChatIdentityView: View {
             } message: {
                 Text("Xóa vĩnh viễn định danh (npub/nsec), tên hiển thị và toàn bộ lịch sử chat. Không khôi phục được nếu chưa sao lưu nsec.")
             }
+            .sheet(item: $pinMode) { mode in
+                ZheePINFormView(mode: mode, importData: importData) { result in
+                    notice = result
+                    pinMode = nil
+                }
+            }
+            .fileImporter(isPresented: $showImporter, allowedContentTypes: [.data]) { result in
+                if case .success(let url) = result,
+                   url.startAccessingSecurityScopedResource() {
+                    defer { url.stopAccessingSecurityScopedResource() }
+                    importData = try? Data(contentsOf: url)
+                    if importData != nil {
+                        pinMode = .importBackup
+                    } else {
+                        notice = "Không đọc được file sao lưu"
+                    }
+                }
+            }
+            .sheet(isPresented: $showExporter) {
+                if let url = backupURL {
+                    ShareLink(item: url) {
+                        Label("Chia sẻ file sao lưu", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// PIN form modes for the E2EE vault.
+enum ZheePINMode: Identifiable {
+    case setup, change, remove, importBackup
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .setup: return "Đặt mã PIN"
+        case .change: return "Đổi mã PIN"
+        case .remove: return "Tắt mã PIN"
+        case .importBackup: return "Khôi phục tin nhắn"
+        }
+    }
+}
+
+/// One form for every PIN operation: setup (new + confirm), change
+/// (old + new + confirm), remove (current), import backup (backup PIN).
+/// PBKDF2 runs synchronously (~0.2s) with a spinner while it derives.
+private struct ZheePINFormView: View {
+    @Environment(\.dismiss) private var dismiss
+    let mode: ZheePINMode
+    let importData: Data?
+    let onDone: (String) -> Void
+
+    @State private var current = ""
+    @State private var newPIN = ""
+    @State private var confirm = ""
+    @State private var error = ""
+    @State private var busy = false
+
+    private var canSubmit: Bool {
+        switch mode {
+        case .setup:
+            return ZheePINVault.isValidPIN(newPIN) && newPIN == confirm
+        case .change:
+            return ZheePINVault.isValidPIN(current) && ZheePINVault.isValidPIN(newPIN) && newPIN == confirm
+        case .remove, .importBackup:
+            return ZheePINVault.isValidPIN(current)
+        }
+    }
+
+    var body: some View {
+        NavigationView {
+            Form {
+                Section {
+                    Text(pinHint)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                if mode == .change || mode == .remove {
+                    Section("Mã PIN hiện tại") {
+                        SecureField("Mã PIN hiện tại", text: $current)
+                            .keyboardType(.numberPad)
+                    }
+                }
+                if mode == .setup || mode == .change {
+                    Section("Mã PIN mới") {
+                        SecureField("Mã PIN mới (6 số)", text: $newPIN)
+                            .keyboardType(.numberPad)
+                        SecureField("Nhập lại mã PIN mới", text: $confirm)
+                            .keyboardType(.numberPad)
+                    }
+                }
+                if mode == .importBackup {
+                    Section("Mã PIN của bản sao lưu") {
+                        SecureField("Mã PIN (6 số)", text: $current)
+                            .keyboardType(.numberPad)
+                    }
+                }
+                if !error.isEmpty {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+                Section {
+                    Button {
+                        submit()
+                    } label: {
+                        if busy {
+                            HStack { ProgressView(); Text("Đang xử lý…") }
+                        } else {
+                            Text(mode.title)
+                        }
+                    }
+                    .disabled(!canSubmit || busy)
+                }
+            }
+            .navigationTitle(mode.title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Hủy") { dismiss() }
+                }
+            }
+        }
+    }
+
+    private var pinHint: String {
+        switch mode {
+        case .setup:
+            return "Mã PIN 6 số mã hóa toàn bộ lịch sử chat. Quên mã PIN thì không khôi phục được — hãy nhớ kỹ hoặc ghi ra giấy."
+        case .change:
+            return "Đổi mã PIN sẽ mã hóa lại toàn bộ lịch sử bằng mã mới."
+        case .remove:
+            return "Tắt mã PIN sẽ lưu lịch sử về dạng thường (không mã hóa)."
+        case .importBackup:
+            return "Nhập mã PIN của bản sao lưu để giải mã và khôi phục tin nhắn + định danh trên máy này."
+        }
+    }
+
+    private func submit() {
+        busy = true
+        defer { busy = false }
+        let store = ZheeChatStore.shared
+        switch mode {
+        case .setup:
+            if store.setupPIN(newPIN) {
+                onDone("Đã bật mã hóa đầu cuối bằng mã PIN")
+                dismiss()
+            } else {
+                error = "Không đặt được mã PIN"
+            }
+        case .change:
+            if store.changePIN(old: current, new: newPIN) {
+                onDone("Đã đổi mã PIN")
+                dismiss()
+            } else {
+                error = "Mã PIN hiện tại không đúng"
+            }
+        case .remove:
+            if store.removePIN(current) {
+                onDone("Đã tắt mã PIN — lịch sử lưu dạng thường")
+                dismiss()
+            } else {
+                error = "Mã PIN không đúng"
+            }
+        case .importBackup:
+            if let data = importData, store.importBackup(data, pin: current) {
+                onDone("Đã khôi phục tin nhắn + định danh")
+                dismiss()
+            } else {
+                error = "Sai mã PIN hoặc file sao lưu không hợp lệ"
+            }
+        }
+    }
+}
+
+/// Full-screen PIN lock: shown instead of the chat while the encrypted
+/// history has no key (new device / reinstall / wiped Keychain).
+private struct ZheePINLockView: View {
+    @State private var pin = ""
+    @State private var error = ""
+    @State private var busy = false
+    @State private var showResetConfirm = false
+
+    var body: some View {
+        ZStack {
+            Color(.systemBackground).ignoresSafeArea()
+            VStack(spacing: 16) {
+                Image(systemName: "lock")
+                    .font(.largeTitle)
+                    .foregroundColor(.secondary)
+                Text("Tin nhắn được mã hóa đầu cuối")
+                    .font(.headline)
+                Text("Nhập mã PIN để mở khóa và khôi phục tin nhắn.")
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                SecureField("Mã PIN (6 số)", text: $pin)
+                    .keyboardType(.numberPad)
+                    .textFieldStyle(.roundedBorder)
+                    .frame(maxWidth: 220)
+                    .onChange(of: pin) { _ in
+                        if pin.count == ZheePINVault.pinLength { unlock() }
+                    }
+                if !error.isEmpty {
+                    Text(error)
+                        .font(.caption)
+                        .foregroundColor(.red)
+                }
+                Button {
+                    unlock()
+                } label: {
+                    if busy {
+                        ProgressView()
+                    } else {
+                        Text("Mở khóa")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!ZheePINVault.isValidPIN(pin) || busy)
+                Button("Quên mã PIN?") { showResetConfirm = true }
+                    .font(.caption)
+                    .foregroundColor(.red)
+                Spacer()
+            }
+            .padding(.top, 80)
+            .padding(.horizontal)
+        }
+        .confirmationDialog("Quên mã PIN?", isPresented: $showResetConfirm) {
+            Button("Xóa lịch sử mã hóa, bắt đầu mới", role: .destructive) {
+                ZheeChatStore.shared.resetEncryptedHistory()
+            }
+            Button("Hủy", role: .cancel) {}
+        } message: {
+            Text("Không có mã PIN thì không giải mã được lịch sử cũ. Xóa để bắt đầu mới.")
+        }
+    }
+
+    private func unlock() {
+        guard ZheePINVault.isValidPIN(pin), !busy else { return }
+        busy = true
+        defer { busy = false }
+        if ZheeChatStore.shared.unlock(with: pin) {
+            // isLocked flips false → overlay disappears.
+        } else {
+            error = "Sai mã PIN, thử lại"
+            pin = ""
         }
     }
 }

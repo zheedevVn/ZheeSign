@@ -77,6 +77,18 @@ final class ZheeChatStore: ObservableObject {
     /// consumed by ZheeChatView into the composer draft.
     @Published var pendingShareText: String?
 
+    // MARK: - E2EE PIN lock (Messenger-style secure storage)
+
+    /// True while the encrypted history exists but no key is available
+    /// (new device / reinstall / wiped Keychain): the user must enter the
+    /// PIN before any message is shown. While locked, inbound traffic is
+    /// dropped, never stored in the clear.
+    @Published private(set) var isLocked = false
+    /// True when a PIN protects the history (Keychain holds the derived key).
+    @Published private(set) var pinEnabled = false
+    /// Derived PIN key, kept in memory only while the session is unlocked.
+    private var pinKey: Data?
+
     /// Display name for a pubkey: profile name if known, else short npub.
     func displayName(for pubkey: String) -> String {
         if let name = profiles[pubkey]?.name, !name.isEmpty { return name }
@@ -94,7 +106,25 @@ final class ZheeChatStore: ObservableObject {
     func voiceData(for id: String) -> Data? { voiceData[id] }
 
     private init() {
-        messages = Self.loadMessages()
+        // Encrypted history (PIN on): auto-unlock only if the Keychain
+        // still holds the derived key. Otherwise stay locked until the
+        // user enters the PIN — messages are never read in the clear.
+        if FileManager.default.fileExists(atPath: Self.encryptedFileURL.path) {
+            pinEnabled = true
+            if let key = ZheePINVault.loadKey(),
+               let blob = try? Data(contentsOf: Self.encryptedFileURL),
+               let plain = ZheePINVault.decryptHistory(blob, key: key),
+               let decoded = try? JSONDecoder().decode([ZheeChatMessage].self, from: plain) {
+                messages = decoded
+                pinKey = key
+            } else {
+                isLocked = true
+            }
+        } else {
+            pinEnabled = ZheePINVault.pinEnabled
+            pinKey = ZheePINVault.loadKey()
+            messages = Self.loadMessages()
+        }
         seenIDs = Set(messages.map { $0.id })
         mesh.onMessage = { [weak self] msg in
             self?.append(
@@ -222,6 +252,12 @@ final class ZheeChatStore: ObservableObject {
         seenIDs.removeAll()
         currentGeohash = nil
         nostr.setGeoFilter(nil)
+        // Emergency wipe takes the PIN lock + encrypted history with it.
+        pinEnabled = false
+        pinKey = nil
+        isLocked = false
+        ZheePINVault.deleteAll()
+        try? FileManager.default.removeItem(at: Self.encryptedFileURL)
         save()
         mesh.restart()
         nostr.stop()
@@ -269,7 +305,8 @@ final class ZheeChatStore: ObservableObject {
     }
 
     private func append(id: String, channel: ZheeChatChannel, senderID: String, senderName: String, text: String, date: Date, isMine: Bool, peerID: String? = nil, voice: Data? = nil) {
-        guard !seenIDs.contains(id) else { return }
+        // While PIN-locked, inbound traffic is dropped, never stored in the clear.
+        guard !isLocked, !seenIDs.contains(id) else { return }
         seenIDs.insert(id)
         if let voice { voiceData[id] = voice }
         messages.append(ZheeChatMessage(
@@ -293,6 +330,14 @@ final class ZheeChatStore: ObservableObject {
         return dir.appendingPathComponent("messages.json")
     }
 
+    /// Encrypted history (PIN on): AES-256-CBC of the same JSON.
+    private static var encryptedFileURL: URL {
+        let dir = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("ZheeChat", isDirectory: true)
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir.appendingPathComponent("messages.enc")
+    }
+
     private static func loadMessages() -> [ZheeChatMessage] {
         guard let data = try? Data(contentsOf: fileURL),
               let decoded = try? JSONDecoder().decode([ZheeChatMessage].self, from: data) else { return [] }
@@ -300,8 +345,153 @@ final class ZheeChatStore: ObservableObject {
     }
 
     private func save() {
-        if let data = try? JSONEncoder().encode(messages) {
+        guard let data = try? JSONEncoder().encode(messages) else { return }
+        if pinEnabled, let key = pinKey {
+            if let enc = ZheePINVault.encryptHistory(data, key: key) {
+                try? enc.write(to: Self.encryptedFileURL, options: .atomic)
+                try? FileManager.default.removeItem(at: Self.fileURL)
+            }
+        } else if !pinEnabled {
             try? data.write(to: Self.fileURL, options: .atomic)
+            try? FileManager.default.removeItem(at: Self.encryptedFileURL)
         }
+        // pinEnabled but no key (locked): never write plaintext.
+    }
+
+    // MARK: - E2EE PIN: setup / unlock / change / remove / reset
+
+    /// First-time PIN setup. Encrypts the current history in place.
+    @discardableResult
+    func setupPIN(_ pin: String) -> Bool {
+        guard ZheePINVault.isValidPIN(pin), !pinEnabled else { return false }
+        let salt = ZheePINVault.randomSalt()
+        let key = ZheePINVault.deriveKey(pin: pin, salt: salt)
+        ZheePINVault.saveSalt(salt)
+        ZheePINVault.saveKey(key)
+        pinKey = key
+        pinEnabled = true
+        isLocked = false
+        save()
+        return true
+    }
+
+    /// Unlock encrypted history with the PIN (new device / reinstall).
+    /// Wrong PIN fails the AES padding + JSON decode — nothing is revealed.
+    @discardableResult
+    func unlock(with pin: String) -> Bool {
+        guard isLocked, ZheePINVault.isValidPIN(pin),
+              let salt = ZheePINVault.loadSalt() else { return false }
+        let key = ZheePINVault.deriveKey(pin: pin, salt: salt)
+        guard let blob = try? Data(contentsOf: Self.encryptedFileURL),
+              let plain = ZheePINVault.decryptHistory(blob, key: key),
+              let decoded = try? JSONDecoder().decode([ZheeChatMessage].self, from: plain) else { return false }
+        pinKey = key
+        ZheePINVault.saveKey(key)
+        messages = decoded
+        seenIDs = Set(messages.map { $0.id })
+        isLocked = false
+        return true
+    }
+
+    /// Change PIN: verifies the old PIN against the stored key, then
+    /// re-encrypts history under a fresh salt + key.
+    @discardableResult
+    func changePIN(old: String, new: String) -> Bool {
+        guard pinEnabled, ZheePINVault.isValidPIN(old), ZheePINVault.isValidPIN(new),
+              let salt = ZheePINVault.loadSalt(),
+              let storedKey = ZheePINVault.loadKey(),
+              ZheePINVault.deriveKey(pin: old, salt: salt) == storedKey else { return false }
+        let newSalt = ZheePINVault.randomSalt()
+        let newKey = ZheePINVault.deriveKey(pin: new, salt: newSalt)
+        ZheePINVault.saveSalt(newSalt)
+        ZheePINVault.saveKey(newKey)
+        pinKey = newKey
+        save()
+        return true
+    }
+
+    /// Turn PIN off: verifies the PIN, then writes history back as plaintext.
+    @discardableResult
+    func removePIN(_ pin: String) -> Bool {
+        guard pinEnabled, ZheePINVault.isValidPIN(pin),
+              let salt = ZheePINVault.loadSalt(),
+              let storedKey = ZheePINVault.loadKey(),
+              ZheePINVault.deriveKey(pin: pin, salt: salt) == storedKey else { return false }
+        pinEnabled = false
+        pinKey = nil
+        ZheePINVault.deleteAll()
+        save()
+        return true
+    }
+
+    /// Forgot PIN escape hatch: deletes the encrypted history + PIN key
+    /// and starts fresh. The old history is unrecoverable without the PIN,
+    /// exactly like Messenger.
+    func resetEncryptedHistory() {
+        messages.removeAll()
+        seenIDs.removeAll()
+        currentGeohash = nil
+        nostr.setGeoFilter(nil)
+        pinEnabled = false
+        pinKey = nil
+        isLocked = false
+        ZheePINVault.deleteAll()
+        try? FileManager.default.removeItem(at: Self.encryptedFileURL)
+        save()
+    }
+
+    // MARK: - E2EE backup: export / import (new device restore)
+
+    private struct BackupPayload: Codable {
+        var version: Int
+        var identitySecret: Data
+        var displayName: String
+        var relays: [String]
+        var messages: [ZheeChatMessage]
+    }
+
+    /// Encrypted backup blob (salt-prefixed) for sharing to a new device.
+    /// Needs the session unlocked — the PIN itself is never in the backup.
+    func exportBackup() -> Data? {
+        guard pinEnabled, let key = pinKey, let salt = ZheePINVault.loadSalt() else { return nil }
+        let identity = ZheeNostrIdentity.shared
+        let relays = UserDefaults.standard.stringArray(forKey: "zheechat.relays") ?? []
+        let payload = BackupPayload(
+            version: 1,
+            identitySecret: identity.exportSecretData(),
+            displayName: identity.displayName,
+            relays: relays,
+            messages: messages
+        )
+        guard let json = try? JSONEncoder().encode(payload) else { return nil }
+        return ZheePINVault.encryptBackup(json, key: key, salt: salt)
+    }
+
+    /// Restore a backup on a new device: decrypts with the PIN, adopts the
+    /// backup's salt + key, restores identity + history, reconnects.
+    /// Wrong PIN fails the decrypt — returns false, nothing changes.
+    @discardableResult
+    func importBackup(_ blob: Data, pin: String) -> Bool {
+        guard ZheePINVault.isValidPIN(pin),
+              let (plain, salt, key) = ZheePINVault.decryptBackup(blob, pin: pin),
+              let payload = try? JSONDecoder().decode(BackupPayload.self, from: plain),
+              payload.version == 1,
+              ZheeNostrIdentity.shared.importSecretData(payload.identitySecret) else { return false }
+        ZheePINVault.saveSalt(salt)
+        ZheePINVault.saveKey(key)
+        pinKey = key
+        pinEnabled = true
+        isLocked = false
+        let identity = ZheeNostrIdentity.shared
+        identity.displayName = payload.displayName
+        UserDefaults.standard.set(payload.relays, forKey: "zheechat.relays")
+        messages = Array(payload.messages.suffix(Self.maxMessages))
+        seenIDs = Set(messages.map { $0.id })
+        currentGeohash = nil
+        nostr.setGeoFilter(nil)
+        save()
+        mesh.restart()
+        if !payload.relays.isEmpty { nostr.updateRelays(payload.relays) }
+        return true
     }
 }

@@ -61,6 +61,19 @@ final class ZheeNostrIdentity: ObservableObject {
         return true
     }
 
+    /// Raw secret for the encrypted E2EE backup (never shown in UI).
+    func exportSecretData() -> Data { secret }
+
+    /// Restore the identity from an encrypted backup. Returns false if invalid.
+    @discardableResult
+    func importSecretData(_ data: Data) -> Bool {
+        guard data.count == 32,
+              ZheeSecp256k1.publicKey(forSecret: data) != nil else { return false }
+        secret = data
+        Self.saveSecret(data)
+        return true
+    }
+
     /// Generate a brand-new identity. The old one is unrecoverable unless backed up.
     func rotate() {
         var bytes = Data(count: 32)
