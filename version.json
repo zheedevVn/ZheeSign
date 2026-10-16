@@ -1,7 +1,7 @@
 {
-  "version": "1.7.36",
-  "build": "1.7.36",
-  "notes": "fix: onChange closure needs explicit param to pick iOS 16 overload",
+  "version": "1.7.37",
+  "build": "1.7.37",
+  "notes": "fix: pip install parses multi-package/chained commands, strips invisible chars + bump to 1.7.37",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
