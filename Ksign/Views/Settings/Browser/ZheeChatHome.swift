@@ -146,6 +146,9 @@ struct ZheeChatRootView: View {
             NavigationStack { ZheeChatMenuView() }
                 .tabItem { Label { Text("Menu") } icon: { ZheeOutlineIcon(.menu, size: 24) } }
         }
+        // ZheeChat has its own TabView — hide the app tab bar so the
+        // two floating pills never stack on top of each other.
+        .toolbar(.hidden, for: .tabBar)
     }
 }
 

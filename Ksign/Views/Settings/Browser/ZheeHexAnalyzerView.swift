@@ -234,6 +234,7 @@ struct ZheeHexAnalyzerView: View {
         }
         .navigationTitle("Hex & Chuỗi")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
         .onAppear { restoreSessionIfNeeded() }
         .onReceive(ZheeHexAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
         .sheet(isPresented: $showPicker) {
@@ -250,8 +251,15 @@ struct ZheeHexAnalyzerView: View {
     /// Restores the last loaded file from the session (e.g. after going
     /// back and returning). The bytes are in memory, so no workDir check.
     private func restoreSessionIfNeeded() {
-        guard fileData == nil else { return }
         let session = ZheeHexAnalyzerSession.shared
+        // Adopt in-flight (or last) progress first: see IPA view.
+        if progressLog.isEmpty {
+            isAnalyzing = session.isAnalyzing
+            progressText = session.progressText
+            progressStep = session.progressStep
+            progressLog = session.progressLog
+        }
+        guard fileData == nil else { return }
         guard let saved = session.fileData else { return }
         fileName = session.fileName
         fileSizeText = session.fileSizeText
@@ -267,6 +275,11 @@ struct ZheeHexAnalyzerView: View {
             progressText = text
             progressStep = step
             progressLog.append((Date(), text))
+            let session = ZheeHexAnalyzerSession.shared
+            session.progressText = text
+            session.progressStep = step
+            session.progressLog = progressLog
+            session.bump()
         }
     }
 
@@ -289,6 +302,10 @@ struct ZheeHexAnalyzerView: View {
         session.strings = []
         session.links = []
         session.secrets = []
+        session.isAnalyzing = true
+        session.progressText = "Đang đọc file…"
+        session.progressStep = 0
+        session.progressLog = [(Date(), "Bắt đầu đọc \(displayName)")]
         session.bump()
         isAnalyzing = true
         errorMessage = nil
@@ -328,6 +345,12 @@ struct ZheeHexAnalyzerView: View {
                     errorMessage = "Không đọc được file."
                     progressLog.append((Date(), "Lỗi: Không đọc được file."))
                     isAnalyzing = false
+                    let session = ZheeHexAnalyzerSession.shared
+                    session.isAnalyzing = false
+                    session.progressText = progressText
+                    session.progressStep = progressStep
+                    session.progressLog = progressLog
+                    session.bump()
                 }
                 return
             }
@@ -364,6 +387,10 @@ struct ZheeHexAnalyzerView: View {
                 session.links = links
                 session.secrets = secrets
                 session.fileData = data
+                session.isAnalyzing = false
+                session.progressText = progressText
+                session.progressStep = progressStep
+                session.progressLog = progressLog
                 session.bump()
             }
         }

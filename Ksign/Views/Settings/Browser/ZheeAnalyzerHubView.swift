@@ -57,5 +57,6 @@ struct ZheeAnalyzerHubView: View {
         }
         .navigationTitle("Phân tích file")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar(.hidden, for: .tabBar)
     }
 }
