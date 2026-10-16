@@ -1,7 +1,7 @@
 {
-  "version": "1.7.38",
-  "build": "1.7.38",
-  "notes": "fix: ZheeChat tab icons actually render + bolder channel avatars + bump to 1.7.38",
+  "version": "1.7.39",
+  "build": "1.7.39",
+  "notes": "chore: bump to 1.7.39",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
