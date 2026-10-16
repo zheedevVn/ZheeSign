@@ -17,6 +17,10 @@ struct ZheeAPKAnalyzerView: View {
     @State private var progressText = ""
     @State private var progressStep = 0
     @State private var progressLog: [(Date, String)] = []
+    @State private var showProgressDetails = true
+    @State private var showCompletionAlert = false
+    @State private var completionAlertTitle = ""
+    @State private var completionAlertMessage = ""
     @State private var report: ZheeAPKReport?
     @State private var errorMessage: String?
     @State private var copiedNote: String?
@@ -69,7 +73,20 @@ struct ZheeAPKAnalyzerView: View {
             }
 
             if !progressLog.isEmpty {
-                ZheeProgressLogView(log: progressLog)
+                if isAnalyzing {
+                    ZheeProgressLogView(log: progressLog)
+                } else {
+                    // Quet xong: gom tien trinh + nhat ky vao 1 muc gap lai.
+                    DisclosureGroup("Nhật ký tiến trình (\(progressLog.count))", isExpanded: $showProgressDetails) {
+                        ZheeAnalyzeProgressView(step: progressStep, text: progressText, stages: [
+                            "Giải nén APK",
+                            "Đọc AndroidManifest.xml",
+                            "Phân tích DEX",
+                            "Quét link & secret",
+                        ])
+                        ZheeProgressLogView(log: progressLog, showTitle: false)
+                    }
+                }
             }
 
             if let report {
@@ -244,6 +261,11 @@ struct ZheeAPKAnalyzerView: View {
         .navigationTitle("Phân tích APK")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
+        .alert(completionAlertTitle, isPresented: $showCompletionAlert) {
+            Button("Đã rõ", role: .cancel) { showCompletionAlert = false }
+        } message: {
+            Text(completionAlertMessage)
+        }
         .onAppear { restoreSessionIfNeeded() }
         .onReceive(ZheeAPKAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
         .sheet(isPresented: $showPicker) {
@@ -267,6 +289,7 @@ struct ZheeAPKAnalyzerView: View {
             progressText = session.progressText
             progressStep = session.progressStep
             progressLog = session.progressLog
+            showProgressDetails = session.isAnalyzing
         }
         guard report == nil else { return }
         guard let saved = session.report else { return }
@@ -320,6 +343,9 @@ struct ZheeAPKAnalyzerView: View {
         }
         // Drop the previous session; runID drops stale completions.
         let myRun = UUID()
+        // Giu app chay nen (audio im lang) cho toi khi quet xong.
+        ZheeBackgroundKeeper.shared.start()
+        ZheeScanNotifier.requestAuthorization()
         analysisRunID = myRun
         let session = ZheeAPKAnalyzerSession.shared
         session.runID = myRun
@@ -350,6 +376,8 @@ struct ZheeAPKAnalyzerView: View {
                 session.bump()
             }
         }) { result in
+            // Ket thuc giu nen (ke ca khi completion bi stale-drop).
+            defer { DispatchQueue.main.async { ZheeBackgroundKeeper.shared.stop() } }
             try? FileManager.default.removeItem(at: url)
             guard analysisRunID == myRun,
                   ZheeAPKAnalyzerSession.shared.runID == myRun else { return }
@@ -357,6 +385,12 @@ struct ZheeAPKAnalyzerView: View {
             case .success(let result):
                 report = result
                 progressLog.append((Date(), String(format: "Hoàn tất trong %.1fs", Date().timeIntervalSince(startedAt))))
+                progressText = "Đã quét xong"
+                showProgressDetails = false
+                completionAlertTitle = "Đã quét xong \(result.appLabel)"
+                completionAlertMessage = "\(result.links.count) link, \(result.secrets.count) secret, \(result.warnings.count) cảnh báo — hoàn tất trong \(String(format: "%.1f", Date().timeIntervalSince(startedAt)))s"
+                showCompletionAlert = true
+                ZheeScanNotifier.post(title: completionAlertTitle, body: completionAlertMessage)
                 isAnalyzing = false
                 // Keep the finished analysis in the session so going
                 // back does not lose it.
@@ -370,6 +404,12 @@ struct ZheeAPKAnalyzerView: View {
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 progressLog.append((Date(), "Lỗi: \(error.localizedDescription)"))
+                progressText = "Quét thất bại"
+                showProgressDetails = false
+                completionAlertTitle = "Quét thất bại"
+                completionAlertMessage = error.localizedDescription
+                showCompletionAlert = true
+                ZheeScanNotifier.post(title: completionAlertTitle, body: completionAlertMessage)
                 isAnalyzing = false
                 let session = ZheeAPKAnalyzerSession.shared
                 session.isAnalyzing = false

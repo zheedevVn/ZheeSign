@@ -19,6 +19,10 @@ struct ZheeIPAAnalyzerView: View {
     @State private var progressText = ""
     @State private var progressStep = 0
     @State private var progressLog: [(Date, String)] = []
+    @State private var showProgressDetails = true
+    @State private var showCompletionAlert = false
+    @State private var completionAlertTitle = ""
+    @State private var completionAlertMessage = ""
     @State private var report: ZheeIPAReport?
     @State private var errorMessage: String?
     @State private var copiedURL: String?
@@ -89,7 +93,21 @@ struct ZheeIPAAnalyzerView: View {
             }
 
             if !progressLog.isEmpty {
-                ZheeProgressLogView(log: progressLog)
+                if isAnalyzing {
+                    ZheeProgressLogView(log: progressLog)
+                } else {
+                    // Quet xong: gom tien trinh + nhat ky vao 1 muc gap lai.
+                    DisclosureGroup("Nhật ký tiến trình (\(progressLog.count))", isExpanded: $showProgressDetails) {
+                        ZheeAnalyzeProgressView(step: progressStep, text: progressText, stages: [
+                            "Giải nén IPA",
+                            "Đọc Info.plist",
+                            "Đọc provisioning",
+                            "Phân tích Mach-O",
+                            "Quét link & secret",
+                        ])
+                        ZheeProgressLogView(log: progressLog, showTitle: false)
+                    }
+                }
             }
 
             if let report {
@@ -488,6 +506,11 @@ struct ZheeIPAAnalyzerView: View {
         .navigationTitle("Phân tích IPA")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
+        .alert(completionAlertTitle, isPresented: $showCompletionAlert) {
+            Button("Đã rõ", role: .cancel) { showCompletionAlert = false }
+        } message: {
+            Text(completionAlertMessage)
+        }
         .onAppear { restoreSessionIfNeeded() }
         .onReceive(ZheeIPAAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
         .onChange(of: patches) { _ in
@@ -662,6 +685,9 @@ struct ZheeIPAAnalyzerView: View {
         // Drop the previous session (incl. its workDir) so a stale
         // completion can never resurrect it; runID drops stale results.
         let myRun = UUID()
+        // Giu app chay nen (audio im lang) cho toi khi quet xong.
+        ZheeBackgroundKeeper.shared.start()
+        ZheeScanNotifier.requestAuthorization()
         analysisRunID = myRun
         let session = ZheeIPAAnalyzerSession.shared
         session.runID = myRun
@@ -709,6 +735,8 @@ struct ZheeIPAAnalyzerView: View {
                 session.bump()
             }
         }) { result in
+            // Ket thuc giu nen (ke ca khi completion bi stale-drop).
+            defer { DispatchQueue.main.async { ZheeBackgroundKeeper.shared.stop() } }
             try? FileManager.default.removeItem(at: url)
             // Stale run (a newer analysis started): drop the result.
             guard analysisRunID == myRun,
@@ -716,6 +744,12 @@ struct ZheeIPAAnalyzerView: View {
             switch result {
             case .success(let result):
                 progressLog.append((Date(), String(format: "Hoàn tất trong %.1fs", Date().timeIntervalSince(startedAt))))
+                progressText = "Đã quét xong"
+                showProgressDetails = false
+                completionAlertTitle = "Đã quét xong \(result.appName)"
+                completionAlertMessage = "\(result.links.count) link, \(result.secrets.count) secret, \(result.warnings.count) cảnh báo — hoàn tất trong \(String(format: "%.1f", Date().timeIntervalSince(startedAt)))s"
+                showCompletionAlert = true
+                ZheeScanNotifier.post(title: completionAlertTitle, body: completionAlertMessage)
                 report = result
                 origBundleID = result.bundleID == "—" ? "" : result.bundleID
                 origVersion = result.version == "—" ? "" : result.version
@@ -747,6 +781,12 @@ struct ZheeIPAAnalyzerView: View {
             case .failure(let error):
                 errorMessage = error.localizedDescription
                 progressLog.append((Date(), "Lỗi: \(error.localizedDescription)"))
+                progressText = "Quét thất bại"
+                showProgressDetails = false
+                completionAlertTitle = "Quét thất bại"
+                completionAlertMessage = error.localizedDescription
+                showCompletionAlert = true
+                ZheeScanNotifier.post(title: completionAlertTitle, body: completionAlertMessage)
                 isAnalyzing = false
                 let session = ZheeIPAAnalyzerSession.shared
                 session.isAnalyzing = false
@@ -770,6 +810,7 @@ struct ZheeIPAAnalyzerView: View {
             progressText = session.progressText
             progressStep = session.progressStep
             progressLog = session.progressLog
+            showProgressDetails = session.isAnalyzing
         }
         guard report == nil else { return }
         guard let saved = session.report else { return }
@@ -935,6 +976,8 @@ struct ZheeIPAAnalyzerView: View {
                           version: editVersion != origVersion ? editVersion : nil,
                           build: editBuild != origBuild ? editBuild : nil)
         let keepSignature = report.isTipa
+        // Giu app chay nen cho toi khi dong goi xong.
+        ZheeBackgroundKeeper.shared.start()
         DispatchQueue.global(qos: .userInitiated).async {
             do {
                 var changed = 0
@@ -957,6 +1000,7 @@ struct ZheeIPAAnalyzerView: View {
                 }
                 try ZheeIPAPatcher.repack(workDir: workDir, outputURL: outURL, stripSignature: !keepSignature)
                 DispatchQueue.main.async {
+                    ZheeBackgroundKeeper.shared.stop()
                     exportedURL = outURL
                     exportMessage = keepSignature
                         ? "Đã xuất TIPA — sửa \(changed) mục. Giữ nguyên chữ ký gốc, cài qua TrollStore."
@@ -965,6 +1009,7 @@ struct ZheeIPAAnalyzerView: View {
                 }
             } catch {
                 DispatchQueue.main.async {
+                    ZheeBackgroundKeeper.shared.stop()
                     exportMessage = "Lỗi: \(error.localizedDescription)"
                     isExporting = false
                 }
@@ -1110,6 +1155,7 @@ private struct ZheeSlimProgressBar: View {
 /// Shared by the IPA / APK / Hex analyzers.
 struct ZheeProgressLogView: View {
     let log: [(Date, String)]
+    var showTitle = true
 
     private static let formatter: DateFormatter = {
         let f = DateFormatter()
@@ -1118,15 +1164,23 @@ struct ZheeProgressLogView: View {
     }()
 
     var body: some View {
-        Section("Nhật ký tiến trình") {
-            ForEach(log.indices, id: \.self) { i in
-                HStack(alignment: .top, spacing: 8) {
-                    Text(Self.formatter.string(from: log[i].0))
-                        .font(.caption.monospacedDigit())
-                        .foregroundColor(.secondary)
-                    Text(log[i].1)
-                        .font(.caption)
-                }
+        if showTitle {
+            Section("Nhật ký tiến trình") {
+                rows
+            }
+        } else {
+            rows
+        }
+    }
+
+    private var rows: some View {
+        ForEach(log.indices, id: \.self) { i in
+            HStack(alignment: .top, spacing: 8) {
+                Text(Self.formatter.string(from: log[i].0))
+                    .font(.caption.monospacedDigit())
+                    .foregroundColor(.secondary)
+                Text(log[i].1)
+                    .font(.caption)
             }
         }
     }

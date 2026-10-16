@@ -17,13 +17,20 @@ final class ZheeBackgroundKeeper: ObservableObject {
 	
 	private var audioPlayer: AVAudioPlayer?
 	private var backgroundTask: UIBackgroundTaskIdentifier = .invalid
+	// Dem giu: server Python + quet file (IPA/APK/Hex) + xuat IPA dung chung
+	// keeper. Chi tat audio khi dem ve 0, de tac vu nay khong tat tac vu kia.
+	private var retainCount = 0
 	
 	private init() {}
 	
 	/// Bật giữ app chạy nền. Trả về true nếu thành công.
 	@discardableResult
 	func start() -> Bool {
-		guard !isKeepingAlive else { return true }
+		// Da chay: chi tang dem, dung chung keeper.
+		if retainCount > 0 {
+			retainCount += 1
+			return true
+		}
 		lastError = nil
 		
 		// 1. Cấu hình audio session
@@ -76,11 +83,15 @@ final class ZheeBackgroundKeeper: ObservableObject {
 		}
 		
 		isKeepingAlive = true
+		retainCount = 1
 		return true
 	}
 	
 	/// Tắt giữ nền
 	func stop() {
+		guard retainCount > 0 else { return }
+		retainCount -= 1
+		guard retainCount == 0 else { return }
 		audioPlayer?.stop()
 		audioPlayer = nil
 		

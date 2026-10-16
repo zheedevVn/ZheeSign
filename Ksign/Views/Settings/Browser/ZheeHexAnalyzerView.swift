@@ -19,6 +19,10 @@ struct ZheeHexAnalyzerView: View {
     @State private var progressText = ""
     @State private var progressStep = 0
     @State private var progressLog: [(Date, String)] = []
+    @State private var showProgressDetails = true
+    @State private var showCompletionAlert = false
+    @State private var completionAlertTitle = ""
+    @State private var completionAlertMessage = ""
     @State private var fileName = ""
     @State private var fileSizeText = ""
     @State private var fileData: Data?
@@ -91,7 +95,19 @@ struct ZheeHexAnalyzerView: View {
             }
 
             if !progressLog.isEmpty {
-                ZheeProgressLogView(log: progressLog)
+                if isAnalyzing {
+                    ZheeProgressLogView(log: progressLog)
+                } else {
+                    // Doc xong: gom tien trinh + nhat ky vao 1 muc gap lai.
+                    DisclosureGroup("Nhật ký tiến trình (\(progressLog.count))", isExpanded: $showProgressDetails) {
+                        ZheeAnalyzeProgressView(step: progressStep, text: progressText, stages: [
+                            "Đọc file",
+                            "Bóc chuỗi",
+                            "Quét link & secret",
+                        ])
+                        ZheeProgressLogView(log: progressLog, showTitle: false)
+                    }
+                }
             }
 
             if fileData != nil {
@@ -235,6 +251,11 @@ struct ZheeHexAnalyzerView: View {
         .navigationTitle("Hex & Chuỗi")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar(.hidden, for: .tabBar)
+        .alert(completionAlertTitle, isPresented: $showCompletionAlert) {
+            Button("Đã rõ", role: .cancel) { showCompletionAlert = false }
+        } message: {
+            Text(completionAlertMessage)
+        }
         .onAppear { restoreSessionIfNeeded() }
         .onReceive(ZheeHexAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
         .sheet(isPresented: $showPicker) {
@@ -258,6 +279,7 @@ struct ZheeHexAnalyzerView: View {
             progressText = session.progressText
             progressStep = session.progressStep
             progressLog = session.progressLog
+            showProgressDetails = session.isAnalyzing
         }
         guard fileData == nil else { return }
         guard let saved = session.fileData else { return }
@@ -295,6 +317,9 @@ struct ZheeHexAnalyzerView: View {
         }
         // Drop the previous session; runID drops stale completions.
         let myRun = UUID()
+        // Giu app chay nen (audio im lang) cho toi khi doc xong.
+        ZheeBackgroundKeeper.shared.start()
+        ZheeScanNotifier.requestAuthorization()
         analysisRunID = myRun
         let session = ZheeHexAnalyzerSession.shared
         session.runID = myRun
@@ -340,10 +365,17 @@ struct ZheeHexAnalyzerView: View {
             try? fm.removeItem(at: url)
             guard let data else {
                 DispatchQueue.main.async {
+                    defer { ZheeBackgroundKeeper.shared.stop() }
                     guard analysisRunID == myRun,
                           ZheeHexAnalyzerSession.shared.runID == myRun else { return }
                     errorMessage = "Không đọc được file."
                     progressLog.append((Date(), "Lỗi: Không đọc được file."))
+                    progressText = "Đọc thất bại"
+                    showProgressDetails = false
+                    completionAlertTitle = "Đọc thất bại"
+                    completionAlertMessage = "Không đọc được file."
+                    showCompletionAlert = true
+                    ZheeScanNotifier.post(title: completionAlertTitle, body: completionAlertMessage)
                     isAnalyzing = false
                     let session = ZheeHexAnalyzerSession.shared
                     session.isAnalyzing = false
@@ -368,10 +400,18 @@ struct ZheeHexAnalyzerView: View {
                 return true
             }
             DispatchQueue.main.async {
+                // Ket thuc giu nen (ke ca khi load bi stale-drop).
+                defer { ZheeBackgroundKeeper.shared.stop() }
                 // Stale run (a newer load started): drop the result.
                 guard analysisRunID == myRun,
                       ZheeHexAnalyzerSession.shared.runID == myRun else { return }
                 progressLog.append((Date(), String(format: "Hoàn tất trong %.1fs — %d chuỗi, %d link, %d secret", Date().timeIntervalSince(startedAt), extracted.count, linkMap.count, foundSecrets.count)))
+                progressText = "Đã đọc xong"
+                showProgressDetails = false
+                completionAlertTitle = "Đã đọc xong \(fileName)"
+                completionAlertMessage = "\(extracted.count) chuỗi, \(linkMap.count) link, \(foundSecrets.count) secret — hoàn tất trong \(String(format: "%.1f", Date().timeIntervalSince(startedAt)))s"
+                showCompletionAlert = true
+                ZheeScanNotifier.post(title: completionAlertTitle, body: completionAlertMessage)
                 fileData = data
                 fileSizeText = sizeText + (size > cap ? " (chỉ đọc 100MB đầu)" : "")
                 strings = extracted

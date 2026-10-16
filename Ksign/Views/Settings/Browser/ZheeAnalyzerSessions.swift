@@ -16,6 +16,30 @@
 
 import Combine
 import Foundation
+import UIKit
+import UserNotifications
+
+/// Thong bao khi quet xong ma app dang o nen. Alert trong app chi hien
+/// khi man hinh analyzer dang mo, nen khi app o nen thi dung notification.
+enum ZheeScanNotifier {
+    static func requestAuthorization() {
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) { _, _ in }
+    }
+
+    static func post(title: String, body: String) {
+        guard UIApplication.shared.applicationState != .active else { return }
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+        let request = UNNotificationRequest(
+            identifier: "zhee-scan-\(UUID().uuidString)",
+            content: content,
+            trigger: UNTimeIntervalNotificationTrigger(timeInterval: 0.5, repeats: false)
+        )
+        UNUserNotificationCenter.current().add(request)
+    }
+}
 
 final class ZheeIPAAnalyzerSession: ObservableObject {
     static let shared = ZheeIPAAnalyzerSession()
