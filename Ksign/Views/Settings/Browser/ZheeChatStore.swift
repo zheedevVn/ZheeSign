@@ -17,6 +17,16 @@ enum ZheeChatChannel: String, CaseIterable, Identifiable {
         case .geo: return "Gần tôi"
         }
     }
+
+    /// Ten ngan cho chip picker — 4 chip vua het man hinh, khong can cuon.
+    var pickerTitle: String {
+        switch self {
+        case .mesh: return "Mesh"
+        case .nostr: return "Nostr"
+        case .dm: return "DM"
+        case .geo: return "Gần tôi"
+        }
+    }
 }
 
 /// One chat message in a ZheeChat channel.

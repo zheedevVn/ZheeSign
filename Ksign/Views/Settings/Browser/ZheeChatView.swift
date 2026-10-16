@@ -80,6 +80,15 @@ struct ZheeChatView: View {
             }
         }
         .toolbar {
+            // Panic gesture: triple-tap the title (khong dat tren picker nua,
+            // vi triple-tap tren cha lam nut chip bi delay).
+            ToolbarItem(placement: .principal) {
+                Text("ZheeChat")
+                    .font(.headline)
+                    .onTapGesture(count: 3) {
+                        showWipeConfirm = true
+                    }
+            }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     showIdentity = true
@@ -123,31 +132,31 @@ struct ZheeChatView: View {
     }
 
     private var channelPicker: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(ZheeChatChannel.allCases) { item in
-                    let selected = channel == item
-                    Button { channel = item } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: channelIcon(for: item)).font(.system(size: 15)).foregroundColor(selected ? .white : .primary)
-                            Text(item.title)
-                                .font(.subheadline)
-                                .fontWeight(selected ? .semibold : .regular)
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Capsule().fill(selected ? Color.blue : Color.gray.opacity(0.15)))
-                        .foregroundColor(selected ? .white : .primary)
+        // 4 chip vua het man hinh, khong can cuon -> khong bi cat mep.
+        // Khong dung ScrollView + khong triple-tap o day nua: 2 thu do
+        // lam nut bam bi delay (ScrollView doi phan biet cuon/bam,
+        // triple-tap doi du 3 cai moi that bai).
+        HStack(spacing: 6) {
+            ForEach(ZheeChatChannel.allCases) { item in
+                let selected = channel == item
+                Button { channel = item } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: channelIcon(for: item)).font(.system(size: 15)).foregroundColor(selected ? .white : .primary)
+                        Text(item.pickerTitle)
+                            .font(.subheadline)
+                            .fontWeight(selected ? .semibold : .regular)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
                     }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(selected ? Color.blue : Color.gray.opacity(0.15)))
+                    .foregroundColor(selected ? .white : .primary)
                 }
             }
-            .padding(.horizontal)
         }
+        .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .onTapGesture(count: 3) {
-            // Panic gesture: triple-tap the channel picker.
-            showWipeConfirm = true
-        }
     }
 
     private var dmBody: some View {
