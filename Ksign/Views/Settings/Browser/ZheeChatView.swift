@@ -8,6 +8,7 @@ import UIKit
 /// Nostr công khai: chat toàn cầu qua relay, ký bằng Schnorr.
 struct ZheeChatView: View {
     @StateObject private var store = ZheeChatStore.shared
+    @ObservedObject private var mesh = ZheeChatStore.shared.mesh
     @StateObject private var identity = ZheeNostrIdentity.shared
     @State private var channel: ZheeChatChannel = .mesh
     @State private var draft = ""
@@ -39,17 +40,30 @@ struct ZheeChatView: View {
     }
 
     var body: some View {
-        // Khong con chip picker: chuyen kenh o danh sach Doan chat.
+        // 4 kenh = 4 giao dien khac nhau.
         VStack(spacing: 0) {
-            if channel == .dm {
-                dmBody
-            } else if channel == .geo && store.currentGeohash == nil {
-                geoEmptyState
-            } else {
-                statusLine
+            switch channel {
+            case .mesh:
+                meshHeader
                 Divider()
                 messageList
                 composer
+            case .nostr:
+                nostrHeader
+                Divider()
+                nostrFeedList
+                composer
+            case .dm:
+                dmBody
+            case .geo:
+                if store.currentGeohash == nil {
+                    geoEmptyState
+                } else {
+                    geoHeader
+                    Divider()
+                    messageList
+                    composer
+                }
             }
         }
         // Luon neo len tren.
@@ -206,40 +220,126 @@ struct ZheeChatView: View {
         .padding(.horizontal)
     }
 
-    private var statusLine: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(channel == .mesh ? Color.green : (store.nostrConnected ? Color.green : Color.orange))
-                .frame(width: 8, height: 8)
-            Text(statusText)
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .lineLimit(1)
+    // MARK: - 4 giao dien kenh
+
+    /// Mesh: radar thiet bi gan + chat bong bong (offline).
+    private var meshHeader: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 12) {
+                ZStack {
+                    Circle().fill(LinearGradient(colors: [Color(red: 0.23, green: 0.51, blue: 0.96), Color(red: 0.02, green: 0.71, blue: 0.83)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    Image(systemName: "wifi").font(.system(size: 20, weight: .semibold)).foregroundColor(.white)
+                }
+                .frame(width: 44, height: 44)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Mesh gần").font(.headline)
+                    Text(store.meshPeerCount == 0 ? "Đang tìm thiết bị gần bạn…" : "\(store.meshPeerCount) thiết bị gần bạn")
+                        .font(.caption).foregroundColor(.secondary)
+                }
+                Spacer()
+                Text("OFFLINE")
+                    .font(.caption2.bold())
+                    .padding(.horizontal, 8).padding(.vertical, 4)
+                    .background(Capsule().fill(Color.green.opacity(0.15)))
+                    .foregroundColor(.green)
+            }
+            if !mesh.connectedPeerNames.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(mesh.connectedPeerNames, id: \.self) { name in
+                            HStack(spacing: 6) {
+                                Circle().fill(Color.green).frame(width: 8, height: 8)
+                                Text(name).font(.caption).lineLimit(1)
+                            }
+                            .padding(.horizontal, 8).padding(.vertical, 4)
+                            .background(Capsule().fill(Color.gray.opacity(0.15)))
+                        }
+                    }
+                }
+            }
         }
-        .padding(.horizontal)
-        .padding(.bottom, 6)
+        .padding()
     }
 
-    private var statusText: String {
-        switch channel {
-        case .mesh:
-            if store.meshPeerCount == 0 {
-                return "Đang tìm thiết bị gần bạn…"
+    /// Nostr: bang tin cong khai — tin hien dang feed, khong bong bong.
+    private var nostrHeader: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(LinearGradient(colors: [Color(red: 0.55, green: 0.36, blue: 0.96), Color(red: 0.93, green: 0.28, blue: 0.60)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                Image(systemName: "globe").font(.system(size: 20, weight: .semibold)).foregroundColor(.white)
             }
-            return "\(store.meshPeerCount) thiết bị gần bạn"
-        case .nostr:
-            if store.nostrConnected {
-                return "Đã kết nối \(store.nostrRelayCount) relay"
+            .frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Nostr công khai").font(.headline)
+                Text(store.nostrConnected ? "Đã kết nối \(store.nostrRelayCount) relay" : "Đang kết nối relay…")
+                    .font(.caption).foregroundColor(.secondary)
             }
-            return "Đang kết nối relay…"
-        case .dm:
-            return store.nostrConnected ? "Đã kết nối \(store.nostrRelayCount) relay" : "Đang kết nối relay…"
-        case .geo:
-            if let geo = store.currentGeohash {
-                return "Kênh #\(geo) · ~5km"
-            }
-            return "Chưa có vị trí"
+            Spacer()
+            Circle().fill(store.nostrConnected ? Color.green : Color.orange).frame(width: 10, height: 10)
         }
+        .padding()
+    }
+
+    private var nostrFeedList: some View {
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    if messages.isEmpty {
+                        emptyState
+                    } else {
+                        ForEach(messages) { message in
+                            nostrFeedRow(message).id(message.id)
+                            Divider().padding(.leading, 52)
+                        }
+                    }
+                }
+                .padding(.vertical, 4)
+            }
+            .onChange(of: store.messages.count) { _ in
+                if let last = messages.last {
+                    withAnimation {
+                        proxy.scrollTo(last.id, anchor: .bottom)
+                    }
+                }
+            }
+        }
+    }
+
+    private func nostrFeedRow(_ message: ZheeChatMessage) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(spacing: 8) {
+                ZheeAvatarView(urlString: store.profiles[message.senderID]?.picture, name: message.senderName)
+                Text(message.isMine ? "Bạn" : message.senderName)
+                    .font(.subheadline.bold()).lineLimit(1)
+                Text(timeText(message.date)).font(.caption2).foregroundColor(.secondary)
+                Spacer()
+            }
+            if message.hasVoice {
+                ZheeVoiceBubble(audio: store.voiceData(for: message.id), isMine: message.isMine, seed: message.id)
+            } else {
+                Text(message.text).font(.body).frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(.horizontal)
+        .padding(.vertical, 10)
+    }
+
+    /// Geo: the o geohash + chat bong bong trong o.
+    private var geoHeader: some View {
+        HStack(spacing: 12) {
+            ZStack {
+                Circle().fill(LinearGradient(colors: [Color(red: 0.13, green: 0.77, blue: 0.37), Color(red: 0.08, green: 0.72, blue: 0.65)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                Image(systemName: "mappin").font(.system(size: 20, weight: .semibold)).foregroundColor(.white)
+            }
+            .frame(width: 44, height: 44)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Gần tôi").font(.headline)
+                Text("Ô #\(store.currentGeohash ?? "") · ~5km").font(.caption).foregroundColor(.secondary)
+                Text("Chỉ người trong ô này thấy").font(.caption2).foregroundColor(.secondary)
+            }
+            Spacer()
+        }
+        .padding()
     }
 
     private var messageList: some View {
@@ -271,18 +371,34 @@ struct ZheeChatView: View {
         VStack(spacing: 10) {
             ZStack {
                 Circle().fill(Color.gray.opacity(0.12))
-                Image(systemName: channel == .mesh ? "wifi" : "globe").font(.system(size: 40)).foregroundColor(.secondary)
+                Image(systemName: emptyStateIcon).font(.system(size: 40)).foregroundColor(.secondary)
             }
             .frame(width: 88, height: 88)
-            Text(channel == .mesh
-                 ? "Chưa có tin nhắn nào.\nMở ZheeChat trên 2 máy gần nhau để chat offline."
-                 : "Chưa có tin nhắn nào.\nKênh công khai — ai dùng ZheeChat cũng thấy.")
+            Text(emptyStateText)
                 .font(.subheadline)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.top, 60)
+    }
+
+    private var emptyStateIcon: String {
+        switch channel {
+        case .mesh: return "wifi"
+        case .nostr: return "globe"
+        case .geo: return "mappin"
+        case .dm: return "lock"
+        }
+    }
+
+    private var emptyStateText: String {
+        switch channel {
+        case .mesh: return "Chưa có tin nhắn nào.\nMở ZheeChat trên 2 máy gần nhau để chat offline."
+        case .nostr: return "Chưa có tin nhắn nào.\nKênh công khai — ai dùng ZheeChat cũng thấy."
+        case .geo: return "Chưa có tin nhắn nào.\nChỉ người trong ô geohash này thấy."
+        case .dm: return "Chưa có DM nào."
+        }
     }
 
     private func messageRow(_ message: ZheeChatMessage) -> some View {
@@ -324,7 +440,7 @@ struct ZheeChatView: View {
                 recordingBar
             } else {
                 HStack(spacing: 8) {
-                    TextField("Nhắn tin…", text: $draft)
+                    TextField(composerPlaceholder, text: $draft)
                         .textFieldStyle(.roundedBorder)
                         .submitLabel(.send)
                         .onSubmit { send() }
@@ -391,6 +507,15 @@ struct ZheeChatView: View {
         let pad = max(0, 24 - tail.count)
         if i < pad { return 5 }
         return 4 + tail[i - pad] * 18
+    }
+
+    private var composerPlaceholder: String {
+        switch channel {
+        case .mesh: return "Nhắn cho thiết bị gần…"
+        case .nostr: return "Đăng công khai…"
+        case .geo: return "Nhắn trong ô #\(store.currentGeohash ?? "")…"
+        case .dm: return "Nhắn tin…"
+        }
     }
 
     private var canSend: Bool {
