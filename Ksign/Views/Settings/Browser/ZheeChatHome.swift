@@ -88,6 +88,7 @@ struct ZheeOutlineIcon: View {
                 path.move(to: p(13.5, 9.5)); path.addLine(to: p(13, 18))
             case .check:
                 path.move(to: p(4, 12.5)); path.addLine(to: p(9.5, 18.5)); path.addLine(to: p(20, 6.5))
+            case .play:
                 path.move(to: p(8, 5)); path.addLine(to: p(8, 19)); path.addLine(to: p(19, 12))
                 path.closeSubpath()
             case .pause:
@@ -156,6 +157,7 @@ private struct ZheeChatListView: View {
     @State private var showNewDM = false
     @State private var showIdentity = false
     @State private var openDM: String?
+    @State private var showDM = false
 
     var body: some View {
         Group {
@@ -201,14 +203,17 @@ private struct ZheeChatListView: View {
             ZheeNewDMView { hex in
                 showNewDM = false
                 openDM = hex
+                showDM = true
             }
         }
         .sheet(isPresented: $showIdentity) {
             ZheeChatIdentityView()
         }
-        .navigationDestination(item: $openDM) { peer in
-            ZheeChatView(channel: .dm, peer: peer)
+        // navigationDestination(item:) needs iOS 17; the app targets 16.
+        .navigationDestination(isPresented: $showDM) {
+            ZheeChatView(channel: .dm, peer: openDM)
         }
+        .onChange(of: showDM) { if !showDM { openDM = nil } }
     }
 }
 

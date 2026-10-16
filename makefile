@@ -65,7 +65,7 @@ $(SCHEMES): deps
 	# Tai cac thu vien Python pho bien (pure-Python) vao site-packages
 	mkdir -p "$(STAGE)/Payload/$(NAME).app/python/lib/python3.15/site-packages"; \
 	rm -rf /tmp/pywheels && mkdir -p /tmp/pywheels; \
-	pip3 download --quiet --only-binary=:all: --dest /tmp/pywheels requests beautifulsoup4 python-dateutil six pytz pyyaml click tqdm colorama 2>/dev/null || true; \
+	pip3 download --quiet --only-binary=:all: --dest /tmp/pywheels requests beautifulsoup4 python-dateutil six pytz pyyaml click tqdm colorama certifi 2>/dev/null || true; \
 	for whl in /tmp/pywheels/*-none-any.whl; do \
 		[ -f "$$whl" ] && unzip -o -q "$$whl" -d "$(STAGE)/Payload/$(NAME).app/python/lib/python3.15/site-packages/"; \
 	done; \

@@ -291,7 +291,7 @@ final class ZheeChatStore: ObservableObject {
             .receive(on: DispatchQueue.main)
             .sink { [weak self] names in
                 guard let self else { return }
-                let joined = names.filter { !knownMeshNames.contains($0) }
+                let joined = names.filter { !self.knownMeshNames.contains($0) }
                 knownMeshNames = Set(names)
                 for name in joined {
                     addActivity(icon: .antenna, text: "\(name) đã vào gần bạn")
