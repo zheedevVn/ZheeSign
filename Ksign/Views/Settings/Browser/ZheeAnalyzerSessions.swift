@@ -14,6 +14,7 @@
 //  observe it to adopt a report that finished while they were gone.
 //  `runID` drops stale completions when a newer analysis started.
 
+import Combine
 import Foundation
 
 final class ZheeIPAAnalyzerSession: ObservableObject {
