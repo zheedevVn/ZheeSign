@@ -5,6 +5,7 @@ import SwiftUI
 enum ZheeOutlineIconKind {
     case chat, people, bell, menu, compose, antenna, globe, pin
     case lock, chevronLeft, send, mic, trash, play, pause
+    case check
 }
 
 struct ZheeOutlineIcon: View {
@@ -85,7 +86,8 @@ struct ZheeOutlineIcon: View {
                 path.addLine(to: p(16.5, 21)); path.addLine(to: p(17.5, 6))
                 path.move(to: p(10.5, 9.5)); path.addLine(to: p(11, 18))
                 path.move(to: p(13.5, 9.5)); path.addLine(to: p(13, 18))
-            case .play:
+            case .check:
+                path.move(to: p(4, 12.5)); path.addLine(to: p(9.5, 18.5)); path.addLine(to: p(20, 6.5))
                 path.move(to: p(8, 5)); path.addLine(to: p(8, 19)); path.addLine(to: p(19, 12))
                 path.closeSubpath()
             case .pause:
@@ -487,7 +489,7 @@ private struct ZheeChatMenuView: View {
                 Text("Xóa vĩnh viễn định danh (npub/nsec) và toàn bộ lịch sử chat.")
             }
             Section {
-                Text("ZheeChat trong ZheeSign 1.7.35")
+                Text("ZheeChat trong ZheeSign 1.7.36")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

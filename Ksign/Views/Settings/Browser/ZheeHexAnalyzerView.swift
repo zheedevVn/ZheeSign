@@ -15,6 +15,10 @@ import UIKit
 struct ZheeHexAnalyzerView: View {
     @State private var showPicker = false
     @State private var isAnalyzing = false
+    @State private var analysisRunID = UUID()
+    @State private var progressText = ""
+    @State private var progressStep = 0
+    @State private var progressLog: [(Date, String)] = []
     @State private var fileName = ""
     @State private var fileSizeText = ""
     @State private var fileData: Data?
@@ -67,6 +71,14 @@ struct ZheeHexAnalyzerView: View {
                     .font(.caption)
                     .foregroundColor(.secondary)
 
+                if isAnalyzing {
+                    ZheeAnalyzeProgressView(step: progressStep, text: progressText, stages: [
+                        "Đọc file",
+                        "Bóc chuỗi",
+                        "Quét link & secret",
+                    ])
+                }
+
                 if let errorMessage {
                     HStack(alignment: .top, spacing: 8) {
                         Image(systemName: "exclamationmark.triangle.fill")
@@ -76,6 +88,10 @@ struct ZheeHexAnalyzerView: View {
                             .foregroundColor(.red)
                     }
                 }
+            }
+
+            if !progressLog.isEmpty {
+                ZheeProgressLogView(log: progressLog)
             }
 
             if fileData != nil {
@@ -191,7 +207,7 @@ struct ZheeHexAnalyzerView: View {
 
                 if !secrets.isEmpty {
                     Section("Secret / Key (\(secrets.count))") {
-                        Text("Giá trị đã bị che — chỉ hiện tên key + vài ký tự đầu.")
+                        Text("Hiển thị đầy đủ giá trị — đừng gửi cho ai.")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         ForEach(secrets) { secret in
@@ -199,7 +215,7 @@ struct ZheeHexAnalyzerView: View {
                                 Text(secret.kind)
                                     .font(.subheadline)
                                     .fontWeight(.semibold)
-                                Text(secret.masked)
+                                Text(secret.value)
                                     .font(.system(.caption, design: .monospaced))
                                     .foregroundColor(.secondary)
                             }
@@ -218,6 +234,8 @@ struct ZheeHexAnalyzerView: View {
         }
         .navigationTitle("Hex & Chuỗi")
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear { restoreSessionIfNeeded() }
+        .onReceive(ZheeHexAnalyzerSession.shared.$revision) { _ in restoreSessionIfNeeded() }
         .sheet(isPresented: $showPicker) {
             ZheeDocumentPicker(contentTypes: [.data]) { url in
                 showPicker = false
@@ -229,10 +247,56 @@ struct ZheeHexAnalyzerView: View {
         }
     }
 
+    /// Restores the last loaded file from the session (e.g. after going
+    /// back and returning). The bytes are in memory, so no workDir check.
+    private func restoreSessionIfNeeded() {
+        guard fileData == nil else { return }
+        let session = ZheeHexAnalyzerSession.shared
+        guard let saved = session.fileData else { return }
+        fileName = session.fileName
+        fileSizeText = session.fileSizeText
+        fileData = saved
+        strings = session.strings
+        links = session.links
+        secrets = session.secrets
+    }
+
+    /// Logs a progress step from any thread (state writes go to main).
+    private func logStep(_ step: Int, _ text: String) {
+        DispatchQueue.main.async {
+            progressText = text
+            progressStep = step
+            progressLog.append((Date(), text))
+        }
+    }
+
     private func loadFile(url: URL) {
+        // Stable copy: the picker copy (asCopy) may be purged after
+        // dismissal, before the background read runs.
+        let displayName = url.lastPathComponent
+        var url = url
+        let stableURL = FileManager.default.temporaryDirectory
+            .appendingPathComponent("ZheePick_\(UUID().uuidString)_\(displayName)")
+        if (try? FileManager.default.copyItem(at: url, to: stableURL)) != nil {
+            url = stableURL
+        }
+        // Drop the previous session; runID drops stale completions.
+        let myRun = UUID()
+        analysisRunID = myRun
+        let session = ZheeHexAnalyzerSession.shared
+        session.runID = myRun
+        session.fileData = nil
+        session.strings = []
+        session.links = []
+        session.secrets = []
+        session.bump()
         isAnalyzing = true
         errorMessage = nil
-        fileName = url.lastPathComponent
+        progressText = "Đang đọc file…"
+        progressStep = 0
+        progressLog = [(Date(), "Bắt đầu đọc \(displayName)")]
+        let startedAt = Date()
+        fileName = displayName
         pageOffset = 0
         strings = []
         links = []
@@ -255,31 +319,52 @@ struct ZheeHexAnalyzerView: View {
                 data = try? handle.read(upToCount: Int(cap))
                 try? handle.close()
             }
+            // Free the stable copy now that the bytes are in memory.
+            try? fm.removeItem(at: url)
             guard let data else {
                 DispatchQueue.main.async {
+                    guard analysisRunID == myRun,
+                          ZheeHexAnalyzerSession.shared.runID == myRun else { return }
                     errorMessage = "Không đọc được file."
+                    progressLog.append((Date(), "Lỗi: Không đọc được file."))
                     isAnalyzing = false
                 }
                 return
             }
+            logStep(1, "Đang bóc chuỗi…")
             let extracted = ZheeBinaryScanner.extractStrings(from: data)
+            logStep(2, "Đang quét link & secret…")
             var linkMap: [String: ZheeLinkItem] = [:]
             var foundSecrets: [ZheeSecretItem] = []
             ZheeBinaryScanner.scanStrings(extracted, source: fileName, linkMap: &linkMap, secrets: &foundSecrets)
             var seen = Set<String>()
             foundSecrets = foundSecrets.filter { item in
-                let k = item.kind + "|" + item.masked
+                let k = item.kind + "|" + item.value
                 guard !seen.contains(k) else { return false }
                 seen.insert(k)
                 return true
             }
             DispatchQueue.main.async {
+                // Stale run (a newer load started): drop the result.
+                guard analysisRunID == myRun,
+                      ZheeHexAnalyzerSession.shared.runID == myRun else { return }
+                progressLog.append((Date(), String(format: "Hoàn tất trong %.1fs — %d chuỗi, %d link, %d secret", Date().timeIntervalSince(startedAt), extracted.count, linkMap.count, foundSecrets.count)))
                 fileData = data
                 fileSizeText = sizeText + (size > cap ? " (chỉ đọc 100MB đầu)" : "")
                 strings = extracted
                 links = linkMap.values.sorted { $0.url < $1.url }
                 secrets = foundSecrets.sorted { $0.kind < $1.kind }
                 isAnalyzing = false
+                // Keep the loaded file in the session so going back
+                // does not lose it.
+                let session = ZheeHexAnalyzerSession.shared
+                session.fileName = fileName
+                session.fileSizeText = fileSizeText
+                session.strings = strings
+                session.links = links
+                session.secrets = secrets
+                session.fileData = data
+                session.bump()
             }
         }
     }
