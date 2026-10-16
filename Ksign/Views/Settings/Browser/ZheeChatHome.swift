@@ -1,127 +1,4 @@
 import SwiftUI
-import UIKit
-
-/// Hand-drawn outline icons (no SF Symbols): every icon is a stroked Path
-/// drawn in a 24x24 space, scaled to the requested size.
-enum ZheeOutlineIconKind {
-    case chat, people, bell, menu, compose, antenna, globe, pin
-    case lock, chevronLeft, send, mic, trash, play, pause
-    case check
-}
-
-struct ZheeOutlineIcon: View {
-    let kind: ZheeOutlineIconKind
-    let size: CGFloat
-    var color: Color = .primary
-    var lineWidth: CGFloat?
-
-    init(_ kind: ZheeOutlineIconKind, size: CGFloat, color: Color = .primary, lineWidth: CGFloat? = nil) {
-        self.kind = kind
-        self.size = size
-        self.color = color
-        self.lineWidth = lineWidth
-    }
-
-    /// Tab bar drops custom Views in tabItem icons (it needs a UIImage),
-    /// so render the hand-drawn icon to a template UIImage once per kind.
-    /// Template mode lets the tab bar tint it (blue selected / gray idle).
-    private static var tabImageCache: [ZheeOutlineIconKind: UIImage] = [:]
-    static func tabImage(_ kind: ZheeOutlineIconKind) -> UIImage {
-        if let cached = tabImageCache[kind] { return cached }
-        let renderer = ImageRenderer(content: ZheeOutlineIcon(kind, size: 28, color: .black))
-        renderer.scale = 3
-        let image = renderer.uiImage ?? UIImage()
-        tabImageCache[kind] = image
-        return image
-    }
-
-    var body: some View {
-        let path = Path { path in
-            let s = size / 24
-            func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x * s, y: y * s) }
-            func r(_ x: CGFloat, _ y: CGFloat, _ w: CGFloat, _ h: CGFloat) -> CGRect {
-                CGRect(x: x * s, y: y * s, width: w * s, height: h * s)
-            }
-            switch kind {
-            case .chat:
-                path.addRoundedRect(in: r(3, 4, 18, 12), cornerSize: CGSize(width: 4 * s, height: 4 * s))
-                path.move(to: p(8, 16)); path.addLine(to: p(8, 21)); path.addLine(to: p(13, 16))
-            case .people:
-                path.addEllipse(in: r(5, 4, 6, 6))
-                path.addEllipse(in: r(14.5, 3, 5, 5))
-                path.move(to: p(2.5, 20)); path.addQuadCurve(to: p(13.5, 20), control: p(8, 10))
-                path.move(to: p(13, 20)); path.addQuadCurve(to: p(21, 20), control: p(17, 13))
-            case .bell:
-                path.move(to: p(12, 3)); path.addLine(to: p(12, 5.5))
-                path.move(to: p(5, 18)); path.addQuadCurve(to: p(19, 18), control: p(12, 0))
-                path.move(to: p(4, 19.5)); path.addLine(to: p(20, 19.5))
-                path.addEllipse(in: r(10.5, 20.5, 3, 2))
-            case .menu:
-                for y in [7, 12, 17] as [CGFloat] {
-                    path.move(to: p(4, y)); path.addLine(to: p(20, y))
-                }
-            case .compose:
-                path.addRoundedRect(in: r(3, 3, 18, 18), cornerSize: CGSize(width: 2 * s, height: 2 * s))
-                path.move(to: p(5, 19)); path.addLine(to: p(14, 10))
-                path.addLine(to: p(19, 5)); path.addLine(to: p(17, 11))
-                path.closeSubpath()
-            case .antenna:
-                path.addEllipse(in: r(10.5, 15.5, 3, 3))
-                path.move(to: p(7, 12)); path.addQuadCurve(to: p(17, 12), control: p(12, 4))
-                path.move(to: p(4.5, 10)); path.addQuadCurve(to: p(19.5, 10), control: p(12, -1))
-            case .globe:
-                path.addEllipse(in: r(3.5, 3.5, 17, 17))
-                path.addEllipse(in: r(8, 3.5, 8, 17))
-                path.move(to: p(3.5, 12)); path.addLine(to: p(20.5, 12))
-            case .pin:
-                path.move(to: p(12, 21))
-                path.addQuadCurve(to: p(12, 3), control: p(4.5, 12))
-                path.addQuadCurve(to: p(12, 21), control: p(19.5, 12))
-                path.addEllipse(in: r(8.5, 7, 7, 7))
-            case .lock:
-                path.move(to: p(7.5, 11))
-                path.addQuadCurve(to: p(16.5, 11), control: p(12, 2))
-                path.addRoundedRect(in: r(5, 11, 14, 10), cornerSize: CGSize(width: 2.5 * s, height: 2.5 * s))
-                path.addEllipse(in: r(11, 14, 2, 2.5))
-            case .chevronLeft:
-                path.move(to: p(15, 4)); path.addLine(to: p(8, 12)); path.addLine(to: p(15, 20))
-            case .send:
-                path.move(to: p(3.5, 12.5)); path.addLine(to: p(20.5, 3.5))
-                path.addLine(to: p(13.5, 13.5)); path.addLine(to: p(20.5, 20.5))
-                path.closeSubpath()
-            case .mic:
-                path.addRoundedRect(in: r(9, 3, 6, 11), cornerSize: CGSize(width: 3 * s, height: 3 * s))
-                path.move(to: p(5.5, 11)); path.addQuadCurve(to: p(18.5, 11), control: p(12, 21))
-                path.move(to: p(12, 17.5)); path.addLine(to: p(12, 21))
-                path.move(to: p(8.5, 21)); path.addLine(to: p(15.5, 21))
-            case .trash:
-                path.move(to: p(5, 6)); path.addLine(to: p(19, 6))
-                path.move(to: p(9, 6)); path.addLine(to: p(9, 3.5))
-                path.addLine(to: p(15, 3.5)); path.addLine(to: p(15, 6))
-                path.move(to: p(6.5, 6)); path.addLine(to: p(7.5, 21))
-                path.addLine(to: p(16.5, 21)); path.addLine(to: p(17.5, 6))
-                path.move(to: p(10.5, 9.5)); path.addLine(to: p(11, 18))
-                path.move(to: p(13.5, 9.5)); path.addLine(to: p(13, 18))
-            case .check:
-                path.move(to: p(4, 12.5)); path.addLine(to: p(9.5, 18.5)); path.addLine(to: p(20, 6.5))
-            case .play:
-                path.move(to: p(8, 5)); path.addLine(to: p(8, 19)); path.addLine(to: p(19, 12))
-                path.closeSubpath()
-            case .pause:
-                path.addRoundedRect(in: r(6.5, 5, 4.5, 14), cornerSize: CGSize(width: 1.5 * s, height: 1.5 * s))
-                path.addRoundedRect(in: r(13, 5, 4.5, 14), cornerSize: CGSize(width: 1.5 * s, height: 1.5 * s))
-            }
-        }
-        Group {
-            if kind == .play || kind == .pause {
-                path.fill(color)
-            } else {
-                path.stroke(color, style: StrokeStyle(lineWidth: lineWidth ?? max(1.2, size * 0.075), lineCap: .round, lineJoin: .round))
-            }
-        }
-        .frame(width: size, height: size)
-    }
-}
 
 /// Messenger-style recent-chats home for ZheeChat:
 /// Đoạn chat (recent conversations) / Mọi người / Thông báo / Menu.
@@ -154,13 +31,13 @@ struct ZheeChatRootView: View {
     var body: some View {
         TabView {
             NavigationStack { ZheeChatListView() }
-                .tabItem { Label { Text("Đoạn chat") } icon: { Image(uiImage: ZheeOutlineIcon.tabImage(.chat)).renderingMode(.template) } }
+                .tabItem { Label("Đoạn chat", systemImage: "message") }
             NavigationStack { ZheePeopleView() }
-                .tabItem { Label { Text("Mọi người") } icon: { Image(uiImage: ZheeOutlineIcon.tabImage(.people)).renderingMode(.template) } }
+                .tabItem { Label("Mọi người", systemImage: "person.2") }
             NavigationStack { ZheeActivityListView() }
-                .tabItem { Label { Text("Thông báo") } icon: { Image(uiImage: ZheeOutlineIcon.tabImage(.bell)).renderingMode(.template) } }
+                .tabItem { Label("Thông báo", systemImage: "bell") }
             NavigationStack { ZheeChatMenuView() }
-                .tabItem { Label { Text("Menu") } icon: { Image(uiImage: ZheeOutlineIcon.tabImage(.menu)).renderingMode(.template) } }
+                .tabItem { Label("Menu", systemImage: "line.3.horizontal") }
         }
         // ZheeChat has its own TabView — hide the app tab bar so the
         // two floating pills never stack on top of each other.
@@ -182,7 +59,7 @@ private struct ZheeChatListView: View {
         Group {
             if store.conversations.isEmpty {
                 VStack(spacing: 12) {
-                    ZheeOutlineIcon(.chat, size: 44, color: .secondary)
+                    Image(systemName: "message").font(.system(size: 44)).foregroundColor(.secondary)
                     Text("Chưa có đoạn chat nào")
                         .font(.headline)
                     Text("Mở Mesh gần, Nostr công khai, hoặc bắt đầu DM mới để chat.")
@@ -214,7 +91,7 @@ private struct ZheeChatListView: View {
             }
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button { showNewDM = true } label: {
-                    ZheeOutlineIcon(.compose, size: 20)
+                    Image(systemName: "square.and.pencil").font(.system(size: 20))
                 }
             }
         }
@@ -318,12 +195,13 @@ private struct ZheeChannelAvatar: View {
     let kind: ZheeChatChannel
     let size: CGFloat
 
-    private var icon: ZheeOutlineIconKind {
+    /// SF Symbols (Apple outline) — giong icon Cài đặt của Apple.
+    private var icon: String {
         switch kind {
-        case .mesh: return .antenna
-        case .nostr: return .globe
-        case .geo: return .pin
-        case .dm: return .chat
+        case .mesh: return "wifi"
+        case .nostr: return "globe"
+        case .geo: return "mappin"
+        case .dm: return "message"
         }
     }
 
@@ -343,7 +221,7 @@ private struct ZheeChannelAvatar: View {
     var body: some View {
         ZStack {
             Circle().fill(gradient)
-            ZheeOutlineIcon(icon, size: size * 0.55, color: .white, lineWidth: size * 0.055)
+            Image(systemName: icon).font(.system(size: size * 0.5, weight: .semibold)).foregroundColor(.white)
         }
         .frame(width: size, height: size)
     }
@@ -438,7 +316,7 @@ private struct ZheeActivityListView: View {
         Group {
             if store.activities.isEmpty {
                 VStack(spacing: 12) {
-                    ZheeOutlineIcon(.bell, size: 44, color: .secondary)
+                    Image(systemName: "bell").font(.system(size: 44)).foregroundColor(.secondary)
                     Text("Chưa có thông báo nào")
                         .font(.headline)
                     Text("Bạn bè Mesh vào gần, DM mới và trạng thái relay sẽ hiện ở đây.")
@@ -452,7 +330,7 @@ private struct ZheeActivityListView: View {
                     HStack(spacing: 12) {
                         ZStack {
                             Circle().fill(Color.blue.opacity(0.15))
-                            ZheeOutlineIcon(activity.icon, size: 18, color: .blue)
+                            Image(systemName: activity.icon).font(.system(size: 18)).foregroundColor(.blue)
                         }
                         .frame(width: 36, height: 36)
                         VStack(alignment: .leading, spacing: 2) {
@@ -517,7 +395,7 @@ private struct ZheeChatMenuView: View {
                 Text("Xóa vĩnh viễn định danh (npub/nsec) và toàn bộ lịch sử chat.")
             }
             Section {
-                Text("ZheeChat trong ZheeSign 1.7.38")
+                Text("ZheeChat trong ZheeSign 1.7.39")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

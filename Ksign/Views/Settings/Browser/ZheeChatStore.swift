@@ -65,7 +65,7 @@ struct ZheeChatMessage: Identifiable, Codable {
 /// One activity feed entry (Thông báo tab): peer joined, DM arrived, relay connected.
 struct ZheeActivity: Identifiable {
     let id = UUID()
-    let icon: ZheeOutlineIconKind
+    let icon: String
     let text: String
     let date: Date
 }
@@ -176,7 +176,7 @@ final class ZheeChatStore: ObservableObject {
         return "\(m.senderName): \(body)"
     }
 
-    private func addActivity(icon: ZheeOutlineIconKind, text: String) {
+    private func addActivity(icon: String, text: String) {
         activities.insert(ZheeActivity(icon: icon, text: text, date: Date()), at: 0)
         if activities.count > 50 { activities.removeLast(activities.count - 50) }
     }
@@ -263,7 +263,7 @@ final class ZheeChatStore: ObservableObject {
         nostr.onDM = { [weak self] event, plaintext in
             guard let self else { return }
             nostr.requestProfile(pubkey: event.pubkey)
-            addActivity(icon: .chat, text: "Tin nhắn riêng mới từ \(displayName(for: event.pubkey))")
+            addActivity(icon: "message", text: "Tin nhắn riêng mới từ \(displayName(for: event.pubkey))")
             append(
                 id: event.id, channel: .dm, senderID: event.pubkey,
                 senderName: displayName(for: event.pubkey),
@@ -294,7 +294,7 @@ final class ZheeChatStore: ObservableObject {
                 let joined = names.filter { !self.knownMeshNames.contains($0) }
                 knownMeshNames = Set(names)
                 for name in joined {
-                    addActivity(icon: .antenna, text: "\(name) đã vào gần bạn")
+                    addActivity(icon: "wifi", text: "\(name) đã vào gần bạn")
                 }
             }
             .store(in: &cancellables)
@@ -303,7 +303,7 @@ final class ZheeChatStore: ObservableObject {
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [weak self] connected in
-                if connected { self?.addActivity(icon: .globe, text: "Đã kết nối relay Nostr") }
+                if connected { self?.addActivity(icon: "globe", text: "Đã kết nối relay Nostr") }
             }
             .store(in: &cancellables)
     }
