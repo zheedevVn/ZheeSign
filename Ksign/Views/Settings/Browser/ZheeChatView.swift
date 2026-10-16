@@ -135,7 +135,7 @@ struct ZheeChatView: View {
                         selectedPeer = conv.peer
                     } label: {
                         HStack {
-                            Image(systemName: "lock.fill")
+                            Image(systemName: "lock")
                                 .font(.caption)
                                 .foregroundColor(.green)
                             VStack(alignment: .leading, spacing: 2) {
@@ -167,7 +167,7 @@ struct ZheeChatView: View {
 
     private var geoEmptyState: some View {
         VStack(spacing: 14) {
-            Image(systemName: "location.fill")
+            Image(systemName: "location")
                 .font(.largeTitle)
                 .foregroundColor(.secondary)
             Text("Kênh gần tôi cần vị trí của bạn.\nChỉ dùng ô geohash ~5km, không gửi tọa độ chính xác.")
@@ -192,10 +192,7 @@ struct ZheeChatView: View {
             Text(statusText)
                 .font(.caption)
                 .foregroundColor(.secondary)
-            Spacer()
-            Text(channel.subtitle)
-                .font(.caption2)
-                .foregroundColor(.secondary)
+                .lineLimit(1)
         }
         .padding(.horizontal)
         .padding(.bottom, 6)
@@ -276,17 +273,18 @@ struct ZheeChatView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-                Text(message.text)
-                    .font(.body)
-                    .foregroundColor(message.isMine ? .white : .primary)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(message.isMine ? Color.blue : Color(.secondarySystemBackground))
-                    )
                 if message.hasVoice {
-                    ZheeVoicePlayButton(audio: store.voiceData(for: message.id))
+                    ZheeVoiceBubble(audio: store.voiceData(for: message.id), isMine: message.isMine, seed: message.id)
+                } else {
+                    Text(message.text)
+                        .font(.body)
+                        .foregroundColor(message.isMine ? .white : .primary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(message.isMine ? Color.blue : Color(.secondarySystemBackground))
+                        )
                 }
                 Text(timeText(message.date))
                     .font(.caption2)
@@ -314,7 +312,7 @@ struct ZheeChatView: View {
                     .submitLabel(.send)
                     .onSubmit { send() }
                 if channel == .mesh {
-                    Image(systemName: "mic.fill")
+                    Image(systemName: "mic")
                         .font(.body)
                         .padding(10)
                         .background(Circle().fill(recorder.isRecording ? Color.red : Color.gray.opacity(0.25)))
@@ -324,7 +322,7 @@ struct ZheeChatView: View {
                         }, perform: {})
                 }
                 Button(action: send) {
-                    Image(systemName: "paperplane.fill")
+                    Image(systemName: "paperplane")
                         .font(.body)
                         .padding(10)
                         .background(Circle().fill(canSend ? Color.blue : Color.gray.opacity(0.4)))
@@ -374,7 +372,7 @@ private struct ZheeDMThreadView: View {
                 Button(action: onBack) {
                     Image(systemName: "chevron.left")
                 }
-                Image(systemName: "lock.fill")
+                Image(systemName: "lock")
                     .font(.caption)
                     .foregroundColor(.green)
                 Text("npub1" + String(peer.prefix(8)))
@@ -412,7 +410,7 @@ private struct ZheeDMThreadView: View {
                     .submitLabel(.send)
                     .onSubmit { send() }
                 Button(action: send) {
-                    Image(systemName: "paperplane.fill")
+                    Image(systemName: "paperplane")
                         .font(.body)
                         .padding(10)
                         .background(Circle().fill(canSend ? Color.blue : Color.gray.opacity(0.4)))
@@ -545,27 +543,46 @@ private struct ZheeAvatarView: View {
     }
 }
 
-/// Play button for a voice (PTT) message.
-private struct ZheeVoicePlayButton: View {
+/// Single-bubble voice (PTT) message: play button + waveform, iMessage-style.
+private struct ZheeVoiceBubble: View {
     @StateObject private var player = ZheeVoicePlayer()
     let audio: Data?
+    let isMine: Bool
+    let seed: String
+
+    private var barColor: Color { isMine ? Color.white.opacity(0.9) : Color.blue.opacity(0.75) }
+
+    private func barHeight(_ i: Int) -> CGFloat {
+        let base = seed.utf8.reduce(0) { $0 &+ Int($1) }
+        return 5 + 11 * abs(sin(Double(i) * 1.7 + Double(base) * 0.13))
+    }
 
     var body: some View {
-        Button {
-            if let audio { player.play(audio) }
-        } label: {
-            HStack(spacing: 4) {
-                Image(systemName: player.isPlaying ? "pause.fill" : "play.fill")
-                    .font(.caption)
-                Text(player.isPlaying ? "Đang phát…" : "Nghe thoại")
-                    .font(.caption)
+        HStack(spacing: 8) {
+            Button {
+                if let audio { player.play(audio) }
+            } label: {
+                Image(systemName: player.isPlaying ? "pause" : "play")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(isMine ? .white : .blue)
+                    .frame(width: 30, height: 30)
+                    .overlay(Circle().stroke(isMine ? Color.white : Color.blue, lineWidth: 1.5))
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Capsule().fill(Color.green.opacity(0.2)))
-            .foregroundColor(.green)
+            .disabled(audio == nil)
+            HStack(spacing: 2.5) {
+                ForEach(0..<20, id: \.self) { i in
+                    RoundedRectangle(cornerRadius: 1.25)
+                        .fill(barColor)
+                        .frame(width: 2.5, height: barHeight(i))
+                }
+            }
         }
-        .disabled(audio == nil)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 18)
+                .fill(isMine ? Color.blue : Color(.secondarySystemBackground))
+        )
     }
 }
 

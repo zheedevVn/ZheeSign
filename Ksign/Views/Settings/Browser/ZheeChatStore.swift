@@ -17,15 +17,6 @@ enum ZheeChatChannel: String, CaseIterable, Identifiable {
         case .geo: return "Gần tôi"
         }
     }
-
-    var subtitle: String {
-        switch self {
-        case .mesh: return "Offline · Bluetooth + Wi-Fi cục bộ"
-        case .nostr: return "Online · Relay toàn cầu"
-        case .dm: return "Mã hóa NIP-04 · Chỉ 2 người đọc được"
-        case .geo: return "Kênh theo vị trí · Bán kính ~5km"
-        }
-    }
 }
 
 /// One chat message in a ZheeChat channel.
