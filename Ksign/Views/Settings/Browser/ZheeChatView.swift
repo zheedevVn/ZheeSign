@@ -52,6 +52,11 @@ struct ZheeChatView: View {
                 composer
             }
         }
+        // Luon neo len tren + doi kenh khong animation: animation ngam
+        // khi doi nhanh kenh lam noi dung nhay giua man hinh / chip
+        // bien mat giua chung (hieu ung loi tren iOS 26).
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .animation(nil, value: channel)
         .onChange(of: channel) { _ in markCurrentRead() }
         .onChange(of: selectedPeer) { _ in markCurrentRead() }
         .onChange(of: location.coordinate.map { "\($0.latitude),\($0.longitude)" }) { _ in
@@ -157,6 +162,9 @@ struct ZheeChatView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
+        // .plain: tat animation nhan / mo cua Button mac dinh khi bam chip
+        // (nguon goc chip nhap nhay / bien mat giua chung).
+        .buttonStyle(.plain)
     }
 
     private var dmBody: some View {
@@ -241,7 +249,7 @@ struct ZheeChatView: View {
             .buttonStyle(.borderedProminent)
         }
         .frame(maxWidth: .infinity)
-        .padding(.top, 60)
+        .padding(.top, 24)
         .padding(.horizontal)
     }
 
