@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 /// Hand-drawn outline icons (no SF Symbols): every icon is a stroked Path
 /// drawn in a 24x24 space, scaled to the requested size.
@@ -12,11 +13,26 @@ struct ZheeOutlineIcon: View {
     let kind: ZheeOutlineIconKind
     let size: CGFloat
     var color: Color = .primary
+    var lineWidth: CGFloat?
 
-    init(_ kind: ZheeOutlineIconKind, size: CGFloat, color: Color = .primary) {
+    init(_ kind: ZheeOutlineIconKind, size: CGFloat, color: Color = .primary, lineWidth: CGFloat? = nil) {
         self.kind = kind
         self.size = size
         self.color = color
+        self.lineWidth = lineWidth
+    }
+
+    /// Tab bar drops custom Views in tabItem icons (it needs a UIImage),
+    /// so render the hand-drawn icon to a template UIImage once per kind.
+    /// Template mode lets the tab bar tint it (blue selected / gray idle).
+    private static var tabImageCache: [ZheeOutlineIconKind: UIImage] = [:]
+    static func tabImage(_ kind: ZheeOutlineIconKind) -> UIImage {
+        if let cached = tabImageCache[kind] { return cached }
+        let renderer = ImageRenderer(content: ZheeOutlineIcon(kind, size: 28, color: .black))
+        renderer.scale = 3
+        let image = renderer.uiImage ?? UIImage()
+        tabImageCache[kind] = image
+        return image
     }
 
     var body: some View {
@@ -100,7 +116,7 @@ struct ZheeOutlineIcon: View {
             if kind == .play || kind == .pause {
                 path.fill(color)
             } else {
-                path.stroke(color, style: StrokeStyle(lineWidth: max(1.2, size * 0.075), lineCap: .round, lineJoin: .round))
+                path.stroke(color, style: StrokeStyle(lineWidth: lineWidth ?? max(1.2, size * 0.075), lineCap: .round, lineJoin: .round))
             }
         }
         .frame(width: size, height: size)
@@ -138,13 +154,13 @@ struct ZheeChatRootView: View {
     var body: some View {
         TabView {
             NavigationStack { ZheeChatListView() }
-                .tabItem { Label { Text("Đoạn chat") } icon: { ZheeOutlineIcon(.chat, size: 24) } }
+                .tabItem { Label { Text("Đoạn chat") } icon: { Image(uiImage: ZheeOutlineIcon.tabImage(.chat)).renderingMode(.template) } }
             NavigationStack { ZheePeopleView() }
-                .tabItem { Label { Text("Mọi người") } icon: { ZheeOutlineIcon(.people, size: 24) } }
+                .tabItem { Label { Text("Mọi người") } icon: { Image(uiImage: ZheeOutlineIcon.tabImage(.people)).renderingMode(.template) } }
             NavigationStack { ZheeActivityListView() }
-                .tabItem { Label { Text("Thông báo") } icon: { ZheeOutlineIcon(.bell, size: 24) } }
+                .tabItem { Label { Text("Thông báo") } icon: { Image(uiImage: ZheeOutlineIcon.tabImage(.bell)).renderingMode(.template) } }
             NavigationStack { ZheeChatMenuView() }
-                .tabItem { Label { Text("Menu") } icon: { ZheeOutlineIcon(.menu, size: 24) } }
+                .tabItem { Label { Text("Menu") } icon: { Image(uiImage: ZheeOutlineIcon.tabImage(.menu)).renderingMode(.template) } }
         }
         // ZheeChat has its own TabView — hide the app tab bar so the
         // two floating pills never stack on top of each other.
@@ -311,19 +327,23 @@ private struct ZheeChannelAvatar: View {
         }
     }
 
-    private var color: Color {
+    private var gradient: LinearGradient {
         switch kind {
-        case .mesh: return .blue
-        case .nostr: return .purple
-        case .geo: return .green
-        case .dm: return .gray
+        case .mesh:
+            return LinearGradient(colors: [Color(red: 0.23, green: 0.51, blue: 0.96), Color(red: 0.02, green: 0.71, blue: 0.83)], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .nostr:
+            return LinearGradient(colors: [Color(red: 0.55, green: 0.36, blue: 0.96), Color(red: 0.93, green: 0.28, blue: 0.60)], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .geo:
+            return LinearGradient(colors: [Color(red: 0.13, green: 0.77, blue: 0.37), Color(red: 0.08, green: 0.72, blue: 0.65)], startPoint: .topLeading, endPoint: .bottomTrailing)
+        case .dm:
+            return LinearGradient(colors: [Color(red: 0.42, green: 0.45, blue: 0.50), Color(red: 0.61, green: 0.64, blue: 0.69)], startPoint: .topLeading, endPoint: .bottomTrailing)
         }
     }
 
     var body: some View {
         ZStack {
-            Circle().fill(color.opacity(0.15))
-            ZheeOutlineIcon(icon, size: size * 0.38, color: color)
+            Circle().fill(gradient)
+            ZheeOutlineIcon(icon, size: size * 0.55, color: .white, lineWidth: size * 0.055)
         }
         .frame(width: size, height: size)
     }
@@ -497,7 +517,7 @@ private struct ZheeChatMenuView: View {
                 Text("Xóa vĩnh viễn định danh (npub/nsec) và toàn bộ lịch sử chat.")
             }
             Section {
-                Text("ZheeChat trong ZheeSign 1.7.37")
+                Text("ZheeChat trong ZheeSign 1.7.38")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
