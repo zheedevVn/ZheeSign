@@ -1,7 +1,7 @@
 {
-  "version": "1.7.35",
-  "build": "1.7.35",
-  "notes": "feat: Messenger-style voice UI + E2EE PIN lock and encrypted backup/restore (1.7.35)",
+  "version": "1.7.36",
+  "build": "1.7.36",
+  "notes": "fix: onChange closure needs explicit param to pick iOS 16 overload",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
