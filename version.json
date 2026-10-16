@@ -1,7 +1,7 @@
 {
-  "version": "1.7.34",
-  "build": "1.7.34",
-  "notes": "Fix missed endpoints: scan all Mach-O files, telegram handles, binary entitlements, no-endpoint verdict",
+  "version": "1.7.35",
+  "build": "1.7.35",
+  "notes": "fix: add CFBundleIdentifier to Share Extension Info.plist (1.7.35)",
   "manifest": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/manifest.plist",
   "ipa": "https://github.com/zheedevVn/ZheeSign/releases/download/beta/ZheeSign.ipa"
 }
