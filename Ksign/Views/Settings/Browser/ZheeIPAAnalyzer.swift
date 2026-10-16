@@ -55,9 +55,9 @@ struct ZheeLinkItem: Hashable, Identifiable {
 }
 
 struct ZheeSecretItem: Hashable, Identifiable {
-    var id: String { kind + masked }
+    var id: String { kind + value }
     let kind: String
-    let masked: String
+    let value: String
     let source: String
 }
 
@@ -100,6 +100,9 @@ struct ZheeIPAReport {
     let isTipa: Bool
     let fileName: String
     let fileSize: String
+    /// Home-screen icon comes from the Assets.car catalog (CFBundleIconName
+    /// set) — SpringBoard ignores the loose AppIcon PNGs.
+    let usesCatalogIcon: Bool
     let appName: String
     let bundleID: String
     let version: String
@@ -178,7 +181,7 @@ struct ZheeIPAReport {
         if !secrets.isEmpty {
             lines.append("")
             lines.append("--- Secrets (\(secrets.count)) ---")
-            lines.append(contentsOf: secrets.map { "[\($0.kind)] \($0.masked)" })
+            lines.append(contentsOf: secrets.map { "[\($0.kind)] \($0.value)" })
         }
         if !frameworks.isEmpty {
             lines.append("")
@@ -241,6 +244,19 @@ final class ZheeIPAAnalyzer {
         let fm = FileManager.default
         let workDir = fm.temporaryDirectory.appendingPathComponent("ZheeAnalyze_\(UUID().uuidString)", isDirectory: true)
 
+        // File size: read FIRST. A late read saw a deleted file ("—")
+        // when the picker's tmp copy was purged mid-scan.
+        let sourceFileSize: Int64? = {
+            if let size = (try? ipaURL.resourceValues(forKeys: [.fileSizeKey]))?.fileSize {
+                return Int64(size)
+            }
+            if let attrs = try? fm.attributesOfItem(atPath: ipaURL.path),
+               let size = attrs[.size] as? Int64 {
+                return size
+            }
+            return nil
+        }()
+
         onProgress("Đang giải nén IPA…")
         try fm.createDirectory(at: workDir, withIntermediateDirectories: true)
         do {
@@ -265,6 +281,17 @@ final class ZheeIPAAnalyzer {
         let build = (info["CFBundleVersion"] as? String) ?? "—"
         let minIOS = (info["MinimumOSVersion"] as? String) ?? "—"
         let executable = (info["CFBundleExecutable"] as? String) ?? ""
+
+        // Icon source: catalog (Assets.car) vs loose files. When the plist
+        // names a catalog icon, SpringBoard ignores the loose AppIcon PNGs.
+        var usesCatalogIcon = false
+        for key in ["CFBundleIcons", "CFBundleIcons~ipad"] {
+            if let icons = info[key] as? [String: Any],
+               let primary = icons["CFBundlePrimaryIcon"] as? [String: Any],
+               let iconName = primary["CFBundleIconName"] as? String, !iconName.isEmpty {
+                usesCatalogIcon = true
+            }
+        }
 
         var permissions: [ZheeKeyValue] = []
         for (key, value) in info where key.hasSuffix("UsageDescription") {
@@ -416,7 +443,7 @@ final class ZheeIPAAnalyzer {
         // Dedupe secrets
         var seenSecrets = Set<String>()
         secrets = secrets.filter { item in
-            let k = item.kind + "|" + item.masked
+            let k = item.kind + "|" + item.value
             guard !seenSecrets.contains(k) else { return false }
             seenSecrets.insert(k)
             return true
@@ -465,13 +492,12 @@ final class ZheeIPAAnalyzer {
         // MARK: File tree
         let fileTree = buildFileTree(root: payload, base: workDir, depth: 0)
 
-        // MARK: File size
+        // MARK: File size (captured up front; fallback = extracted size)
         let fileSize: String
-        if let attrs = try? fm.attributesOfItem(atPath: ipaURL.path),
-           let size = attrs[.size] as? Int64 {
+        if let size = sourceFileSize {
             fileSize = ByteCountFormatter.string(fromByteCount: size, countStyle: .file)
         } else {
-            fileSize = "—"
+            fileSize = "~" + ByteCountFormatter.string(fromByteCount: Self.totalSize(of: payload), countStyle: .file)
         }
 
         return ZheeIPAReport(
@@ -479,6 +505,7 @@ final class ZheeIPAAnalyzer {
             isTipa: ipaURL.pathExtension.lowercased() == "tipa",
             fileName: displayName,
             fileSize: fileSize,
+            usesCatalogIcon: usesCatalogIcon,
             appName: appName,
             bundleID: bundleID,
             version: version,
@@ -624,6 +651,18 @@ final class ZheeIPAAnalyzer {
     }
 
     // MARK: - File tree
+
+    /// Total size of all files under a directory (fallback file size).
+    private static func totalSize(of dir: URL) -> Int64 {
+        let fm = FileManager.default
+        guard let enumerator = fm.enumerator(at: dir, includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey]) else { return 0 }
+        var total: Int64 = 0
+        for case let url as URL in enumerator {
+            if (try? url.resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true { continue }
+            total += Int64((try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0)
+        }
+        return total
+    }
 
     private func buildFileTree(root: URL, base: URL, depth: Int) -> ZheeFileNode {
         let fm = FileManager.default

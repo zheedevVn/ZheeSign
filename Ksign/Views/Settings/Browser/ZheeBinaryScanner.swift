@@ -60,13 +60,61 @@ enum ZheeBinaryScanner {
         for match in regex.matches(in: text, options: [], range: range) {
             guard let r = Range(match.range, in: text) else { continue }
             var url = String(text[r])
-            while let last = url.last, ".,;:!?)]}".contains(last) { url.removeLast() }
+            while let last = url.last, ".,;:!?".contains(last) { url.removeLast() }
+            // Strip a trailing closer only when its opener is absent —
+            // keeps template placeholders like {id} and wiki URLs like
+            // …(Central), drops "(see …)" closers.
+            for (close, open) in [(")", "("), ("]", "["), ("}", "{")] as [(Character, Character)] {
+                while url.last == close && !url.contains(open) { url.removeLast() }
+            }
             guard url.count >= 8, url.count < 2048 else { continue }
             // Apple DTD links (e.g. PropertyList-1.0.dtd) are plist boilerplate, not endpoints
             if url.contains("/DTDs/") { continue }
+            // Regex / format-string fragments are not URLs:
+            // - '|' '^' '`' never appear in real URLs — they come from
+            //   regex literals like (?:tg://|ftp://)[^...] in the binary.
+            // - '%' must start a %XX percent-escape; %s / %d / %@ are
+            //   format specifiers, not URLs.
+            // - http(s)/ftp hosts need a dot (or be localhost):
+            //   "http://a" is a truncated fragment, not an endpoint.
+            if url.contains("|") || url.contains("^") || url.contains("`") { continue }
+            if hasBarePercent(url) { continue }
+            if !hasValidHost(url) { continue }
             found.append(url)
         }
         return found
+    }
+
+    /// True if '%' appears outside a %XX percent-escape (%s / %d / %@ …).
+    private static func hasBarePercent(_ url: String) -> Bool {
+        let chars = Array(url)
+        var i = 0
+        while i < chars.count {
+            if chars[i] == "%" {
+                guard i + 2 < chars.count,
+                      chars[i + 1].isHexDigit, chars[i + 2].isHexDigit else { return true }
+                i += 3
+            } else {
+                i += 1
+            }
+        }
+        return false
+    }
+
+    /// http(s)/ftp hosts need a dot (or be localhost). tg:// deep links
+    /// (tg://resolve?…) are exempt — their "host" is an action name.
+    private static func hasValidHost(_ url: String) -> Bool {
+        let lower = url.lowercased()
+        guard lower.hasPrefix("http://") || lower.hasPrefix("https://") || lower.hasPrefix("ftp://") else { return true }
+        guard let schemeRange = url.range(of: "://") else { return false }
+        let rest = url[schemeRange.upperBound...]
+        let host = rest.split(separator: "/", maxSplits: 1).first?
+            .split(separator: "?", maxSplits: 1).first?
+            .split(separator: "#", maxSplits: 1).first?
+            .split(separator: ":", maxSplits: 1).first ?? ""
+        if host.isEmpty { return false }
+        if host == "localhost" { return true }
+        return host.contains(".")
     }
 
     static func categorize(_ url: String) -> ZheeLinkCategory {
@@ -167,7 +215,7 @@ enum ZheeBinaryScanner {
         return out
     }
 
-    // MARK: - Secrets (values are masked, never stored)
+    // MARK: - Secrets (full values shown on device)
 
     static func findSecrets(in text: String, source: String) -> [ZheeSecretItem] {
         let patterns: [(kind: String, regex: String)] = [
@@ -188,24 +236,10 @@ enum ZheeBinaryScanner {
             for match in regex.matches(in: text, options: [], range: range).prefix(20) {
                 guard let r = Range(match.range, in: text) else { continue }
                 let raw = String(text[r])
-                results.append(ZheeSecretItem(kind: kind, masked: maskSecret(raw), source: source))
+                results.append(ZheeSecretItem(kind: kind, value: raw, source: source))
             }
         }
         return results
-    }
-
-    static func maskSecret(_ raw: String) -> String {
-        let trimmed = raw.count > 120 ? String(raw.prefix(120)) + "…" : raw
-        if let sep = trimmed.firstIndex(where: { $0 == "=" || $0 == ":" }) {
-            let key = trimmed[..<sep]
-            let value = trimmed[trimmed.index(after: sep)...]
-            let head = value.prefix(4)
-            return "\(key)=\(head)••••••"
-        }
-        if trimmed.count > 12 {
-            return "\(trimmed.prefix(6))••••••\(trimmed.suffix(4))"
-        }
-        return "••••••"
     }
 
     // MARK: - Scan a text blob (chunked) into links + secrets
